@@ -31,7 +31,7 @@ import java.io.Closeable;
 
 public class CassandraSession implements Closeable {
 
-	private static final Logger logger = LoggerFactory.getLogger(com.qwazr.connectors.cassandra.CassandraSession.class);
+	private static final Logger logger = LoggerFactory.getLogger(CassandraSession.class);
 
 	private final LockUtils.ReadWriteLock rwl = new LockUtils.ReadWriteLock();
 

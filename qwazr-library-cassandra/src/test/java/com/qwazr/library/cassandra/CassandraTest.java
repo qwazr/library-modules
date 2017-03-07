@@ -19,6 +19,7 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.qwazr.library.annotations.Library;
+import com.qwazr.library.test.AbstractLibraryTest;
 import com.qwazr.utils.concurrent.ThreadUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.junit.Assert;

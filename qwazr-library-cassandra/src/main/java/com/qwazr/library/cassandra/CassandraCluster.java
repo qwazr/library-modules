@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 
 public class CassandraCluster implements Closeable {
 
-	private final static Logger logger = LoggerFactory.getLogger(com.qwazr.connectors.cassandra.CassandraCluster.class);
+	private final static Logger logger = LoggerFactory.getLogger(CassandraCluster.class);
 
 	private final LockUtils.ReadWriteLock rwl = new LockUtils.ReadWriteLock();
 	private Cluster cluster;

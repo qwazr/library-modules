@@ -33,7 +33,7 @@ import java.sql.SQLException;
 
 public class DatabaseConnector extends AbstractPasswordLibrary implements Closeable {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(com.qwazr.connectors.DatabaseConnector.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseConnector.class);
 
 	public final String driver = null;
 
