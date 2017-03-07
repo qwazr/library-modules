@@ -1,0 +1,13 @@
+{
+  "library": {
+    "cassandra": {
+      "class": "com.qwazr.connectors.CassandraConnector",
+      "hosts": [
+        "localhost"
+      ],
+      "timeout_connect_ms": 20000,
+      "timeout_read_ms": 60000,
+      "timeout_pool_ms": 10000
+    }
+  }
+}
