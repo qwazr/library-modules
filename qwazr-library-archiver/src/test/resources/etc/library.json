@@ -1,0 +1,12 @@
+{
+  "library": {
+    "archiver": {
+      "class": "com.qwazr.library.archiver.ArchiverTool",
+      "codec": "deflate"
+    },
+    "gzip_archiver": {
+      "class": "com.qwazr.library.archiver.ArchiverTool",
+      "codec": "gzip"
+    }
+  }
+}

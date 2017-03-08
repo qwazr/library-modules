@@ -57,4 +57,13 @@ public class FreemarkerTest extends AbstractLibraryTest {
 		Assert.assertNotNull(test);
 		Assert.assertTrue(test.contains(TEST_TEXT));
 	}
+
+	@Test
+	public void builder() {
+		final FreeMarkerToolBuilder builder = FreeMarkerTool.of();
+		Assert.assertNotNull(builder);
+		final FreeMarkerTool tool =
+				builder.defaultContentType("TEXT/HTML").defaultEncoding("UTF-8").outputEncoding("UTF-8").build();
+		Assert.assertNotNull(tool);
+	}
 }
