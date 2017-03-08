@@ -1,0 +1,12 @@
+{
+  "library": {
+    "ldap": {
+      "class": "com.qwazr.library.ldap.LdapConnector",
+      "host": "localhost",
+      "port": 389,
+      "base_dn": "dc=qwazr,dc=net",
+      "username": "cn=admin,dc=qwazr,dc=net",
+      "password": "test"
+    }
+  }
+}
