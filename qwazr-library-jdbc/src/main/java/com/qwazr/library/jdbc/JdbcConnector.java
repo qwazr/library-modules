@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.qwazr.library.database;
+package com.qwazr.library.jdbc;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.qwazr.library.AbstractPasswordLibrary;
@@ -31,9 +31,9 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.sql.SQLException;
 
-public class DatabaseConnector extends AbstractPasswordLibrary implements Closeable {
+public class JdbcConnector extends AbstractPasswordLibrary implements Closeable {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseConnector.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(JdbcConnector.class);
 
 	public final String driver = null;
 

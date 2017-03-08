@@ -1,7 +1,7 @@
 {
   "library": {
     "cassandra": {
-      "class": "com.qwazr.connectors.CassandraConnector",
+      "class": "com.qwazr.library.cassandra.CassandraConnector",
       "hosts": [
         "localhost"
       ],

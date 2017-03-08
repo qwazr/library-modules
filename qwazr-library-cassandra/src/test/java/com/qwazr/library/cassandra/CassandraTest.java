@@ -23,20 +23,22 @@ import com.qwazr.library.test.AbstractLibraryTest;
 import com.qwazr.utils.concurrent.ThreadUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.logging.Logger;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class CassandraTest extends AbstractLibraryTest {
 
-	private final static Logger logger = Logger.getLogger(CassandraTest.class.getName());
+	private final static Logger LOGGER = LoggerFactory.getLogger(CassandraTest.class);
 
 	@Library("cassandra")
 	private CassandraConnector cassandra;
@@ -50,13 +52,18 @@ public class CassandraTest extends AbstractLibraryTest {
 	private final static String CREATE_INDEX = "CREATE INDEX ON qwazr_connector_test.test(cat_id)";
 
 	@Test
+	public void test_01_injected() {
+		Assert.assertNotNull(cassandra);
+	}
+
+	@Test
 	public void test_02_create() throws IOException {
 		try {
 			Assert.assertTrue(cassandra.execute(CREATE_SCHEMA).wasApplied());
 			Assert.assertTrue(cassandra.execute(CREATE_TABLE).wasApplied());
 			Assert.assertTrue(cassandra.execute(CREATE_INDEX).wasApplied());
 		} catch (NoHostAvailableException e) {
-			logger.warning("Bypass (no cassandra host is running)");
+			Assume.assumeNoException("Bypass (no cassandra host is running)", e);
 		}
 	}
 
@@ -74,7 +81,7 @@ public class CassandraTest extends AbstractLibraryTest {
 			}
 			ThreadUtils.parallel(threadList);
 		} catch (NoHostAvailableException e) {
-			logger.warning("Bypass (no cassandra host is running)");
+			Assume.assumeNoException("Bypass (no cassandra host is running)", e);
 		}
 	}
 
@@ -87,7 +94,7 @@ public class CassandraTest extends AbstractLibraryTest {
 			Assert.assertTrue(cassandra.execute(DROP_TABLE).wasApplied());
 			Assert.assertTrue(cassandra.execute(DROP_SCHEMA).wasApplied());
 		} catch (NoHostAvailableException e) {
-			logger.warning("Bypass (no cassandra host is running)");
+			Assume.assumeNoException("Bypass (no cassandra host is running)", e);
 		}
 	}
 
@@ -98,13 +105,13 @@ public class CassandraTest extends AbstractLibraryTest {
 		@Override
 		public void run() throws Exception {
 			long id = Thread.currentThread().getId();
-			logger.info("Starts - id: " + id);
+			LOGGER.info("Starts - id: " + id);
 			int count = 0;
 			while (System.currentTimeMillis() < finalTime) {
 				Assert.assertTrue(cassandra.execute(INSERT, RandomUtils.nextInt(0, 10)).wasApplied());
 				count++;
 			}
-			logger.info("Ends - id: " + id + " - count: " + count);
+			LOGGER.info("Ends - id: " + id + " - count: " + count);
 		}
 	}
 
@@ -117,7 +124,7 @@ public class CassandraTest extends AbstractLibraryTest {
 		@Override
 		public void run() throws Exception {
 			long id = Thread.currentThread().getId();
-			logger.info("Starts - id: " + id);
+			LOGGER.info("Starts - id: " + id);
 			int count = 0;
 			while (System.currentTimeMillis() < finalTime) {
 				ResultSet result = cassandra.execute(SELECT, RandomUtils.nextInt(0, 10));
@@ -128,7 +135,7 @@ public class CassandraTest extends AbstractLibraryTest {
 					count++;
 				}
 			}
-			logger.info("Ends - id: " + id + " - count: " + count);
+			LOGGER.info("Ends - id: " + id + " - count: " + count);
 		}
 	}
 }

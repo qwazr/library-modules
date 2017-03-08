@@ -1,7 +1,7 @@
 {
   "library": {
     "mysql": {
-      "class": "com.qwazr.connectors.DatabaseConnector",
+      "class": "com.qwazr.library.jdbc.JdbcConnector",
       "driver": "com.mysql.jdbc.Driver",
       "url": "jdbc:mysql://localhost:3306/test?autoReconnect=true",
       "username": "test",

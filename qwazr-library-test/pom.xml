@@ -2,8 +2,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>qwazr-library-cassandra</artifactId>
-    <name>QWAZR library module for Cassandra</name>
+    <artifactId>qwazr-library-test</artifactId>
+    <name>QWAZR library test</name>
     <packaging>jar</packaging>
 
     <parent>
@@ -14,18 +14,10 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.datastax.cassandra</groupId>
-            <artifactId>cassandra-driver-core</artifactId>
-            <version>3.1.4</version>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
         </dependency>
-
-        <dependency>
-            <groupId>com.qwazr</groupId>
-            <artifactId>qwazr-library-test</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-
     </dependencies>
 
 </project>
