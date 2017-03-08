@@ -1,0 +1,22 @@
+{
+  "library": {
+    "markdown_default": {
+      "class": "com.qwazr.library.markdown.MarkdownTool"
+    },
+    "markdown_extensions": {
+      "class": "com.qwazr.library.markdown.MarkdownTool",
+      "extensions": [
+        "heading_anchor",
+        "autolinks",
+        "tables"
+      ]
+    },
+    "markdown_bootstrap": {
+      "class": "com.qwazr.library.markdown.MarkdownTool",
+      "extensions": [
+        "tables"
+      ],
+      "attribute_provider_class": "com.qwazr.library.markdown.BoostrapAttributeProvider"
+    }
+  }
+}

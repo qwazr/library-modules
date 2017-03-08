@@ -38,6 +38,7 @@
         <module>qwazr-library-hadoop</module>
         <module>qwazr-library-jdbc</module>
         <module>qwazr-library-ldap</module>
+        <module>qwazr-library-markdown</module>
         <module>qwazr-library-mongodb</module>
         <module>qwazr-library-mybatis</module>
         <module>qwazr-library-realm-table</module>
