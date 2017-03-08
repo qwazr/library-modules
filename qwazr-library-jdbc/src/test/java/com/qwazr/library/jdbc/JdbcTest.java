@@ -16,21 +16,44 @@ package com.qwazr.library.jdbc; /**
 
 import com.qwazr.library.annotations.Library;
 import com.qwazr.library.test.AbstractLibraryTest;
+import com.qwazr.utils.IOUtils;
 import org.junit.Assert;
-import org.junit.FixMethodOrder;
 import org.junit.Test;
-import org.junit.runners.MethodSorters;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class JdbcTest extends AbstractLibraryTest {
 
-	@Library("mysql")
-	private JdbcConnector mysql;
+	@Library("derbyNoPool")
+	private JdbcConnector derbyNoPool;
+
+	@Library("derbyWithPool")
+	private JdbcConnector derbyWithPool;
 
 	@Test
-	public void test_01_inject() throws IOException {
-		Assert.assertNotNull(mysql);
+	public void noPool() throws IOException, SQLException {
+		Assert.assertNotNull(derbyNoPool);
+		try (IOUtils.CloseableContext context = new IOUtils.CloseableList()) {
+			Assert.assertNotNull(derbyNoPool.getConnection(context));
+			Assert.assertNotNull(derbyNoPool.getConnection(context, true));
+			Assert.assertNotNull(derbyNoPool.getConnection(context, true, Connection.TRANSACTION_READ_COMMITTED));
+			Assert.assertNull(derbyNoPool.getPoolNumActive());
+			Assert.assertNull(derbyNoPool.getPoolNumIdle());
+		}
 	}
+
+	@Test
+	public void withPool() throws IOException, SQLException {
+		Assert.assertNotNull(derbyWithPool);
+		try (IOUtils.CloseableContext context = new IOUtils.CloseableList()) {
+			Assert.assertNotNull(derbyWithPool.getConnection(context));
+			Assert.assertNotNull(derbyWithPool.getConnection(context, true));
+			Assert.assertNotNull(derbyWithPool.getConnection(context, true, Connection.TRANSACTION_READ_COMMITTED));
+			Assert.assertEquals(new Integer(3), derbyWithPool.getPoolNumActive());
+			Assert.assertEquals(new Integer(7), derbyWithPool.getPoolNumIdle());
+		}
+	}
+
 }
