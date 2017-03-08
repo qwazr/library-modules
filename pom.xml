@@ -39,6 +39,7 @@
         <module>qwazr-library-ldap</module>
         <module>qwazr-library-mongodb</module>
         <module>qwazr-library-mybatis</module>
+        <module>qwazr-library-realm-table</module>
         <module>qwazr-library-thymeleaf</module>
     </modules>
 

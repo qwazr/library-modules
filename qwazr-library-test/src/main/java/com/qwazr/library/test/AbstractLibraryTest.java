@@ -16,6 +16,8 @@
 package com.qwazr.library.test;
 
 import com.qwazr.classloader.ClassLoaderManager;
+import com.qwazr.database.TableManager;
+import com.qwazr.database.TableServiceInterface;
 import com.qwazr.library.LibraryManager;
 import com.qwazr.utils.FileUtils;
 import org.junit.Before;
@@ -24,6 +26,7 @@ import org.junit.BeforeClass;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -33,14 +36,17 @@ public abstract class AbstractLibraryTest {
 
 	@BeforeClass
 	public static void init() throws IOException {
-		final File dataDirectory = Files.createTempDirectory("library-test").toFile();
+		final Path dataDirectory = Files.createTempDirectory("library-test");
 		final Collection<File> etcFiles = Arrays.asList(new File("src/test/resources/etc/library.json"));
-		final ClassLoaderManager classLoaderManager = new ClassLoaderManager(dataDirectory, Thread.currentThread());
-		libraryManager = new LibraryManager(classLoaderManager, null, dataDirectory, etcFiles);
+		final ClassLoaderManager classLoaderManager =
+				new ClassLoaderManager(dataDirectory.toFile(), Thread.currentThread());
+		final TableManager tableManager = new TableManager(dataDirectory.resolve(TableServiceInterface.SERVICE_NAME));
+		libraryManager =
+				new LibraryManager(classLoaderManager, tableManager.getService(), dataDirectory.toFile(), etcFiles);
 
 		final File resourcesDirectory = new File("src/test/resources");
 		if (resourcesDirectory.exists())
-			FileUtils.copyDirectory(resourcesDirectory, dataDirectory);
+			FileUtils.copyDirectory(resourcesDirectory, dataDirectory.toFile());
 	}
 
 	@Before
