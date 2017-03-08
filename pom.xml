@@ -17,7 +17,6 @@
         <connection>scm:git:git@github.com:qwazr/library-modules.git</connection>
         <developerConnection>scm:git:git@github.com:qwazr/library-modules.git</developerConnection>
         <url>git@github.com:qwazr/library-modules.git</url>
-        <tag>HEAD</tag>
     </scm>
 
     <dependencies>
