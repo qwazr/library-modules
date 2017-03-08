@@ -1,0 +1,20 @@
+{
+  "library": {
+    "mongodb": {
+      "class": "com.qwazr.library.mongodb.MongoDbConnector",
+      "servers": [
+        {
+          "hostname": "localhost",
+          "port": 27017
+        }
+      ],
+      "credentials": [
+        {
+          "database": "test",
+          "username": "test",
+          "password": "test"
+        }
+      ]
+    }
+  }
+}

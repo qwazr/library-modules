@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Emmanuel Keller / QWAZR
+ * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.qwazr.library.ldap;
+package com.qwazr.library.mongodb;
 
 import com.qwazr.library.annotations.Library;
 import com.qwazr.library.test.AbstractLibraryTest;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.sql.SQLException;
+public class MongoDbConnectorTest extends AbstractLibraryTest {
 
-public class LdapConnectorTest extends AbstractLibraryTest {
-
-	@Library("ldap")
-	private LdapConnector ldap;
+	@Library("mongodb")
+	private MongoDbConnector mongodb;
 
 	@Test
 	public void test() {
-		Assert.assertNotNull(ldap);
+		Assert.assertNotNull(mongodb);
 	}
 
 }
