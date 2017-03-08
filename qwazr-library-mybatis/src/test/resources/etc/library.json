@@ -1,0 +1,23 @@
+{
+  "library": {
+    "mybatis_default": {
+      "class": "com.qwazr.library.mybatis.MybatisConnector",
+      "properties": {
+        "driver": "org.apache.derby.jdbc.EmbeddedDriver",
+        "url": "jdbc:derby:memory:myDB;create=true",
+        "username": "test",
+        "password": "test"
+      }
+    },
+    "mybatis_file": {
+      "class": "com.qwazr.library.mybatis.MybatisConnector",
+      "configuration_file": "src/main/resources/com/qwazr/library/mybatis/default-config.xml",
+      "properties": {
+        "driver": "org.apache.derby.jdbc.EmbeddedDriver",
+        "url": "jdbc:derby:memory:myDB;create=true",
+        "username": "test",
+        "password": "test"
+      }
+    }
+  }
+}

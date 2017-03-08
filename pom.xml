@@ -31,7 +31,10 @@
         <module>qwazr-library-test</module>
         <module>qwazr-library-cassandra</module>
         <module>qwazr-library-email</module>
+        <module>qwazr-library-excel</module>
+        <module>qwazr-library-ftp</module>
         <module>qwazr-library-jdbc</module>
+        <module>qwazr-library-mybatis</module>
     </modules>
 
 </project>
