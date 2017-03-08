@@ -37,6 +37,7 @@
         <module>qwazr-library-hadoop</module>
         <module>qwazr-library-jdbc</module>
         <module>qwazr-library-mybatis</module>
+        <module>qwazr-library-thymeleaf</module>
     </modules>
 
 </project>

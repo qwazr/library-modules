@@ -1,0 +1,19 @@
+{
+  "library": {
+    "thymeleaf_classloader": {
+      "class": "com.qwazr.library.thymeleaf.ThymeleafTool",
+      "use_classloader": true,
+      "cache_enabled": true,
+      "cache_ttl_ms": 60000,
+      "template_mode": "XHTML",
+      "suffix": ".html"
+    },
+    "thymeleaf_files": {
+      "class": "com.qwazr.library.thymeleaf.ThymeleafTool",
+      "cache_enabled": false,
+      "character_encoding": "UTF-8",
+      "suffix": ".html",
+      "template_mode": "XHTML"
+    }
+  }
+}
