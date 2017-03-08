@@ -32,6 +32,7 @@
         <module>qwazr-library-cassandra</module>
         <module>qwazr-library-email</module>
         <module>qwazr-library-excel</module>
+        <module>qwazr-library-freemarker</module>
         <module>qwazr-library-ftp</module>
         <module>qwazr-library-hadoop</module>
         <module>qwazr-library-jdbc</module>

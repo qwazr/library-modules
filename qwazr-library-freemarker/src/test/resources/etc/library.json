@@ -1,0 +1,17 @@
+{
+  "library": {
+    "freemarker_classloader": {
+      "class": "com.qwazr.library.freemarker.FreeMarkerTool",
+      "use_classloader": true,
+      "output_encoding": "UTF-8",
+      "default_encoding": "UTF-8",
+      "default_content_type": "TEXT/HTML"
+    },
+    "freemarker_files": {
+      "class": "com.qwazr.library.freemarker.FreeMarkerTool",
+      "output_encoding": "UTF-8",
+      "default_encoding": "UTF-8",
+      "default_content_type": "TEXT/HTML"
+    }
+  }
+}
