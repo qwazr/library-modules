@@ -1,4 +1,4 @@
-package com.qwazr.library.jdbc; /**
+package com.qwazr.library.email; /**
  * Copyright 2014-2016 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");

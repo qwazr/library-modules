@@ -1,0 +1,12 @@
+{
+  "library": {
+    "email": {
+      "class": "com.qwazr.library.email.EmailConnector",
+      "hostname": "smtp.example.org",
+      "port": "587",
+      "ssl": "true",
+      "username": "user1",
+      "password": "pass1"
+    }
+  }
+}

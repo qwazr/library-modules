@@ -30,6 +30,7 @@
     <modules>
         <module>qwazr-library-test</module>
         <module>qwazr-library-cassandra</module>
+        <module>qwazr-library-email</module>
         <module>qwazr-library-jdbc</module>
     </modules>
 
