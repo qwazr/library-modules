@@ -1,0 +1,7 @@
+{
+  "library": {
+    "files": {
+      "class": "com.qwazr.library.files.FilesTool"
+    }
+  }
+}

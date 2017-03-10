@@ -35,6 +35,7 @@
         <module>qwazr-library-csv</module>
         <module>qwazr-library-email</module>
         <module>qwazr-library-excel</module>
+        <module>qwazr-library-files</module>
         <module>qwazr-library-fop</module>
         <module>qwazr-library-freemarker</module>
         <module>qwazr-library-ftp</module>
