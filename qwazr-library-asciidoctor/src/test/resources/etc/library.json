@@ -1,0 +1,7 @@
+{
+  "library": {
+    "asciidoctor": {
+      "class": "com.qwazr.library.asciidoctor.AsciiDoctorTool"
+    }
+  }
+}

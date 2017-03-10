@@ -30,6 +30,7 @@
     <modules>
         <module>qwazr-library-test</module>
         <module>qwazr-library-archiver</module>
+        <module>qwazr-library-asciidoctor</module>
         <module>qwazr-library-cassandra</module>
         <module>qwazr-library-csv</module>
         <module>qwazr-library-email</module>
