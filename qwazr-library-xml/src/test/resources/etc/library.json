@@ -1,0 +1,10 @@
+{
+  "library": {
+    "xml": {
+      "class": "com.qwazr.library.xml.XMLTool"
+    },
+    "xpath": {
+      "class": "com.qwazr.library.xml.XPathTool"
+    }
+  }
+}

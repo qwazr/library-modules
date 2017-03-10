@@ -44,6 +44,7 @@
         <module>qwazr-library-realm-table</module>
         <module>qwazr-library-rrd4j</module>
         <module>qwazr-library-thymeleaf</module>
+        <module>qwazr-library-xml</module>
     </modules>
 
 </project>
