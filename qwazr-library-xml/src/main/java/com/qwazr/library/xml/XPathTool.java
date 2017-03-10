@@ -16,21 +16,21 @@
 package com.qwazr.library.xml;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import javax.xml.namespace.QName;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.*;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class XPathTool extends AbstractXmlFactoryTool implements Closeable {
 
@@ -40,13 +40,13 @@ public class XPathTool extends AbstractXmlFactoryTool implements Closeable {
 	private final XPath xPath;
 
 	@JsonIgnore
-	private final Map<String, XPathExpression> xPathMap;
+	private final ConcurrentHashMap<String, XPathExpression> xPathMap;
 
 	public XPathTool() {
 		synchronized (xPathFactory) {
 			xPath = xPathFactory.newXPath();
 		}
-		xPathMap = new HashMap<>();
+		xPathMap = new ConcurrentHashMap<>();
 	}
 
 	@Override
@@ -55,17 +55,17 @@ public class XPathTool extends AbstractXmlFactoryTool implements Closeable {
 	}
 
 	public XPathDocument readDocument(File file) throws ParserConfigurationException, SAXException, IOException {
-		return new XPathDocument(file);
+		return new XPathDocument(this, file);
 	}
 
 	public XPathDocument readDocument(String path) throws ParserConfigurationException, SAXException, IOException {
-		return new XPathDocument(new File(path));
+		return new XPathDocument(this, new File(path));
 	}
 
 	public Collection<String> extractText(Node node) {
 		if (node == null)
 			return null;
-		ArrayList<String> list = new ArrayList<String>();
+		ArrayList<String> list = new ArrayList<>();
 		extractText(node, list);
 		return list;
 	}
@@ -85,93 +85,20 @@ public class XPathTool extends AbstractXmlFactoryTool implements Closeable {
 	}
 
 	@JsonIgnore
-	private XPathExpression getXPathExpression(String xpath_expression) throws XPathExpressionException {
-		synchronized (xPathMap) {
-			XPathExpression xPathExpression = xPathMap.get(xpath_expression);
-			if (xPathExpression != null)
-				return xPathExpression;
+	XPathExpression getXPathExpression(String xpathExpression) {
+		return xPathMap.computeIfAbsent(xpathExpression, exp -> {
 			synchronized (xPath) {
-				xPathExpression = xPath.compile(xpath_expression);
+				try {
+					return xPath.compile(exp);
+				} catch (XPathExpressionException e) {
+					throw new RuntimeException(e.getMessage(), e);
+				}
 			}
-			xPathMap.put(xpath_expression, xPathExpression);
-			return xPathExpression;
-		}
+		});
 	}
 
 	public void clearXpathCache() {
-		synchronized (xPathMap) {
-			xPathMap.clear();
-		}
-	}
-
-	public class XPathDocument {
-
-		private final Document document;
-
-		private XPathDocument(File file) throws ParserConfigurationException, SAXException, IOException {
-			document = getNewDocumentBuilder().parse(file);
-		}
-
-		private Object xpath(String xpath_expression, Object object, QName xPathResult)
-				throws XPathExpressionException {
-			if (object == null)
-				object = document;
-			XPathExpression xPathExpression = getXPathExpression(xpath_expression);
-			synchronized (xPathExpression) {
-				synchronized (xPath) {
-					return xPathExpression.evaluate(object, xPathResult);
-				}
-			}
-		}
-
-		public Node xpath_node(String xpath_expression, Object object) throws XPathExpressionException {
-			return (Node) xpath(xpath_expression, object, XPathConstants.NODE);
-		}
-
-		public Node xpath_node(String xpath_expression) throws XPathExpressionException {
-			return xpath_node(xpath_expression, document);
-		}
-
-		public Node[] xpath_nodes(String xpath_expression, Object object) throws XPathExpressionException {
-			if (object == null)
-				object = document;
-			NodeList nodeList = (NodeList) xpath(xpath_expression, object, XPathConstants.NODESET);
-			if (nodeList == null)
-				return null;
-			Node[] nodes = new Node[nodeList.getLength()];
-			for (int i = 0; i < nodes.length; i++)
-				nodes[i] = nodeList.item(i);
-			return nodes;
-		}
-
-		public Node[] xpath_nodes(String xpath_expression) throws XPathExpressionException {
-			return xpath_nodes(xpath_expression, document);
-		}
-
-		public String xpath_text(String xpath_expression, Object object) throws XPathExpressionException {
-			return (String) xpath(xpath_expression, object, XPathConstants.STRING);
-		}
-
-		public String xpath_text(String xpath_expression) throws XPathExpressionException {
-			return xpath_text(xpath_expression, document);
-		}
-
-		public Boolean xpath_boolean(String xpath_expression, Object object) throws XPathExpressionException {
-			return (Boolean) xpath(xpath_expression, object, XPathConstants.BOOLEAN);
-		}
-
-		public Boolean xpath_boolean(String xpath_expression) throws XPathExpressionException {
-			return xpath_boolean(xpath_expression, document);
-		}
-
-		public Number xpath_number(String xpath_expression, Object object) throws XPathExpressionException {
-			return (Number) xpath(xpath_expression, object, XPathConstants.NUMBER);
-		}
-
-		public Number xpath_number(String xpath_expression) throws XPathExpressionException {
-			return xpath_number(xpath_expression, document);
-		}
-
+		xPathMap.clear();
 	}
 
 }
