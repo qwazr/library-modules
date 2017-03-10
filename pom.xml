@@ -37,6 +37,7 @@
         <module>qwazr-library-freemarker</module>
         <module>qwazr-library-ftp</module>
         <module>qwazr-library-hadoop</module>
+        <module>qwazr-library-iban</module>
         <module>qwazr-library-jdbc</module>
         <module>qwazr-library-ldap</module>
         <module>qwazr-library-markdown</module>
