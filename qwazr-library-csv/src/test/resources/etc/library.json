@@ -1,0 +1,7 @@
+{
+  "library": {
+    "csv": {
+      "class": "com.qwazr.library.csv.CSVTool"
+    }
+  }
+}
