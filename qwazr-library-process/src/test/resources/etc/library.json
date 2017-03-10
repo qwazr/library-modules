@@ -1,0 +1,11 @@
+{
+  "library": {
+    "process": {
+      "class": "com.qwazr.library.process.ProcessTool",
+      "commands": [
+        "java",
+        "-version"
+      ]
+    }
+  }
+}
