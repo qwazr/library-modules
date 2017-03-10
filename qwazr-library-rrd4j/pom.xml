@@ -13,7 +13,13 @@
     </parent>
 
     <dependencies>
-        
+
+        <dependency>
+            <groupId>org.rrd4j</groupId>
+            <artifactId>rrd4j</artifactId>
+            <version>3.1</version>
+        </dependency>
+
         <dependency>
             <groupId>com.qwazr</groupId>
             <artifactId>qwazr-library-test</artifactId>

@@ -17,7 +17,6 @@ package com.qwazr.library.rrd4j;
 
 import com.qwazr.library.annotations.Library;
 import com.qwazr.library.test.AbstractLibraryTest;
-import com.qwazr.tools.Rrd4jTool;
 import com.qwazr.utils.IOUtils;
 import org.junit.Assert;
 import org.junit.Test;
