@@ -35,6 +35,7 @@
         <module>qwazr-library-csv</module>
         <module>qwazr-library-email</module>
         <module>qwazr-library-excel</module>
+        <module>qwazr-library-fop</module>
         <module>qwazr-library-freemarker</module>
         <module>qwazr-library-ftp</module>
         <module>qwazr-library-hadoop</module>
@@ -44,6 +45,7 @@
         <module>qwazr-library-markdown</module>
         <module>qwazr-library-mongodb</module>
         <module>qwazr-library-mybatis</module>
+        <module>qwazr-library-properties</module>
         <module>qwazr-library-realm-table</module>
         <module>qwazr-library-rrd4j</module>
         <module>qwazr-library-thymeleaf</module>

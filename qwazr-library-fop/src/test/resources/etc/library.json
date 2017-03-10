@@ -1,0 +1,7 @@
+{
+  "library": {
+    "fop": {
+      "class": "com.qwazr.library.fop.ApacheFopTool"
+    }
+  }
+}

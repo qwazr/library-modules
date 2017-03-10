@@ -1,0 +1,8 @@
+{
+  "library": {
+    "properties": {
+      "class": "com.qwazr.library.properties.PropertiesTool",
+      "path": "src/test/resources/com/qwazr/library/properties/test.properties"
+    }
+  }
+}
