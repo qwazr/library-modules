@@ -17,7 +17,6 @@ package com.qwazr.library.test;
 
 import com.qwazr.classloader.ClassLoaderManager;
 import com.qwazr.database.TableManager;
-import com.qwazr.database.TableServiceInterface;
 import com.qwazr.library.LibraryManager;
 import com.qwazr.utils.FileUtils;
 import org.junit.Before;
@@ -40,7 +39,7 @@ public abstract class AbstractLibraryTest {
 		final Collection<File> etcFiles = Arrays.asList(new File("src/test/resources/etc/library.json"));
 		final ClassLoaderManager classLoaderManager =
 				new ClassLoaderManager(dataDirectory.toFile(), Thread.currentThread());
-		final TableManager tableManager = new TableManager(dataDirectory.resolve(TableServiceInterface.SERVICE_NAME));
+		final TableManager tableManager = new TableManager(TableManager.checkTablesDirectory(dataDirectory));
 		libraryManager =
 				new LibraryManager(classLoaderManager, tableManager.getService(), dataDirectory.toFile(), etcFiles);
 
