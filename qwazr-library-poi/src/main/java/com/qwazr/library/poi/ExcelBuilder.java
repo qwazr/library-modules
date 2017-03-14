@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.qwazr.library.excel;
+package com.qwazr.library.poi;
 
 import com.datastax.driver.core.ResultSet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;

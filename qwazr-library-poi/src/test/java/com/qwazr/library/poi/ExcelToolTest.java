@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.qwazr.library.excel;
+package com.qwazr.library.poi;
 
 import com.qwazr.library.annotations.Library;
 import com.qwazr.library.test.AbstractLibraryTest;
@@ -27,7 +27,7 @@ import java.sql.SQLException;
 public class ExcelToolTest extends AbstractLibraryTest {
 
 	@Library("excel")
-	private com.qwazr.library.excel.ExcelTool excel;
+	private com.qwazr.library.poi.ExcelTool excel;
 
 	@Test
 	public void test() throws IOException, SQLException {

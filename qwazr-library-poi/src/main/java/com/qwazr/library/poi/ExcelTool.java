@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.qwazr.library.excel;
+package com.qwazr.library.poi;
 
 import com.qwazr.library.AbstractLibrary;
 import com.qwazr.utils.IOUtils;

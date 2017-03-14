@@ -25,6 +25,11 @@
             <artifactId>qwazr-library</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.qwazr</groupId>
+            <artifactId>qwazr-extractor</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <modules>
@@ -34,7 +39,7 @@
         <module>qwazr-library-cassandra</module>
         <module>qwazr-library-csv</module>
         <module>qwazr-library-email</module>
-        <module>qwazr-library-excel</module>
+        <module>qwazr-library-poi</module>
         <module>qwazr-library-files</module>
         <module>qwazr-library-fop</module>
         <module>qwazr-library-freemarker</module>

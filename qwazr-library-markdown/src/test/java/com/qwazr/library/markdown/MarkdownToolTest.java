@@ -23,7 +23,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 
-public class MarkdownTest extends AbstractLibraryTest {
+public class MarkdownToolTest extends AbstractLibraryTest {
 
 	@Library("markdown_extensions")
 	private MarkdownTool markdownExtensionsTool;

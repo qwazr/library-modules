@@ -1,0 +1,7 @@
+{
+  "library": {
+    "excel": {
+      "class": "com.qwazr.library.poi.ExcelTool"
+    }
+  }
+}

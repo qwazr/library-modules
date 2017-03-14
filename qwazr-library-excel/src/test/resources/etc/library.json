@@ -1,7 +1,0 @@
-{
-  "library": {
-    "excel": {
-      "class": "com.qwazr.library.excel.ExcelTool"
-    }
-  }
-}
