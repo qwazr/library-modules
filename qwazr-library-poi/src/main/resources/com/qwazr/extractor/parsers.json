@@ -1,0 +1,11 @@
+[
+  "com.qwazr.library.poi.DocParser",
+  "com.qwazr.library.poi.DocxParser",
+  "com.qwazr.library.poi.MapiMsgParser",
+  "com.qwazr.library.poi.PptParser",
+  "com.qwazr.library.poi.PptxParser",
+  "com.qwazr.library.poi.PublisherParser",
+  "com.qwazr.library.poi.VisioParser",
+  "com.qwazr.library.poi.XlsParser",
+  "com.qwazr.library.poi.XlsxParser"
+]

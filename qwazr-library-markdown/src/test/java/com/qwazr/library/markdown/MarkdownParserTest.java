@@ -19,11 +19,13 @@ import com.qwazr.extractor.ExtractorManager;
 import com.qwazr.extractor.ParserTest;
 import org.junit.Test;
 
+import java.io.IOException;
+
 public class MarkdownParserTest extends ParserTest {
 
-	public MarkdownParserTest() {
+	public MarkdownParserTest() throws IOException, ClassNotFoundException {
 		super(new ExtractorManager(null));
-		manager.register(MarkdownParser.class);
+		manager.registerByJsonResources();
 	}
 
 	@Test

@@ -19,11 +19,13 @@ import com.qwazr.extractor.ExtractorManager;
 import com.qwazr.extractor.ParserTest;
 import org.junit.Test;
 
+import java.io.IOException;
+
 public class EmlParserTest extends ParserTest {
 
-	public EmlParserTest() {
+	public EmlParserTest() throws IOException, ClassNotFoundException {
 		super(new ExtractorManager(null));
-		manager.register(EmlParser.class);
+		manager.registerByJsonResources();
 	}
 
 	@Test

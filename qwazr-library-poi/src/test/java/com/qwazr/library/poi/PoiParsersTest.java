@@ -23,20 +23,15 @@ import org.junit.Test;
 import java.io.IOException;
 
 public class PoiParsersTest extends ParserTest {
-	
+
 	static final String DEFAULT_TEST_STRING = "osstextextractor";
 
 	static ExtractorManager manager;
 
 	@BeforeClass
-	public static void init() throws IOException {
+	public static void init() throws IOException, ClassNotFoundException {
 		manager = new ExtractorManager(null);
-		manager.register(DocParser.class);
-		manager.register(DocxParser.class);
-		manager.register(PptParser.class);
-		manager.register(PptxParser.class);
-		manager.register(XlsParser.class);
-		manager.register(XlsxParser.class);
+		manager.registerByJsonResources();
 	}
 
 	public PoiParsersTest() {
