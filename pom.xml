@@ -50,6 +50,7 @@
         <module>qwazr-library-markdown</module>
         <module>qwazr-library-mongodb</module>
         <module>qwazr-library-mybatis</module>
+        <module>qwazr-library-nekohtml</module>
         <module>qwazr-library-pdfbox</module>
         <module>qwazr-library-process</module>
         <module>qwazr-library-properties</module>
