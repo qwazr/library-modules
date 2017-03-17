@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.qwazr.extractor.parser;
+package com.qwazr.library.pdfbox;
 
 import com.qwazr.extractor.ParserAbstract;
 import com.qwazr.extractor.ParserField;
@@ -32,7 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 
-public class PdfBox extends ParserAbstract {
+public class PdfBoxParser extends ParserAbstract {
 
 	private static final String[] DEFAULT_MIMETYPES = { "application/pdf" };
 

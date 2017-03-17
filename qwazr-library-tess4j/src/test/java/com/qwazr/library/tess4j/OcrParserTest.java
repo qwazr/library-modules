@@ -13,31 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  **/
-package com.qwazr.library.pdfbox;
+package com.qwazr.library.tess4j;
 
 import com.qwazr.extractor.ExtractorManager;
 import com.qwazr.extractor.ParserTest;
+import org.junit.Assume;
 import org.junit.Test;
 
 import java.io.IOException;
 
-public class PdfBoxParserTest extends ParserTest {
+public class OcrParserTest extends ParserTest {
 
 	static final String DEFAULT_TEST_STRING = "osstextextractor";
 
-	public PdfBoxParserTest() throws IOException, ClassNotFoundException {
+	public OcrParserTest() throws IOException, ClassNotFoundException {
 		super(new ExtractorManager(null));
 		manager.registerByJsonResources();
 	}
 
 	@Test
-	public void testPdf() throws Exception {
-		doTest(PdfBoxParser.class, "file.pdf", DEFAULT_TEST_STRING);
-	}
-
-	@Test
-	public void testPwdPdf() throws Exception {
-		doTest(PdfBoxParser.class, "file-pass.pdf", DEFAULT_TEST_STRING, "password", "1234");
+	public void testOcr() throws Exception {
+		try {
+			doTest(OcrParser.class, "file.pdf", DEFAULT_TEST_STRING);
+		} catch (UnsatisfiedLinkError e) {
+			Assume.assumeNoException("OCR skipped: no TESSDATA_PREFIX", e);
+		}
 	}
 
 }
