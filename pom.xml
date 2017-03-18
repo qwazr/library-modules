@@ -36,6 +36,7 @@
         <module>qwazr-library-test</module>
         <module>qwazr-library-archiver</module>
         <module>qwazr-library-asciidoctor</module>
+        <module>qwazr-library-audio</module>
         <module>qwazr-library-cassandra</module>
         <module>qwazr-library-csv</module>
         <module>qwazr-library-email</module>
@@ -51,6 +52,7 @@
         <module>qwazr-library-markdown</module>
         <module>qwazr-library-mongodb</module>
         <module>qwazr-library-mybatis</module>
+        <module>qwazr-library-odf</module>
         <module>qwazr-library-pdfbox</module>
         <module>qwazr-library-process</module>
         <module>qwazr-library-properties</module>
