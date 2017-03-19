@@ -54,6 +54,11 @@ public class HtmlParserTest extends ParserTest {
 		int i = 0;
 		for (String selectorResult : selectorResults) {
 			String key = names == null ? Integer.toString(i) : names[i];
+			List<String> list = results.get(key);
+			Assert.assertNotNull(list);
+			Assert.assertTrue(list.size() > 0);
+			if (selectorResult == null)
+				continue;
 			String result = results.get(key).get(0);
 			Assert.assertNotNull(result);
 			Assert.assertEquals(selectorResult, result);
@@ -83,10 +88,10 @@ public class HtmlParserTest extends ParserTest {
 		testSelector(CSS_NAMES, CSS_SELECTORS, "css", CSS_RESULTS);
 	}
 
-	private final static String[] REGEXP_NAMES = { "reg1" };
-	private final static String[] REGEXP_SELECTORS = { "\"downloadUrl\" : \"(.*?)\"" };
-	private final static String[] REGEXP_RESULTS = { "http://www.opensearchserver.com/#download" };
-	
+	private final static String[] REGEXP_NAMES = { "reg1", "reg2" };
+	private final static String[] REGEXP_SELECTORS = { "\"downloadUrl\" : \"(.*?)\"", "<script>(.*?)</script>" };
+	private final static String[] REGEXP_RESULTS = { "http://www.opensearchserver.com/#download", null };
+
 	@Test
 	public void testHtmlRegExp() {
 		testSelector(null, REGEXP_SELECTORS, "regexp", REGEXP_RESULTS);

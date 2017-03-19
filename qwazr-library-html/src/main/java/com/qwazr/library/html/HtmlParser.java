@@ -234,7 +234,7 @@ public class HtmlParser extends ParserAbstract {
 		while ((regexp = getParameterValue(parameters, REGEXP_PARAM, i)) != null) {
 			final String name = getParameterValue(parameters, REGEXP_NAME_PARAM, i);
 			final ListConsumer results = new ListConsumer();
-			final Matcher matcher = Pattern.compile(regexp).matcher(htmlSource);
+			final Matcher matcher = Pattern.compile(regexp, Pattern.DOTALL).matcher(htmlSource);
 			final int groupCount = matcher.groupCount();
 			while (matcher.find())
 				for (int j = 1; j <= groupCount; j++)
