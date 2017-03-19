@@ -83,4 +83,13 @@ public class HtmlParserTest extends ParserTest {
 		testSelector(CSS_NAMES, CSS_SELECTORS, "css", CSS_RESULTS);
 	}
 
+	private final static String[] REGEXP_NAMES = { "reg1" };
+	private final static String[] REGEXP_SELECTORS = { "\"downloadUrl\" : \"(.*?)\"" };
+	private final static String[] REGEXP_RESULTS = { "http://www.opensearchserver.com/#download" };
+	
+	@Test
+	public void testHtmlRegExp() {
+		testSelector(null, REGEXP_SELECTORS, "regexp", REGEXP_RESULTS);
+		testSelector(REGEXP_NAMES, REGEXP_SELECTORS, "regexp", REGEXP_RESULTS);
+	}
 }

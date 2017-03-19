@@ -20,8 +20,10 @@ import com.qwazr.extractor.ParserAbstract;
 import com.qwazr.extractor.ParserField;
 import com.qwazr.extractor.ParserFieldsBuilder;
 import com.qwazr.extractor.ParserResultBuilder;
+import com.qwazr.utils.CharsetUtils;
 import com.qwazr.utils.DomUtils;
 import com.qwazr.utils.HtmlUtils;
+import com.qwazr.utils.IOUtils;
 import com.qwazr.utils.StringUtils;
 import com.qwazr.utils.XPathParser;
 import org.apache.xerces.parsers.DOMParser;
@@ -38,9 +40,12 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class HtmlParser extends ParserAbstract {
 
@@ -88,7 +93,13 @@ public class HtmlParser extends ParserAbstract {
 
 	final private static ParserField CSS_NAME_PARAM = ParserField.newString("css_name", "The name of the CSS selector");
 
-	final private static ParserField[] PARAMETERS = { XPATH_PARAM, XPATH_NAME_PARAM, CSS_PARAM, CSS_NAME_PARAM };
+	final private static ParserField REGEXP_PARAM = ParserField.newString("regexp", "Any regular expression");
+
+	final private static ParserField REGEXP_NAME_PARAM =
+			ParserField.newString("regexp_name", "The name of the regular expression");
+
+	final private static ParserField[] PARAMETERS =
+			{ XPATH_PARAM, XPATH_NAME_PARAM, CSS_PARAM, CSS_NAME_PARAM, REGEXP_PARAM, REGEXP_NAME_PARAM };
 
 	@Override
 	public ParserField[] getParameters() {
@@ -216,6 +227,24 @@ public class HtmlParser extends ParserAbstract {
 		return i;
 	}
 
+	private int extractRegExp(final MultivaluedMap<String, String> parameters, final String htmlSource,
+			final LinkedHashMap<String, Object> selectorsResult) {
+		int i = 0;
+		String regexp;
+		while ((regexp = getParameterValue(parameters, REGEXP_PARAM, i)) != null) {
+			final String name = getParameterValue(parameters, REGEXP_NAME_PARAM, i);
+			final ListConsumer results = new ListConsumer();
+			final Matcher matcher = Pattern.compile(regexp).matcher(htmlSource);
+			final int groupCount = matcher.groupCount();
+			while (matcher.find())
+				for (int j = 1; j <= groupCount; j++)
+					results.accept(matcher.group(j));
+			selectorsResult.put(name == null ? Integer.toString(i) : name, results);
+			i++;
+		}
+		return i;
+	}
+
 	private void addToMap(final Map<String, String> map, final String name, final String value) {
 		if (!StringUtils.isEmpty(value))
 			map.put(name, value);
@@ -229,6 +258,13 @@ public class HtmlParser extends ParserAbstract {
 	@Override
 	public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
 			final String extension, final String mimeType, final ParserResultBuilder resultBuilder) throws Exception {
+
+		final boolean isXpathParam = parameters != null && parameters.containsKey(XPATH_PARAM.name);
+		final boolean isCssParam = parameters != null && parameters.containsKey(CSS_PARAM.name);
+		final boolean isRegExpParam = parameters != null && parameters.containsKey(REGEXP_PARAM.name);
+		final boolean isSelector = isXpathParam || isCssParam || isRegExpParam;
+
+		// Setup NekoHTML
 		final HTMLConfiguration config = new HTMLConfiguration();
 		config.setFeature("http://xml.org/sax/features/namespaces", true);
 		config.setFeature("http://cyberneko.org/html/features/balance-tags/ignore-outside-content", false);
@@ -237,16 +273,30 @@ public class HtmlParser extends ParserAbstract {
 		config.setProperty("http://cyberneko.org/html/properties/names/elems", "lower");
 		config.setProperty("http://cyberneko.org/html/properties/names/attrs", "lower");
 		final DOMParser htmlParser = new DOMParser(config);
-		htmlParser.parse(new InputSource(inputStream));
+
+		final String htmlSource;
+		if (isRegExpParam) {
+			htmlSource = IOUtils.toString(inputStream, CharsetUtils.CharsetUTF8);
+			htmlParser.parse(new InputSource(new StringReader(htmlSource)));
+		} else {
+			htmlSource = null;
+			htmlParser.parse(new InputSource(inputStream));
+		}
 
 		final ParserFieldsBuilder parserDocument = resultBuilder.newDocument();
-		final Document htmlDocument = htmlParser.getDocument();
-
-		final XPathParser xPath = new XPathParser();
 
 		final LinkedHashMap<String, Object> selectorsResult = new LinkedHashMap<>();
-		extractXPath(parameters, xPath, htmlDocument, selectorsResult);
-		extractCss(parameters, htmlDocument, selectorsResult);
+
+		final Document htmlDocument = htmlParser.getDocument();
+		final XPathParser xPath = isXpathParam || !isSelector ? new XPathParser() : null;
+
+		if (isXpathParam)
+			extractXPath(parameters, xPath, htmlDocument, selectorsResult);
+		if (isCssParam)
+			extractCss(parameters, htmlDocument, selectorsResult);
+		if (isRegExpParam)
+			extractRegExp(parameters, htmlSource, selectorsResult);
+
 		if (!selectorsResult.isEmpty()) {
 			parserDocument.set(SELECTORS, selectorsResult);
 		} else {
