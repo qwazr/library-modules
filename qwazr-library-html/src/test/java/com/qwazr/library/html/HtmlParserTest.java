@@ -31,7 +31,7 @@ public class HtmlParserTest extends ParserTest {
 
 	public HtmlParserTest() throws IOException, ClassNotFoundException {
 		super(new ExtractorManager(null));
-		manager.registerByJsonResources();
+		manager.registerServices();
 	}
 
 	@Test

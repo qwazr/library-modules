@@ -28,7 +28,7 @@ public class OcrParserTest extends ParserTest {
 
 	public OcrParserTest() throws IOException, ClassNotFoundException {
 		super(new ExtractorManager(null));
-		manager.registerByJsonResources();
+		manager.registerServices();
 	}
 
 	@Test

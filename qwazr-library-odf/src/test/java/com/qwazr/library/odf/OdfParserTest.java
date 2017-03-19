@@ -27,7 +27,7 @@ public class OdfParserTest extends ParserTest {
 
 	public OdfParserTest() throws IOException, ClassNotFoundException {
 		super(new ExtractorManager(null));
-		manager.registerByJsonResources();
+		manager.registerServices();
 	}
 
 	@Test

@@ -25,7 +25,7 @@ public class EmlParserTest extends ParserTest {
 
 	public EmlParserTest() throws IOException, ClassNotFoundException {
 		super(new ExtractorManager(null));
-		manager.registerByJsonResources();
+		manager.registerServices();
 	}
 
 	@Test

@@ -25,7 +25,7 @@ public class MarkdownParserTest extends ParserTest {
 
 	public MarkdownParserTest() throws IOException, ClassNotFoundException {
 		super(new ExtractorManager(null));
-		manager.registerByJsonResources();
+		manager.registerServices();
 	}
 
 	@Test

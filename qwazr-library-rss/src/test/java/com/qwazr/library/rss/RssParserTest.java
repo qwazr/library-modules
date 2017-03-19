@@ -25,7 +25,7 @@ public class RssParserTest extends ParserTest {
 
 	public RssParserTest() throws IOException, ClassNotFoundException {
 		super(new ExtractorManager(null));
-		manager.registerByJsonResources();
+		manager.registerServices();
 	}
 
 	@Test

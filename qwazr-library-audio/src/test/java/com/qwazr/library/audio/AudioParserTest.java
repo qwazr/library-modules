@@ -29,7 +29,7 @@ public class AudioParserTest extends ParserTest {
 
 	public AudioParserTest() throws IOException, ClassNotFoundException {
 		super(new ExtractorManager(null));
-		manager.registerByJsonResources();
+		manager.registerServices();
 	}
 
 	@Test

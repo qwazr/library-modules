@@ -27,7 +27,7 @@ public class PdfBoxParserTest extends ParserTest {
 
 	public PdfBoxParserTest() throws IOException, ClassNotFoundException {
 		super(new ExtractorManager(null));
-		manager.registerByJsonResources();
+		manager.registerServices();
 	}
 
 	@Test
