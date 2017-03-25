@@ -15,7 +15,6 @@
  **/
 package com.qwazr.library.poi;
 
-import com.datastax.driver.core.ResultSet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -190,48 +189,6 @@ public class ExcelBuilder implements Closeable {
 	 */
 	public int incCell(final int inc) {
 		return xpos.addAndGet(inc);
-	}
-
-	/**
-	 * Fill the content of a sheet with a Cassandra resultSet. The fisrt row show the column definition.
-	 *
-	 * @param sheetName   the name of the sheet
-	 * @param resultSet   the rows to copy
-	 * @param rowCallback a callback function called on each row
-	 */
-	public void createSheetAndFill(final String sheetName, final ResultSet resultSet,
-			final BiConsumer<ExcelBuilder, com.datastax.driver.core.Row> rowCallback) {
-
-		activeSheetAndSetPos(sheetName, 0, 0);
-
-		addRow();
-		resultSet.getColumnDefinitions().forEach(colDef -> addCell(colDef.getName()));
-		if (rowCallback != null)
-			rowCallback.accept(this, null);
-
-		resultSet.forEach(row -> {
-			addRow();
-			xpos.set(0);
-			row.getColumnDefinitions().forEach(colDef -> {
-				final String colName = colDef.getName();
-				if (row.isNull(colName))
-					xpos.incrementAndGet();
-				else
-					addCell(row.getObject(colName));
-			});
-			if (rowCallback != null)
-				rowCallback.accept(this, row);
-		});
-	}
-
-	/**
-	 * Fill the content of a sheet with a Cassandra resultSet. The fisrt row show the column definition.
-	 *
-	 * @param sheetName the name of the sheet
-	 * @param resultSet the rows to copy
-	 */
-	public void createSheetAndFill(final String sheetName, final ResultSet resultSet) {
-		createSheetAndFill(sheetName, resultSet, null);
 	}
 
 	/**
