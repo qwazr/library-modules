@@ -15,7 +15,6 @@
  **/
 package com.qwazr.library.markdown;
 
-import com.qwazr.classloader.ClassLoaderManager;
 import com.qwazr.library.AbstractLibrary;
 import org.commonmark.renderer.html.AttributeProvider;
 
@@ -28,13 +27,7 @@ public class MarkdownToolBuilder extends AbstractLibrary {
 	String attributeProviderClassName;
 
 	Class<? extends AttributeProvider> attributeProviderClass;
-
-	final ClassLoaderManager classLoaderManager;
-
-	MarkdownToolBuilder(ClassLoaderManager classLoaderManager) {
-		this.classLoaderManager = classLoaderManager;
-	}
-
+	
 	public MarkdownToolBuilder extension(MarkdownExtensionEnum extension) {
 		if (extensions == null)
 			extensions = new LinkedHashSet<>();

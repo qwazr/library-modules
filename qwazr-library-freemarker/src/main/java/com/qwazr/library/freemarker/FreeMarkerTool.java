@@ -64,7 +64,7 @@ public class FreeMarkerTool extends AbstractLibrary implements Closeable {
 	public void load() {
 		cfg = new Configuration(Configuration.VERSION_2_3_23);
 		cfg.setTemplateLoader((use_classloader != null && use_classloader) ?
-				new ResourceTemplateLoader(libraryManager == null ? null : libraryManager.getClassLoaderManager()) :
+				new ResourceTemplateLoader() :
 				new FileTemplateLoader(libraryManager == null ? null : libraryManager.getDataDirectory()));
 		cfg.setOutputEncoding(output_encoding == null ? DEFAULT_CHARSET : output_encoding);
 		cfg.setDefaultEncoding(default_encoding == null ? DEFAULT_CHARSET : default_encoding);

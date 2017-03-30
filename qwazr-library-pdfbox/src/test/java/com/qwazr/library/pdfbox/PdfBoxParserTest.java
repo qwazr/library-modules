@@ -26,7 +26,7 @@ public class PdfBoxParserTest extends ParserTest {
 	static final String DEFAULT_TEST_STRING = "osstextextractor";
 
 	public PdfBoxParserTest() throws IOException, ClassNotFoundException {
-		super(new ExtractorManager(null));
+		super(new ExtractorManager());
 		manager.registerServices();
 	}
 

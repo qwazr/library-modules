@@ -30,7 +30,7 @@ import java.util.Map;
 public class HtmlParserTest extends ParserTest {
 
 	public HtmlParserTest() throws IOException, ClassNotFoundException {
-		super(new ExtractorManager(null));
+		super(new ExtractorManager());
 		manager.registerServices();
 	}
 

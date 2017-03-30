@@ -27,7 +27,7 @@ public class OcrParserTest extends ParserTest {
 	static final String DEFAULT_TEST_STRING = "osstextextractor";
 
 	public OcrParserTest() throws IOException, ClassNotFoundException {
-		super(new ExtractorManager(null));
+		super(new ExtractorManager());
 		manager.registerServices();
 	}
 

@@ -228,7 +228,7 @@ public class ExcelBuilder implements Closeable {
 	}
 
 	/**
-	 * Fill the content of a sheet with a SQL resultSet. The fisrt row show the column definition.
+	 * Fill the content of a sheet with a SQL resultSet. The first row show the column definition.
 	 *
 	 * @param sheetName the name of the sheet
 	 * @param resultSet the rows to copy

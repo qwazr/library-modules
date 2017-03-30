@@ -73,7 +73,7 @@ public class JdbcConnector extends AbstractPasswordLibrary implements Closeable 
 		if (pool == null) {
 			JDBCConnection cnx = new JDBCConnection();
 			if (!StringUtils.isEmpty(driver))
-				cnx.setDriver(libraryManager.getClassLoaderManager().getClassLoader(),
+				cnx.setDriver(Thread.currentThread().getContextClassLoader(),
 						SubstitutedVariables.propertyAndEnvironmentSubstitute(driver));
 			if (!StringUtils.isEmpty(url))
 				cnx.setUrl(SubstitutedVariables.propertyAndEnvironmentSubstitute(url));

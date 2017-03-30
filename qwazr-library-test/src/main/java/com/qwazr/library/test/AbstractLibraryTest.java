@@ -15,7 +15,6 @@
  **/
 package com.qwazr.library.test;
 
-import com.qwazr.classloader.ClassLoaderManager;
 import com.qwazr.database.TableManager;
 import com.qwazr.library.LibraryManager;
 import com.qwazr.utils.FileUtils;
@@ -37,11 +36,8 @@ public abstract class AbstractLibraryTest {
 	public static void init() throws IOException {
 		final Path dataDirectory = Files.createTempDirectory("library-test");
 		final Collection<File> etcFiles = Arrays.asList(new File("src/test/resources/etc/library.json"));
-		final ClassLoaderManager classLoaderManager =
-				new ClassLoaderManager(dataDirectory.toFile(), Thread.currentThread());
 		final TableManager tableManager = new TableManager(TableManager.checkTablesDirectory(dataDirectory));
-		libraryManager =
-				new LibraryManager(classLoaderManager, tableManager.getService(), dataDirectory.toFile(), etcFiles);
+		libraryManager = new LibraryManager(tableManager.getService(), dataDirectory.toFile(), etcFiles);
 
 		final File resourcesDirectory = new File("src/test/resources");
 		if (resourcesDirectory.exists())

@@ -26,7 +26,7 @@ public class OdfParserTest extends ParserTest {
 	static final String DEFAULT_TEST_STRING = "osstextextractor";
 
 	public OdfParserTest() throws IOException, ClassNotFoundException {
-		super(new ExtractorManager(null));
+		super(new ExtractorManager());
 		manager.registerServices();
 	}
 

@@ -16,7 +16,6 @@
 package com.qwazr.library.markdown;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.qwazr.classloader.ClassLoaderManager;
 import com.qwazr.library.AbstractLibrary;
 import com.qwazr.utils.ClassLoaderUtils;
 import org.commonmark.Extension;
@@ -47,9 +46,6 @@ public class MarkdownTool extends AbstractLibrary {
 	private final Class<? extends AttributeProvider> attributeProviderClass;
 
 	@JsonIgnore
-	private final ClassLoaderManager classLoaderManager;
-
-	@JsonIgnore
 	private volatile Parser parser;
 
 	@JsonIgnore
@@ -59,14 +55,12 @@ public class MarkdownTool extends AbstractLibrary {
 		extensions = null;
 		attribute_provider_class = null;
 		attributeProviderClass = null;
-		classLoaderManager = null;
 	}
 
 	MarkdownTool(MarkdownToolBuilder builder) {
 		this.extensions = builder.extensions;
 		this.attribute_provider_class = builder.attributeProviderClassName;
 		this.attributeProviderClass = builder.attributeProviderClass;
-		this.classLoaderManager = builder.classLoaderManager;
 	}
 
 	@Override
@@ -86,15 +80,8 @@ public class MarkdownTool extends AbstractLibrary {
 			final Class<? extends AttributeProvider> attrProvClass;
 			if (attributeProviderClass != null)
 				attrProvClass = attributeProviderClass;
-			else {
-
-				final ClassLoaderManager clm = classLoaderManager != null ?
-						classLoaderManager :
-						libraryManager == null ? null : libraryManager.getClassLoaderManager();
-				attrProvClass = clm == null ?
-						ClassLoaderUtils.findClass(null, attribute_provider_class) :
-						clm.findClass(attribute_provider_class);
-			}
+			else
+				attrProvClass = ClassLoaderUtils.findClass(attribute_provider_class);
 			rendererBuilder.attributeProviderFactory(context -> {
 				try {
 					return attrProvClass.newInstance();
@@ -129,7 +116,7 @@ public class MarkdownTool extends AbstractLibrary {
 	}
 
 	public String resourceToHtml(final String resourceName, final String encoding) throws IOException {
-		try (final InputStream input = libraryManager.getClassLoaderManager().getResourceAsStream(resourceName)) {
+		try (final InputStream input = ClassLoaderUtils.getResourceAsStream(resourceName)) {
 			return toHtml(input, encoding);
 		}
 	}
@@ -149,10 +136,6 @@ public class MarkdownTool extends AbstractLibrary {
 	}
 
 	public static MarkdownToolBuilder of() {
-		return of(null);
-	}
-
-	public static MarkdownToolBuilder of(final ClassLoaderManager classLoaderManager) {
-		return new MarkdownToolBuilder(classLoaderManager);
+		return new MarkdownToolBuilder();
 	}
 }

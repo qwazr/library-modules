@@ -28,7 +28,7 @@ public class AudioParserTest extends ParserTest {
 	static final String AUDIO_TEST_STRING = "opensearchserver";
 
 	public AudioParserTest() throws IOException, ClassNotFoundException {
-		super(new ExtractorManager(null));
+		super(new ExtractorManager());
 		manager.registerServices();
 	}
 

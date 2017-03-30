@@ -24,7 +24,7 @@ import java.io.IOException;
 public class MarkdownParserTest extends ParserTest {
 
 	public MarkdownParserTest() throws IOException, ClassNotFoundException {
-		super(new ExtractorManager(null));
+		super(new ExtractorManager());
 		manager.registerServices();
 	}
 

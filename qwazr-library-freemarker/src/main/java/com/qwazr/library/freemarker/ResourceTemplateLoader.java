@@ -16,7 +16,7 @@
 package com.qwazr.library.freemarker;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.qwazr.classloader.ClassLoaderManager;
+import com.qwazr.utils.ClassLoaderUtils;
 import com.qwazr.utils.IOUtils;
 import freemarker.cache.TemplateLoader;
 
@@ -28,27 +28,15 @@ import java.io.Reader;
 
 class ResourceTemplateLoader implements TemplateLoader {
 
-	private final ClassLoaderManager classLoaderManager;
-
-	ResourceTemplateLoader(ClassLoaderManager classLoaderManager) {
-		this.classLoaderManager = classLoaderManager;
-	}
-
-	private ClassLoader getClassLoader() {
-		return classLoaderManager == null ?
-				Thread.currentThread().getContextClassLoader() :
-				classLoaderManager.getClassLoader();
-	}
-
 	@Override
 	public Object findTemplateSource(final String path) throws IOException {
-		return getClassLoader().getResourceAsStream(path);
+		return ClassLoaderUtils.getResourceAsStream(path);
 	}
 
 	@Override
 	@JsonIgnore
 	public long getLastModified(final Object templateSource) {
-		return getClassLoader().hashCode();
+		return Thread.currentThread().getContextClassLoader().hashCode();
 	}
 
 	@Override

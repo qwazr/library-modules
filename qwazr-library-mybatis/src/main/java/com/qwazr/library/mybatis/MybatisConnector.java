@@ -16,7 +16,6 @@
 package com.qwazr.library.mybatis;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.qwazr.classloader.ClassLoaderManager;
 import com.qwazr.library.AbstractPasswordLibrary;
 import com.qwazr.utils.IOUtils.CloseableContext;
 import com.qwazr.utils.StringUtils;
@@ -88,11 +87,6 @@ public class MybatisConnector extends AbstractPasswordLibrary {
 		} else
 			props = null;
 
-		if (libraryManager != null) {
-			final ClassLoaderManager classLoaderManager = libraryManager.getClassLoaderManager();
-			if (classLoaderManager != null)
-				Resources.setDefaultClassLoader(classLoaderManager.getClassLoader());
-		}
 		final SqlSessionFactoryBuilder builder = new SqlSessionFactoryBuilder();
 		try (final InputStream inputStream = configurationFile != null ?
 				new FileInputStream(configurationFile) :

@@ -24,7 +24,7 @@ import java.io.IOException;
 public class RssParserTest extends ParserTest {
 
 	public RssParserTest() throws IOException, ClassNotFoundException {
-		super(new ExtractorManager(null));
+		super(new ExtractorManager());
 		manager.registerServices();
 	}
 
