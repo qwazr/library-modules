@@ -53,16 +53,18 @@ public class TableRealmConnector extends AbstractLibrary implements IdentityMana
 	private volatile Set<String> columns;
 
 	public void load() throws URISyntaxException {
-		tableService = libraryManager.getTableService();
+		tableService =
+				libraryManager.getInstancesSupplier()
+						.getInstance(TableServiceInterface.class);
 		final Set<String> tables = tableService.list();
 		if (!tables.contains(table_name)) {
 			tableService.createTable(table_name, KeyStore.Impl.leveldb);
 			tableService.setColumn(table_name, login_column,
-					new ColumnDefinition(ColumnDefinition.Type.STRING, ColumnDefinition.Mode.INDEXED));
+								   new ColumnDefinition(ColumnDefinition.Type.STRING, ColumnDefinition.Mode.INDEXED));
 			tableService.setColumn(table_name, password_column,
-					new ColumnDefinition(ColumnDefinition.Type.STRING, ColumnDefinition.Mode.STORED));
+								   new ColumnDefinition(ColumnDefinition.Type.STRING, ColumnDefinition.Mode.STORED));
 			tableService.setColumn(table_name, roles_column,
-					new ColumnDefinition(ColumnDefinition.Type.STRING, ColumnDefinition.Mode.STORED));
+								   new ColumnDefinition(ColumnDefinition.Type.STRING, ColumnDefinition.Mode.STORED));
 		}
 		columns = new HashSet<>();
 		columns.add(password_column);
@@ -79,7 +81,8 @@ public class TableRealmConnector extends AbstractLibrary implements IdentityMana
 
 		// This realm only support one type of credential
 		if (!(credential instanceof PasswordCredential))
-			throw new RuntimeException("Unsupported credential type: " + credential.getClass().getName());
+			throw new RuntimeException("Unsupported credential type: " + credential.getClass()
+					.getName());
 
 		PasswordCredential passwordCredential = (PasswordCredential) credential;
 
@@ -90,7 +93,9 @@ public class TableRealmConnector extends AbstractLibrary implements IdentityMana
 			if (row == null)
 				return null;
 		} catch (WebApplicationException e) {
-			if (e.getResponse().getStatusInfo().getFamily() == Response.Status.Family.CLIENT_ERROR)
+			if (e.getResponse()
+					.getStatusInfo()
+					.getFamily() == Response.Status.Family.CLIENT_ERROR)
 				return authenticationFailure("Unknown user: " + id);
 			throw e;
 		}

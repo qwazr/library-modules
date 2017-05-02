@@ -24,7 +24,7 @@ public class TableRealmConnectorTest extends AbstractLibraryTest {
 
 	@Library("table-realm")
 	private TableRealmConnector tableRealm;
-
+	
 	@Test
 	public void test() {
 		Assert.assertNotNull(tableRealm);

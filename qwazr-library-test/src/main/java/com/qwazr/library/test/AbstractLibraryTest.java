@@ -16,8 +16,10 @@
 package com.qwazr.library.test;
 
 import com.qwazr.database.TableManager;
+import com.qwazr.database.TableServiceInterface;
 import com.qwazr.library.LibraryManager;
 import com.qwazr.utils.FileUtils;
+import com.qwazr.utils.reflection.InstancesSupplier;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
@@ -34,11 +36,14 @@ public abstract class AbstractLibraryTest {
 
 	@BeforeClass
 	public static void init() throws IOException {
+		if (libraryManager != null)
+			return;
 		final Path dataDirectory = Files.createTempDirectory("library-test");
 		final Collection<File> etcFiles = Arrays.asList(new File("src/test/resources/etc/library.json"));
-		final TableManager tableManager = new TableManager(TableManager.checkTablesDirectory(dataDirectory));
-		libraryManager = new LibraryManager(tableManager.getService(), dataDirectory.toFile(), etcFiles);
-
+		final TableManager tableManager = new TableManager(Files.createTempDirectory("qwazr-database"));
+		final InstancesSupplier instancesSupplier = InstancesSupplier.withConcurrentMap();
+		instancesSupplier.registerInstance(TableServiceInterface.class, tableManager.getService());
+		libraryManager = new LibraryManager(dataDirectory.toFile(), etcFiles, instancesSupplier);
 		final File resourcesDirectory = new File("src/test/resources");
 		if (resourcesDirectory.exists())
 			FileUtils.copyDirectory(resourcesDirectory, dataDirectory.toFile());
