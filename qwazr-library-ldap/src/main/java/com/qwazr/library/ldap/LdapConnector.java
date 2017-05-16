@@ -43,6 +43,8 @@ public class LdapConnector extends AbstractPasswordLibrary implements Closeable 
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(LdapConnector.class);
 
+	private static final String DEFAULT_PASSWORD_ATTRIBUTE = "userPassword";
+
 	public final String host = null;
 	public final Integer port = null;
 	public final String username = null;
@@ -112,7 +114,7 @@ public class LdapConnector extends AbstractPasswordLibrary implements Closeable 
 		SearchCursor cursor = connection.search(request);
 		while (start > 0 && cursor.next())
 			;
-		List<Entry> entries = new ArrayList<Entry>();
+		final List<Entry> entries = new ArrayList<>();
 		while (rows > 0 && cursor.next())
 			entries.add(cursor.getEntry());
 		return entries;
@@ -154,12 +156,12 @@ public class LdapConnector extends AbstractPasswordLibrary implements Closeable 
 		connection.add(new DefaultEntry(dn, elements));
 	}
 
-	public void createUser(LdapConnection connection, String dn, String clearPassword, ScriptObjectMirror attrs)
-			throws LdapException {
+	public void createUser(LdapConnection connection, String dn, String passwordAttribute, String clearPassword,
+			ScriptObjectMirror attrs) throws LdapException {
 		connection.bind();
 		Entry entry = new DefaultEntry(dn + ", " + base_dn);
 		if (clearPassword != null)
-			entry.add("userPassword", getShaPassword(clearPassword));
+			entry.add(passwordAttribute, getShaPassword(clearPassword));
 		if (attrs != null) {
 			for (Map.Entry<String, Object> attr : attrs.entrySet()) {
 				String key = attr.getKey();
@@ -180,6 +182,11 @@ public class LdapConnector extends AbstractPasswordLibrary implements Closeable 
 		connection.add(entry);
 	}
 
+	public void createUser(LdapConnection connection, String dn, String clearPassword, ScriptObjectMirror attrs)
+			throws LdapException {
+		createUser(connection, dn, DEFAULT_PASSWORD_ATTRIBUTE, clearPassword, attrs);
+	}
+
 	public void updatePassword(LdapConnection connection, String dn, String passwordAttribute, String clearPassword)
 			throws LdapException {
 		connection.bind();
@@ -187,6 +194,10 @@ public class LdapConnector extends AbstractPasswordLibrary implements Closeable 
 				new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE, passwordAttribute,
 						getShaPassword(clearPassword));
 		connection.modify(dn + ", " + base_dn, changePassword);
+	}
+
+	public void updatePassword(LdapConnection connection, String dn, String clearPassword) throws LdapException {
+		updatePassword(connection, dn, DEFAULT_PASSWORD_ATTRIBUTE, clearPassword);
 	}
 
 	public void updateString(LdapConnection connection, String dn, String attr, String... values) throws LdapException {
