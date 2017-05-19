@@ -15,7 +15,9 @@
  **/
 package com.qwazr.library.freemarker;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.qwazr.library.AbstractLibrary;
 import com.qwazr.library.LibraryManager;
 import freemarker.template.Configuration;
@@ -26,6 +28,7 @@ import freemarker.template.TemplateExceptionHandler;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Enumeration;
@@ -39,6 +42,7 @@ public class FreeMarkerTool extends AbstractLibrary implements Closeable {
 	public final String default_content_type;
 
 	public final Boolean use_classloader;
+	public final String template_path;
 
 	@JsonIgnore
 	private volatile Configuration cfg = null;
@@ -46,11 +50,17 @@ public class FreeMarkerTool extends AbstractLibrary implements Closeable {
 	private final static String DEFAULT_CHARSET = "UTF-8";
 	private final static String DEFAULT_CONTENT_TYPE = "text/html";
 
-	FreeMarkerTool() {
-		output_encoding = null;
-		default_encoding = null;
-		default_content_type = null;
-		use_classloader = null;
+	@JsonCreator
+	FreeMarkerTool(@JsonProperty("output_encoding") String outputEncoding,
+			@JsonProperty("default_encoding") String defaultEncoding,
+			@JsonProperty("default_content_type") String defaultContentType,
+			@JsonProperty("use_classloader") Boolean useClassloader,
+			@JsonProperty("template_path") String templatePath) {
+		output_encoding = outputEncoding;
+		default_encoding = defaultEncoding;
+		default_content_type = defaultContentType;
+		use_classloader = useClassloader;
+		template_path = templatePath;
 	}
 
 	FreeMarkerTool(FreeMarkerToolBuilder builder) {
@@ -58,6 +68,7 @@ public class FreeMarkerTool extends AbstractLibrary implements Closeable {
 		default_encoding = builder.defaultEncoding;
 		default_content_type = builder.defaultContentType;
 		use_classloader = builder.useClassloader;
+		template_path = builder.templatePath;
 	}
 
 	@Override
@@ -65,7 +76,9 @@ public class FreeMarkerTool extends AbstractLibrary implements Closeable {
 		cfg = new Configuration(Configuration.VERSION_2_3_23);
 		cfg.setTemplateLoader((use_classloader != null && use_classloader) ?
 				new ResourceTemplateLoader() :
-				new FileTemplateLoader(libraryManager == null ? null : libraryManager.getDataDirectory()));
+				new FileTemplateLoader(template_path != null ?
+						new File(template_path) :
+						libraryManager == null ? null : libraryManager.getDataDirectory()));
 		cfg.setOutputEncoding(output_encoding == null ? DEFAULT_CHARSET : output_encoding);
 		cfg.setDefaultEncoding(default_encoding == null ? DEFAULT_CHARSET : default_encoding);
 		cfg.setLocalizedLookup(false);
@@ -92,7 +105,7 @@ public class FreeMarkerTool extends AbstractLibrary implements Closeable {
 
 	public void template(String templatePath, HttpServletRequest request, HttpServletResponse response)
 			throws IOException, TemplateException {
-		Map<String, Object> variables = new HashMap<String, Object>();
+		Map<String, Object> variables = new HashMap<>();
 		variables.put("request", request);
 		variables.put("session", request.getSession());
 		Enumeration<String> attrNames = request.getAttributeNames();

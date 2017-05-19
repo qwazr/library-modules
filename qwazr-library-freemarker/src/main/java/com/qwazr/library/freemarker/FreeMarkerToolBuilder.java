@@ -23,6 +23,7 @@ public class FreeMarkerToolBuilder {
 	String defaultEncoding;
 	String defaultContentType;
 	Boolean useClassloader;
+	String templatePath;
 	final LibraryManager libraryManager;
 
 	FreeMarkerToolBuilder(LibraryManager libraryManager) {
@@ -46,6 +47,11 @@ public class FreeMarkerToolBuilder {
 
 	public FreeMarkerToolBuilder useClassloader(Boolean useClassloader) {
 		this.useClassloader = useClassloader;
+		return this;
+	}
+
+	public FreeMarkerToolBuilder templatePath(String templatePath) {
+		this.templatePath = templatePath;
 		return this;
 	}
 
