@@ -22,6 +22,7 @@ import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.qwazr.utils.LockUtils;
+import com.qwazr.utils.concurrent.ReadWriteLock;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -95,7 +96,7 @@ public class CassandraSession implements Closeable {
 				session = keySpace == null ? cluster.connect() : cluster.connect(keySpace);
 				return session;
 			});
-		} catch (LockUtils.InsideLockException e) {
+		} catch (ReadWriteLock.InsideLockException e) {
 			if (e.exception instanceof RuntimeException)
 				throw (RuntimeException) e.exception;
 			throw e;
@@ -103,8 +104,9 @@ public class CassandraSession implements Closeable {
 	}
 
 	private SimpleStatement getStatement(final String cql, final Integer fetchSize, final Object... values) {
-		SimpleStatement statement =
-				values != null && values.length > 0 ? new SimpleStatement(cql, values) : new SimpleStatement(cql);
+		SimpleStatement statement = values != null && values.length > 0 ?
+				new SimpleStatement(cql, values) :
+				new SimpleStatement(cql);
 		if (fetchSize != null)
 			statement.setFetchSize(fetchSize);
 		return statement;
