@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- **/
+ */
 package com.qwazr.library.archiver;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.qwazr.library.AbstractLibrary;
 import com.qwazr.utils.CharsetUtils;
 import com.qwazr.utils.IOUtils;
+import com.qwazr.utils.LoggerUtils;
 import com.qwazr.utils.json.JsonMapper;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveException;
@@ -32,17 +33,27 @@ import org.apache.commons.compress.compressors.CompressorOutputStream;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.http.entity.ContentType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 public class ArchiverTool extends AbstractLibrary {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(ArchiverTool.class);
+	private static final Logger LOGGER = LoggerUtils.getLogger(ArchiverTool.class);
 
 	private final CompressorStreamFactory factory;
 
@@ -229,8 +240,8 @@ public class ArchiverTool extends AbstractLibrary {
 						if (!parentDir.mkdirs())
 							throw new IOException("Can't create directory : " + parentDir.getPath());
 					final long entryLastModified = entry.getLastModifiedDate().getTime();
-					if (destFile.exists() && destFile.isFile() && destFile.lastModified() == entryLastModified
-							&& entry.getSize() == destFile.length())
+					if (destFile.exists() && destFile.isFile() && destFile.lastModified() == entryLastModified &&
+							entry.getSize() == destFile.length())
 						continue;
 					IOUtils.copy(in, destFile);
 					destFile.setLastModified(entryLastModified);
@@ -262,7 +273,7 @@ public class ArchiverTool extends AbstractLibrary {
 				extract(sourceFile, destDir);
 			} catch (IOException | ArchiveException e) {
 				if (logErrorAndContinue != null && logErrorAndContinue)
-					LOGGER.error(e.getMessage(), e);
+					LOGGER.log(Level.SEVERE, e, e::getMessage);
 				else
 					throw e;
 			}

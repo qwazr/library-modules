@@ -1,5 +1,5 @@
-/**
- * Copyright 2014-2016 Emmanuel Keller / QWAZR
+/*
+ * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- **/
+ */
 package com.qwazr.library.cassandra;
 
 import com.datastax.driver.core.ResultSet;
@@ -20,6 +20,7 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.qwazr.library.annotations.Library;
 import com.qwazr.library.test.AbstractLibraryTest;
+import com.qwazr.utils.LoggerUtils;
 import com.qwazr.utils.concurrent.ThreadUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.junit.Assert;
@@ -27,27 +28,26 @@ import org.junit.Assume;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Logger;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class CassandraTest extends AbstractLibraryTest {
 
-	private final static Logger LOGGER = LoggerFactory.getLogger(CassandraTest.class);
+	private final static Logger LOGGER = LoggerUtils.getLogger(CassandraTest.class);
 
 	@Library("cassandra")
 	private CassandraConnector cassandra;
 
-	private final static String CREATE_SCHEMA = "CREATE KEYSPACE qwazr_connector_test WITH REPLICATION "
-			+ "= { 'class' : 'SimpleStrategy', 'replication_factor' : 3 }";
+	private final static String CREATE_SCHEMA = "CREATE KEYSPACE qwazr_connector_test WITH REPLICATION " +
+			"= { 'class' : 'SimpleStrategy', 'replication_factor' : 3 }";
 
-	private final static String CREATE_TABLE = "CREATE TABLE qwazr_connector_test.test"
-			+ "(item_id timeuuid, cat_id int, status text, PRIMARY KEY (item_id))";
+	private final static String CREATE_TABLE = "CREATE TABLE qwazr_connector_test.test" +
+			"(item_id timeuuid, cat_id int, status text, PRIMARY KEY (item_id))";
 
 	private final static String CREATE_INDEX = "CREATE INDEX ON qwazr_connector_test.test(cat_id)";
 
@@ -105,7 +105,7 @@ public class CassandraTest extends AbstractLibraryTest {
 		@Override
 		public void run() throws Exception {
 			long id = Thread.currentThread().getId();
-			LOGGER.info("Starts - id: " + id);
+			LOGGER.info(() -> "Starts - id: " + id);
 			int count = 0;
 			while (System.currentTimeMillis() < finalTime) {
 				Assert.assertTrue(cassandra.execute(INSERT, RandomUtils.nextInt(0, 10)).wasApplied());
@@ -123,7 +123,7 @@ public class CassandraTest extends AbstractLibraryTest {
 
 		@Override
 		public void run() throws Exception {
-			long id = Thread.currentThread().getId();
+			final long id = Thread.currentThread().getId();
 			LOGGER.info("Starts - id: " + id);
 			int count = 0;
 			while (System.currentTimeMillis() < finalTime) {

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,20 +12,29 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- **/
+ */
 package com.qwazr.library.ftp;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.qwazr.library.AbstractPasswordLibrary;
 import com.qwazr.utils.IOUtils;
+import com.qwazr.utils.LoggerUtils;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
-import org.apache.commons.net.ftp.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.commons.net.ftp.FTP;
+import org.apache.commons.net.ftp.FTPClient;
+import org.apache.commons.net.ftp.FTPFile;
+import org.apache.commons.net.ftp.FTPReply;
+import org.apache.commons.net.ftp.FTPSClient;
 
-import java.io.*;
+import java.io.Closeable;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class FtpConnector extends AbstractPasswordLibrary {
 
@@ -38,7 +47,7 @@ public class FtpConnector extends AbstractPasswordLibrary {
 	public final Integer keep_alive_timeout;
 	public final Integer control_keep_alive_timeout;
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(FtpConnector.class);
+	private static final Logger LOGGER = LoggerUtils.getLogger(FtpConnector.class);
 
 	public FtpConnector() {
 		hostname = null;
@@ -178,8 +187,7 @@ public class FtpConnector extends AbstractPasswordLibrary {
 						continue;
 				if (downloadOnlyIfNotExists != null && downloadOnlyIfNotExists && localFile.exists())
 					continue;
-				if (LOGGER.isInfoEnabled())
-					LOGGER.info("FTP download: " + hostname + '/' + remote_path + '/' + remoteName);
+				LOGGER.info(() -> "FTP download: " + hostname + '/' + remote_path + '/' + remoteName);
 				retrieve(remoteFile, localFile, binary);
 			}
 			for (Map.Entry<FTPFile, File> entry : remoteDirs.entrySet())
@@ -203,8 +211,7 @@ public class FtpConnector extends AbstractPasswordLibrary {
 			try {
 				ftp.disconnect();
 			} catch (IOException e) {
-				if (LOGGER.isWarnEnabled())
-					LOGGER.warn(e.getMessage(), e);
+				LOGGER.log(Level.WARNING, e, e::getMessage);
 			}
 		}
 	}

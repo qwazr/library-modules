@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,29 +12,29 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- **/
+ */
 package com.qwazr.library.rrd4j;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.qwazr.library.AbstractLibrary;
 import com.qwazr.utils.IOUtils;
+import com.qwazr.utils.LoggerUtils;
 import com.qwazr.utils.StringUtils;
 import com.qwazr.utils.SubstitutedVariables;
 import org.rrd4j.core.RrdDb;
 import org.rrd4j.core.RrdDef;
 import org.rrd4j.core.Sample;
 import org.rrd4j.core.Util;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Objects;
+import java.util.logging.Logger;
 
 public class Rrd4jTool extends AbstractLibrary {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(Rrd4jTool.class);
+	private static final Logger LOGGER = LoggerUtils.getLogger(Rrd4jTool.class);
 
 	public final String path = null;
 	public final Long startTime = null;
@@ -89,10 +89,9 @@ public class Rrd4jTool extends AbstractLibrary {
 		try {
 			rrdDatabase = new RrdDatabase(resolvedPath, backendFactory, readOnly);
 		} catch (FileNotFoundException e) {
-			if (LOGGER.isInfoEnabled())
-				LOGGER.info("RRD database not found. Create a new one: " + resolvedPath == null ?
-						StringUtils.EMPTY :
-						new File(resolvedPath).getAbsolutePath());
+			LOGGER.info(() -> "RRD database not found. Create a new one: " + resolvedPath == null ?
+					StringUtils.EMPTY :
+					new File(resolvedPath).getAbsolutePath());
 			rrdDatabase = new RrdDatabase(createDef(), backendFactory);
 		}
 		closeableContext.add(rrdDatabase);

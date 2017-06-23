@@ -1,5 +1,5 @@
-/**
- * Copyright 2015-2016 Emmanuel Keller / QWAZR
+/*
+ * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,7 @@ package com.qwazr.library.xml;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.qwazr.library.AbstractLibrary;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.qwazr.utils.LoggerUtils;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -27,10 +26,12 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public abstract class AbstractXmlFactoryTool extends AbstractLibrary {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(AbstractXmlFactoryTool.class);
+	private static final Logger LOGGER = LoggerUtils.getLogger(AbstractXmlFactoryTool.class);
 
 	public final Boolean namespace_aware = null;
 	public final Boolean expand_entity_references = null;
@@ -79,12 +80,12 @@ public abstract class AbstractXmlFactoryTool extends AbstractLibrary {
 
 		@Override
 		final public void warning(SAXParseException exception) throws SAXException {
-			LOGGER.warn(exception.getMessage(), exception);
+			LOGGER.log(Level.WARNING, exception.getMessage(), exception);
 		}
 
 		@Override
 		final public void error(SAXParseException exception) throws SAXException {
-			LOGGER.error(exception.getMessage(), exception);
+			LOGGER.log(Level.SEVERE, exception.getMessage(), exception);
 		}
 
 		@Override

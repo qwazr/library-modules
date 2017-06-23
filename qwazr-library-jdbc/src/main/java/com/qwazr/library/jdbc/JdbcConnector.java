@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,12 +12,13 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- **/
+ */
 package com.qwazr.library.jdbc;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.qwazr.library.AbstractPasswordLibrary;
 import com.qwazr.utils.IOUtils.CloseableContext;
+import com.qwazr.utils.LoggerUtils;
 import com.qwazr.utils.StringUtils;
 import com.qwazr.utils.SubstitutedVariables;
 import com.qwazr.utils.jdbc.Transaction;
@@ -25,15 +26,15 @@ import com.qwazr.utils.jdbc.connection.ConnectionManager;
 import com.qwazr.utils.jdbc.connection.DataSourceConnection;
 import com.qwazr.utils.jdbc.connection.JDBCConnection;
 import org.apache.commons.dbcp2.BasicDataSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class JdbcConnector extends AbstractPasswordLibrary implements Closeable {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(JdbcConnector.class);
+	private static final Logger LOGGER = LoggerUtils.getLogger(JdbcConnector.class);
 
 	public final String driver = null;
 
@@ -121,7 +122,7 @@ public class JdbcConnector extends AbstractPasswordLibrary implements Closeable 
 					basicDataSource.close();
 				basicDataSource = null;
 			} catch (SQLException e) {
-				LOGGER.error(e.getMessage(), e);
+				LOGGER.log(Level.SEVERE, e, e::getMessage);
 			}
 		}
 	}

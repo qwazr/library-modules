@@ -1,5 +1,5 @@
-/**
- * Copyright 2014-2016 Emmanuel Keller / QWAZR
+/*
+ * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,12 +12,13 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- **/
+ */
 package com.qwazr.library.mybatis;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.qwazr.library.AbstractPasswordLibrary;
 import com.qwazr.utils.IOUtils.CloseableContext;
+import com.qwazr.utils.LoggerUtils;
 import com.qwazr.utils.StringUtils;
 import com.qwazr.utils.SubstitutedVariables;
 import org.apache.ibatis.io.Resources;
@@ -27,8 +28,6 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 import org.apache.ibatis.session.TransactionIsolationLevel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -39,10 +38,11 @@ import java.sql.Connection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.logging.Logger;
 
 public class MybatisConnector extends AbstractPasswordLibrary {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(MybatisConnector.class);
+	private static final Logger LOGGER = LoggerUtils.getLogger(MybatisConnector.class);
 
 	public final String configuration_file = null;
 
@@ -77,8 +77,7 @@ public class MybatisConnector extends AbstractPasswordLibrary {
 					props.load(reader);
 				}
 			} else {
-				if (LOGGER.isWarnEnabled())
-					LOGGER.warn("The property file does not exit: " + properties_file);
+				LOGGER.warning(() -> "The property file does not exit: " + properties_file);
 			}
 		}
 		if (properties != null) {

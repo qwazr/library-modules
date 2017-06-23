@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,21 +12,22 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- **/
+ */
 package com.qwazr.library.rrd4j;
 
+import com.qwazr.utils.LoggerUtils;
 import org.rrd4j.core.RrdBackendFactory;
 import org.rrd4j.core.RrdDb;
 import org.rrd4j.core.RrdDef;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 class RrdDatabase implements Closeable {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(RrdDatabase.class);
+	private static final Logger LOGGER = LoggerUtils.getLogger(RrdDatabase.class);
 
 	final RrdDb rrdDb;
 
@@ -52,8 +53,7 @@ class RrdDatabase implements Closeable {
 		try {
 			rrdDb.close();
 		} catch (IOException e) {
-			if (LOGGER.isWarnEnabled())
-				LOGGER.warn(e.getMessage(), e);
+			LOGGER.log(Level.WARNING, e, e::getMessage);
 		}
 	}
 

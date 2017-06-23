@@ -17,7 +17,7 @@ package com.qwazr.library.email;
 
 import com.qwazr.library.annotations.Library;
 import com.qwazr.library.test.AbstractLibraryTest;
-import org.apache.commons.lang3.RandomStringUtils;
+import com.qwazr.utils.RandomUtils;
 import org.apache.commons.mail.Email;
 import org.apache.commons.mail.EmailException;
 import org.junit.Assert;
@@ -35,10 +35,9 @@ public class EmailConnectorTest extends AbstractLibraryTest {
 
 	private Map<String, Object> getNewParams() {
 		final Map<String, Object> params = new HashMap<>();
-		params.put("subject", RandomStringUtils.randomAlphanumeric(10));
-		params.put("from_email",
-				RandomStringUtils.randomAlphanumeric(10) + "@" + RandomStringUtils.randomAlphanumeric(10) + ".test");
-		params.put("from_name", RandomStringUtils.randomAlphanumeric(10));
+		params.put("subject", RandomUtils.alphanumeric(10));
+		params.put("from_email", RandomUtils.alphanumeric(10) + "@" + RandomUtils.alphanumeric(10) + ".test");
+		params.put("from_name", RandomUtils.alphanumeric(10));
 		return params;
 	}
 

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,20 +21,20 @@ import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
-import com.qwazr.utils.LockUtils;
+import com.qwazr.utils.LoggerUtils;
 import com.qwazr.utils.concurrent.ReadWriteLock;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class CassandraSession implements Closeable {
 
-	private static final Logger logger = LoggerFactory.getLogger(CassandraSession.class);
+	private static final Logger logger = LoggerUtils.getLogger(CassandraSession.class);
 
-	private final LockUtils.ReadWriteLock rwl = new LockUtils.ReadWriteLock();
+	private final ReadWriteLock rwl = ReadWriteLock.stamped();
 
 	private volatile long lastUse;
 
@@ -91,8 +91,7 @@ public class CassandraSession implements Closeable {
 					return session;
 				if (cluster == null || cluster.isClosed())
 					throw new DriverException("The cluster is closed");
-				if (logger.isDebugEnabled())
-					logger.debug("Create session " + keySpace == null ? StringUtils.EMPTY : keySpace);
+				logger.finest(() -> "Create session " + keySpace == null ? StringUtils.EMPTY : keySpace);
 				session = keySpace == null ? cluster.connect() : cluster.connect(keySpace);
 				return session;
 			});
@@ -121,7 +120,7 @@ public class CassandraSession implements Closeable {
 			try {
 				return session.execute(statement);
 			} catch (DriverException e2) {
-				logger.warn(e2.getMessage(), e2);
+				logger.log(Level.WARNING, e2, e2::getMessage);
 				throw e1;
 			}
 		}
@@ -129,16 +128,14 @@ public class CassandraSession implements Closeable {
 	}
 
 	public ResultSet executeWithFetchSize(String cql, int fetchSize, Object... values) {
-		if (logger.isDebugEnabled())
-			logger.debug("Execute " + cql);
+		logger.finest(() -> "Execute " + cql);
 		Session session = checkSession();
 		SimpleStatement statement = getStatement(cql, fetchSize, values);
 		return executeStatement(session, statement);
 	}
 
 	public ResultSet execute(String cql, Object... values) {
-		if (logger.isDebugEnabled())
-			logger.debug("Execute " + cql);
+		logger.finest(() -> "Execute " + cql);
 		Session session = checkSession();
 		SimpleStatement statement = getStatement(cql, null, values);
 		return executeStatement(session, statement);

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- **/
+ */
 package com.qwazr.library.realm.table;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -20,13 +20,12 @@ import com.qwazr.database.TableServiceInterface;
 import com.qwazr.database.model.ColumnDefinition;
 import com.qwazr.database.store.KeyStore;
 import com.qwazr.library.AbstractLibrary;
+import com.qwazr.utils.LoggerUtils;
 import io.undertow.security.idm.Account;
 import io.undertow.security.idm.Credential;
 import io.undertow.security.idm.IdentityManager;
 import io.undertow.security.idm.PasswordCredential;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
@@ -36,10 +35,12 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class TableRealmConnector extends AbstractLibrary implements IdentityManager {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(TableRealmConnector.class);
+	private static final Logger LOGGER = LoggerUtils.getLogger(TableRealmConnector.class);
 
 	public final String table_name = null;
 	public final String login_column = null;
@@ -53,18 +54,16 @@ public class TableRealmConnector extends AbstractLibrary implements IdentityMana
 	private volatile Set<String> columns;
 
 	public void load() throws URISyntaxException {
-		tableService =
-				libraryManager.getInstancesSupplier()
-						.getInstance(TableServiceInterface.class);
+		tableService = libraryManager.getInstancesSupplier().getInstance(TableServiceInterface.class);
 		final Set<String> tables = tableService.list();
 		if (!tables.contains(table_name)) {
 			tableService.createTable(table_name, KeyStore.Impl.leveldb);
 			tableService.setColumn(table_name, login_column,
-								   new ColumnDefinition(ColumnDefinition.Type.STRING, ColumnDefinition.Mode.INDEXED));
+					new ColumnDefinition(ColumnDefinition.Type.STRING, ColumnDefinition.Mode.INDEXED));
 			tableService.setColumn(table_name, password_column,
-								   new ColumnDefinition(ColumnDefinition.Type.STRING, ColumnDefinition.Mode.STORED));
+					new ColumnDefinition(ColumnDefinition.Type.STRING, ColumnDefinition.Mode.STORED));
 			tableService.setColumn(table_name, roles_column,
-								   new ColumnDefinition(ColumnDefinition.Type.STRING, ColumnDefinition.Mode.STORED));
+					new ColumnDefinition(ColumnDefinition.Type.STRING, ColumnDefinition.Mode.STORED));
 		}
 		columns = new HashSet<>();
 		columns.add(password_column);
@@ -81,8 +80,7 @@ public class TableRealmConnector extends AbstractLibrary implements IdentityMana
 
 		// This realm only support one type of credential
 		if (!(credential instanceof PasswordCredential))
-			throw new RuntimeException("Unsupported credential type: " + credential.getClass()
-					.getName());
+			throw new RuntimeException("Unsupported credential type: " + credential.getClass().getName());
 
 		PasswordCredential passwordCredential = (PasswordCredential) credential;
 
@@ -93,9 +91,7 @@ public class TableRealmConnector extends AbstractLibrary implements IdentityMana
 			if (row == null)
 				return null;
 		} catch (WebApplicationException e) {
-			if (e.getResponse()
-					.getStatusInfo()
-					.getFamily() == Response.Status.Family.CLIENT_ERROR)
+			if (e.getResponse().getStatusInfo().getFamily() == Response.Status.Family.CLIENT_ERROR)
 				return authenticationFailure("Unknown user: " + id);
 			throw e;
 		}
@@ -139,13 +135,11 @@ public class TableRealmConnector extends AbstractLibrary implements IdentityMana
 	}
 
 	private Account authenticationFailure(final String msg) {
-		if (LOGGER.isWarnEnabled())
-			LOGGER.warn(msg);
+		LOGGER.warning(msg);
 		try {
 			Thread.sleep(2000);
 		} catch (InterruptedException e) {
-			if (LOGGER.isWarnEnabled())
-				LOGGER.warn(e.getMessage(), e);
+			LOGGER.log(Level.WARNING, e, e::getMessage);
 		}
 		return null;
 	}

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,23 +20,23 @@ import com.datastax.driver.core.Cluster.Builder;
 import com.datastax.driver.core.HostDistance;
 import com.datastax.driver.core.PoolingOptions;
 import com.datastax.driver.core.SocketOptions;
-import com.qwazr.utils.LockUtils;
+import com.qwazr.utils.LoggerUtils;
+import com.qwazr.utils.concurrent.ReadWriteLock;
 import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class CassandraCluster implements Closeable {
 
-	private final static Logger logger = LoggerFactory.getLogger(CassandraCluster.class);
+	private final static Logger logger = LoggerUtils.getLogger(CassandraCluster.class);
 
-	private final LockUtils.ReadWriteLock rwl = new LockUtils.ReadWriteLock();
+	private final ReadWriteLock rwl = ReadWriteLock.stamped();
 	private Cluster cluster;
 
 	private final String login;
@@ -145,11 +145,8 @@ public class CassandraCluster implements Closeable {
 					IOUtils.closeQuietly(session);
 		});
 		rwl.write(() -> {
-			List<String> keys = sessions.entrySet()
-					.stream()
-					.filter(entry -> entry.getValue().isClosed())
-					.map(Map.Entry::getKey)
-					.collect(Collectors.toList());
+			List<String> keys = sessions.entrySet().stream().filter(entry -> entry.getValue().isClosed()).map(
+					Map.Entry::getKey).collect(Collectors.toList());
 			keys.forEach(key -> sessions.remove(key));
 		});
 	}
