@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,36 +12,45 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- **/
+ */
 package com.qwazr.library.ldap;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.qwazr.library.AbstractPasswordLibrary;
 import com.qwazr.utils.IOUtils;
+import com.qwazr.utils.LoggerUtils;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import org.apache.directory.api.ldap.model.constants.LdapSecurityConstants;
 import org.apache.directory.api.ldap.model.cursor.CursorException;
 import org.apache.directory.api.ldap.model.cursor.EntryCursor;
 import org.apache.directory.api.ldap.model.cursor.SearchCursor;
-import org.apache.directory.api.ldap.model.entry.*;
+import org.apache.directory.api.ldap.model.entry.DefaultEntry;
+import org.apache.directory.api.ldap.model.entry.DefaultModification;
+import org.apache.directory.api.ldap.model.entry.Entry;
+import org.apache.directory.api.ldap.model.entry.Modification;
+import org.apache.directory.api.ldap.model.entry.ModificationOperation;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.api.ldap.model.message.SearchRequest;
 import org.apache.directory.api.ldap.model.message.SearchRequestImpl;
 import org.apache.directory.api.ldap.model.message.SearchScope;
 import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.api.ldap.model.password.PasswordUtil;
-import org.apache.directory.ldap.client.api.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.directory.ldap.client.api.LdapConnection;
+import org.apache.directory.ldap.client.api.LdapConnectionConfig;
+import org.apache.directory.ldap.client.api.LdapConnectionPool;
+import org.apache.directory.ldap.client.api.LdapNetworkConnection;
+import org.apache.directory.ldap.client.api.ValidatingPoolableLdapConnectionFactory;
 
 import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class LdapConnector extends AbstractPasswordLibrary implements Closeable {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(LdapConnector.class);
+	private static final Logger LOGGER = LoggerUtils.getLogger(LdapConnector.class);
 
 	private static final String DEFAULT_PASSWORD_ATTRIBUTE = "userPassword";
 
@@ -190,9 +199,8 @@ public class LdapConnector extends AbstractPasswordLibrary implements Closeable 
 	public void updatePassword(LdapConnection connection, String dn, String passwordAttribute, String clearPassword)
 			throws LdapException {
 		connection.bind();
-		Modification changePassword =
-				new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE, passwordAttribute,
-						getShaPassword(clearPassword));
+		Modification changePassword = new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE,
+				passwordAttribute, getShaPassword(clearPassword));
 		connection.modify(dn + ", " + base_dn, changePassword);
 	}
 
@@ -217,8 +225,7 @@ public class LdapConnector extends AbstractPasswordLibrary implements Closeable 
 				connectionPool.close();
 				connectionPool = null;
 			} catch (Exception e) {
-				if (LOGGER.isWarnEnabled())
-					LOGGER.warn(e.getMessage(), e);
+				LOGGER.log(Level.WARNING, e, e::getMessage);
 			}
 		}
 	}
