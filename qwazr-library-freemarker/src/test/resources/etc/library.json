@@ -12,6 +12,16 @@
       "output_encoding": "UTF-8",
       "default_encoding": "UTF-8",
       "default_content_type": "TEXT/HTML"
+    },
+    "freemarker_multi": {
+      "class": "com.qwazr.library.freemarker.FreeMarkerTool",
+      "output_encoding": "UTF-8",
+      "default_encoding": "UTF-8",
+      "default_content_type": "TEXT/HTML",
+      "template_loaders": [
+        {},
+        {}
+      ]
     }
   }
 }

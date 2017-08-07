@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,11 +12,10 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- **/
+ */
 package com.qwazr.library.freemarker;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.qwazr.utils.ClassLoaderUtils;
 import com.qwazr.utils.IOUtils;
 import freemarker.cache.TemplateLoader;
 
@@ -26,17 +25,26 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
-class ResourceTemplateLoader implements TemplateLoader {
+public class ResourceTemplateLoader implements TemplateLoader {
+
+	private final ClassLoader classLoader;
+	private final String pathPrefix;
+
+	public ResourceTemplateLoader(ClassLoader classLoader, String pathPrefix) {
+		this.classLoader = classLoader == null ? Thread.currentThread().getContextClassLoader() : classLoader;
+		this.pathPrefix = pathPrefix;
+	}
 
 	@Override
 	public Object findTemplateSource(final String path) throws IOException {
-		return ClassLoaderUtils.getResourceAsStream(path);
+		return pathPrefix == null ? classLoader.getResourceAsStream(path) : classLoader.getResourceAsStream(
+				pathPrefix + path);
 	}
 
 	@Override
 	@JsonIgnore
 	public long getLastModified(final Object templateSource) {
-		return Thread.currentThread().getContextClassLoader().hashCode();
+		return classLoader.hashCode();
 	}
 
 	@Override

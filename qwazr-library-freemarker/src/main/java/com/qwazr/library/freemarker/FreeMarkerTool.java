@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- **/
+ */
 package com.qwazr.library.freemarker;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -31,18 +31,46 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class FreeMarkerTool extends AbstractLibrary implements Closeable {
 
-	public final String output_encoding;
-	public final String default_encoding;
-	public final String default_content_type;
+	@JsonProperty("output_encoding")
+	public final String outputEncoding;
 
-	public final Boolean use_classloader;
-	public final String template_path;
+	@JsonProperty("default_encoding")
+	public final String defaultEncoding;
+
+	@JsonProperty("default_content_type")
+	public final String defaultContentType;
+
+	@JsonProperty("use_classloader")
+	public final Boolean useClassloader;
+
+	@JsonProperty("template_path")
+	public final String templatePath;
+
+	@JsonProperty("localized_lookup")
+	public final Boolean localizedLookup;
+
+	@JsonProperty("template_loaders")
+	public final List<Loader> templateLoaders;
+
+	public static class Loader {
+
+		public enum Type {resource, file}
+
+		public final Type type;
+
+		Loader(@JsonProperty("type") Type type) {
+			this.type = type;
+		}
+	}
 
 	@JsonIgnore
 	private volatile Configuration cfg = null;
@@ -54,33 +82,36 @@ public class FreeMarkerTool extends AbstractLibrary implements Closeable {
 	FreeMarkerTool(@JsonProperty("output_encoding") String outputEncoding,
 			@JsonProperty("default_encoding") String defaultEncoding,
 			@JsonProperty("default_content_type") String defaultContentType,
-			@JsonProperty("use_classloader") Boolean useClassloader,
-			@JsonProperty("template_path") String templatePath) {
-		output_encoding = outputEncoding;
-		default_encoding = defaultEncoding;
-		default_content_type = defaultContentType;
-		use_classloader = useClassloader;
-		template_path = templatePath;
+			@JsonProperty("use_classloader") Boolean useClassloader, @JsonProperty("template_path") String templatePath,
+			@JsonProperty("localized_lookup") Boolean localizedLookup,
+			@JsonProperty("template_loaders") Collection<Loader> templateLoaders) {
+		this.outputEncoding = outputEncoding;
+		this.defaultEncoding = defaultEncoding;
+		this.defaultContentType = defaultContentType;
+		this.useClassloader = useClassloader;
+		this.templatePath = templatePath;
+		this.localizedLookup = localizedLookup;
+		this.templateLoaders = templateLoaders == null ? null : new ArrayList<>(templateLoaders);
 	}
 
 	FreeMarkerTool(FreeMarkerToolBuilder builder) {
-		output_encoding = builder.outputEncoding;
-		default_encoding = builder.defaultEncoding;
-		default_content_type = builder.defaultContentType;
-		use_classloader = builder.useClassloader;
-		template_path = builder.templatePath;
+		this(builder.outputEncoding, builder.defaultEncoding, builder.defaultContentType, builder.useClassloader,
+				builder.templatePath, builder.localizedLookup, builder.tempplateLoaders);
 	}
 
 	@Override
 	public void load() {
-		cfg = new Configuration(Configuration.VERSION_2_3_23);
-		cfg.setTemplateLoader((use_classloader != null && use_classloader) ?
-				new ResourceTemplateLoader() :
-				new FileTemplateLoader(template_path != null ?
-						new File(template_path) :
-						libraryManager == null ? null : libraryManager.getDataDirectory()));
-		cfg.setOutputEncoding(output_encoding == null ? DEFAULT_CHARSET : output_encoding);
-		cfg.setDefaultEncoding(default_encoding == null ? DEFAULT_CHARSET : default_encoding);
+		cfg = new Configuration(Configuration.VERSION_2_3_26);
+		MultiTemplateLoader.Builder builder = MultiTemplateLoader.of();
+		if (useClassloader != null && useClassloader)
+			builder.loader(new ResourceTemplateLoader(null, templatePath));
+		else
+			builder.loader(new FileTemplateLoader(templatePath != null ?
+					new File(templatePath) :
+					libraryManager == null ? null : libraryManager.getDataDirectory()));
+		cfg.setTemplateLoader(builder.build());
+		cfg.setOutputEncoding(outputEncoding == null ? DEFAULT_CHARSET : outputEncoding);
+		cfg.setDefaultEncoding(defaultEncoding == null ? DEFAULT_CHARSET : defaultEncoding);
 		cfg.setLocalizedLookup(false);
 		cfg.setTagSyntax(Configuration.AUTO_DETECT_TAG_SYNTAX);
 		cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
@@ -97,7 +128,7 @@ public class FreeMarkerTool extends AbstractLibrary implements Closeable {
 	public void template(String templatePath, Map<String, Object> dataModel, HttpServletResponse response)
 			throws TemplateException, IOException {
 		if (response.getContentType() == null)
-			response.setContentType(default_content_type == null ? DEFAULT_CONTENT_TYPE : default_content_type);
+			response.setContentType(defaultContentType == null ? DEFAULT_CONTENT_TYPE : defaultContentType);
 		response.setCharacterEncoding(DEFAULT_CHARSET);
 		Template template = cfg.getTemplate(templatePath);
 		template.process(dataModel, response.getWriter());

@@ -17,6 +17,10 @@ package com.qwazr.library.freemarker;
 
 import com.qwazr.library.LibraryManager;
 
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 public class FreeMarkerToolBuilder {
 
 	String outputEncoding;
@@ -24,6 +28,9 @@ public class FreeMarkerToolBuilder {
 	String defaultContentType;
 	Boolean useClassloader;
 	String templatePath;
+	Boolean localizedLookup;
+	Set<FreeMarkerTool.Loader> tempplateLoaders;
+
 	final LibraryManager libraryManager;
 
 	FreeMarkerToolBuilder(LibraryManager libraryManager) {
@@ -52,6 +59,18 @@ public class FreeMarkerToolBuilder {
 
 	public FreeMarkerToolBuilder templatePath(String templatePath) {
 		this.templatePath = templatePath;
+		return this;
+	}
+
+	public FreeMarkerToolBuilder localizedLookup(Boolean localizedLookup) {
+		this.localizedLookup = localizedLookup;
+		return this;
+	}
+
+	public FreeMarkerToolBuilder tempplateLoader(FreeMarkerTool.Loader... templateLoader) {
+		if (this.tempplateLoaders == null)
+			this.tempplateLoaders = new LinkedHashSet<>();
+		Collections.addAll(this.tempplateLoaders, templateLoader);
 		return this;
 	}
 
