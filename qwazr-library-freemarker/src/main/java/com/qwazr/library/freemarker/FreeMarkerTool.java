@@ -25,6 +25,7 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import freemarker.template.TemplateExceptionHandler;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -70,9 +71,13 @@ public class FreeMarkerTool extends AbstractLibrary implements Closeable {
 		public final Type type;
 		public final String path;
 
+		@JsonIgnore
+		private final int hashCode;
+
 		Loader(@JsonProperty("type") Type type, @JsonProperty("path") String path) {
 			this.type = type;
 			this.path = path;
+			hashCode = new HashCodeBuilder().append(type.ordinal()).append(path).build();
 		}
 
 		@JsonIgnore
@@ -85,6 +90,20 @@ public class FreeMarkerTool extends AbstractLibrary implements Closeable {
 			case resource:
 				return new ResourceTemplateLoader(null, path);
 			}
+		}
+
+		@JsonIgnore
+		@Override
+		public int hashCode() {
+			return hashCode;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (o == null || !(o instanceof Loader))
+				return false;
+			final Loader l = (Loader) o;
+			return Objects.equals(l.path, path) && type == l.type;
 		}
 	}
 
@@ -112,7 +131,7 @@ public class FreeMarkerTool extends AbstractLibrary implements Closeable {
 
 	FreeMarkerTool(FreeMarkerToolBuilder builder) {
 		this(builder.outputEncoding, builder.defaultEncoding, builder.defaultContentType, builder.useClassloader,
-				builder.templatePath, builder.localizedLookup, builder.tempplateLoaders);
+				builder.templatePath, builder.localizedLookup, builder.templateLoaders);
 	}
 
 	@Override

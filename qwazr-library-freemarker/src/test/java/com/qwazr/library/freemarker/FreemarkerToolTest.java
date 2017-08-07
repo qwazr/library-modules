@@ -75,7 +75,8 @@ public class FreemarkerToolTest extends AbstractLibraryTest {
 		Assert.assertNotNull(builder);
 		final FreeMarkerTool tool = builder.defaultContentType("TEXT/HTML").defaultEncoding("UTF-16").outputEncoding(
 				"UTF-8").localizedLookup(true).templatePath("/tmpl-path").useClassloader(false).templateLoader(
-				new FreeMarkerTool.Loader(FreeMarkerTool.Loader.Type.resource, "/loader-path")).build();
+				FreeMarkerTool.Loader.Type.resource, "/loader-path").templateLoader(FreeMarkerTool.Loader.Type.resource,
+				"/loader-path").build();
 		Assert.assertNotNull(tool);
 		Assert.assertEquals("TEXT/HTML", tool.defaultContentType);
 		Assert.assertEquals("UTF-16", tool.defaultEncoding);
