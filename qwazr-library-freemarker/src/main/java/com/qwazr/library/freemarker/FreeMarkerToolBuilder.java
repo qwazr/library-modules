@@ -67,7 +67,7 @@ public class FreeMarkerToolBuilder {
 		return this;
 	}
 
-	public FreeMarkerToolBuilder tempplateLoader(FreeMarkerTool.Loader... templateLoader) {
+	public FreeMarkerToolBuilder templateLoader(FreeMarkerTool.Loader... templateLoader) {
 		if (this.tempplateLoaders == null)
 			this.tempplateLoaders = new LinkedHashSet<>();
 		Collections.addAll(this.tempplateLoaders, templateLoader);

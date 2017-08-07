@@ -73,9 +73,20 @@ public class FreemarkerToolTest extends AbstractLibraryTest {
 	public void builder() {
 		final FreeMarkerToolBuilder builder = FreeMarkerTool.of();
 		Assert.assertNotNull(builder);
-		final FreeMarkerTool tool = builder.defaultContentType("TEXT/HTML").defaultEncoding("UTF-8").outputEncoding(
-				"UTF-8").build();
+		final FreeMarkerTool tool = builder.defaultContentType("TEXT/HTML").defaultEncoding("UTF-16").outputEncoding(
+				"UTF-8").localizedLookup(true).templatePath("/tmpl-path").useClassloader(false).templateLoader(
+				new FreeMarkerTool.Loader(FreeMarkerTool.Loader.Type.resource, "/loader-path")).build();
 		Assert.assertNotNull(tool);
+		Assert.assertEquals("TEXT/HTML", tool.defaultContentType);
+		Assert.assertEquals("UTF-16", tool.defaultEncoding);
+		Assert.assertEquals("UTF-8", tool.outputEncoding);
+		Assert.assertEquals(true, tool.localizedLookup);
+		Assert.assertEquals("/tmpl-path", tool.templatePath);
+		Assert.assertEquals(false, tool.useClassloader);
+		Assert.assertNotNull(tool.templateLoaders);
+		Assert.assertEquals(1, tool.templateLoaders.size());
+		Assert.assertEquals(FreeMarkerTool.Loader.Type.resource, tool.templateLoaders.get(0).type);
+		Assert.assertEquals("/loader-path", tool.templateLoaders.get(0).path);
 	}
 
 }
