@@ -64,6 +64,9 @@ public class FreemarkerToolTest extends AbstractLibraryTest {
 	@Test
 	public void multiTemplate() throws IOException, TemplateException {
 		Assert.assertNotNull(freemarker_multi);
+		Assert.assertEquals("resource_only template", freemarker_multi.template("resource_only.ftl", null));
+		Assert.assertEquals("file_only template", freemarker_multi.template("file_only.ftl", null));
+		Assert.assertEquals("template_from_file", freemarker_multi.template("template.ftl", null));
 	}
 
 	@Test
@@ -74,4 +77,5 @@ public class FreemarkerToolTest extends AbstractLibraryTest {
 				"UTF-8").build();
 		Assert.assertNotNull(tool);
 	}
+
 }

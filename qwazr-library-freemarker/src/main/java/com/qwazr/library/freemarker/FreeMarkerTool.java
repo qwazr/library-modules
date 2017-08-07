@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.qwazr.library.AbstractLibrary;
 import com.qwazr.library.LibraryManager;
+import freemarker.cache.TemplateLoader;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
@@ -37,6 +38,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class FreeMarkerTool extends AbstractLibrary implements Closeable {
 
@@ -66,9 +68,23 @@ public class FreeMarkerTool extends AbstractLibrary implements Closeable {
 		public enum Type {resource, file}
 
 		public final Type type;
+		public final String path;
 
-		Loader(@JsonProperty("type") Type type) {
+		Loader(@JsonProperty("type") Type type, @JsonProperty("path") String path) {
 			this.type = type;
+			this.path = path;
+		}
+
+		@JsonIgnore
+		public TemplateLoader build() {
+			final Type t = type == null ? Type.resource : type;
+			switch (t) {
+			case file:
+				return new FileTemplateLoader(new File(Objects.requireNonNull(path, "The path is missing")));
+			default:
+			case resource:
+				return new ResourceTemplateLoader(null, path);
+			}
 		}
 	}
 
@@ -102,13 +118,15 @@ public class FreeMarkerTool extends AbstractLibrary implements Closeable {
 	@Override
 	public void load() {
 		cfg = new Configuration(Configuration.VERSION_2_3_26);
-		MultiTemplateLoader.Builder builder = MultiTemplateLoader.of();
+		final MultiTemplateLoader.Builder builder = MultiTemplateLoader.of();
 		if (useClassloader != null && useClassloader)
-			builder.loader(new ResourceTemplateLoader(null, templatePath));
+			builder.loader(new Loader(Loader.Type.resource, null).build());
 		else
 			builder.loader(new FileTemplateLoader(templatePath != null ?
 					new File(templatePath) :
 					libraryManager == null ? null : libraryManager.getDataDirectory()));
+		if (templateLoaders != null)
+			templateLoaders.forEach(loader -> builder.loader(loader.build()));
 		cfg.setTemplateLoader(builder.build());
 		cfg.setOutputEncoding(outputEncoding == null ? DEFAULT_CHARSET : outputEncoding);
 		cfg.setDefaultEncoding(defaultEncoding == null ? DEFAULT_CHARSET : defaultEncoding);

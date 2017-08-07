@@ -19,8 +19,14 @@
       "default_encoding": "UTF-8",
       "default_content_type": "TEXT/HTML",
       "template_loaders": [
-        {},
-        {}
+        {
+          "type": "file",
+          "path": "src/test/templates/"
+        },
+        {
+          "type": "resource",
+          "path": "com/qwazr/library/freemarker/"
+        }
       ]
     }
   }
