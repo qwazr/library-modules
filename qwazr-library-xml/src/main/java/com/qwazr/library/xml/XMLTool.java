@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +12,13 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- **/
+ */
 package com.qwazr.library.xml;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.jamesmurty.utils.XMLBuilder2;
 import com.qwazr.utils.IOUtils;
-import com.qwazr.utils.XmlMapper;
+import com.qwazr.utils.ObjectMappers;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import jdk.nashorn.api.scripting.ScriptUtils;
 import org.w3c.dom.Document;
@@ -29,7 +29,14 @@ import org.xml.sax.helpers.DefaultHandler;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.io.Writer;
 
 public class XMLTool extends AbstractXmlFactoryTool {
 
@@ -183,7 +190,7 @@ public class XMLTool extends AbstractXmlFactoryTool {
 		//Marshaller marshaller = jaxbContext.createMarshaller();
 		//StringWriter sw = new StringWriter();
 		//marshaller.marshal(object, writer);
-		XmlMapper.MAPPER.writeValue(writer, object);
+		ObjectMappers.XML.writeValue(writer, object);
 	}
 
 }

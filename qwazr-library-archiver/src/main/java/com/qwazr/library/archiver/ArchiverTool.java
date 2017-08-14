@@ -22,7 +22,7 @@ import com.qwazr.library.AbstractLibrary;
 import com.qwazr.utils.CharsetUtils;
 import com.qwazr.utils.IOUtils;
 import com.qwazr.utils.LoggerUtils;
-import com.qwazr.utils.json.JsonMapper;
+import com.qwazr.utils.ObjectMappers;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveException;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
@@ -144,7 +144,7 @@ public class ArchiverTool extends AbstractLibrary {
 			throws IOException, CompressorException {
 		try (final InputStream input = getCompressorNewInputStream(
 				new BufferedInputStream(new FileInputStream(sourceFile)))) {
-			return JsonMapper.MAPPER.readValue(input, valueType);
+			return ObjectMappers.JSON.readValue(input, valueType);
 		}
 	}
 
@@ -162,7 +162,7 @@ public class ArchiverTool extends AbstractLibrary {
 			throws IOException, CompressorException {
 		try (final InputStream input = getCompressorNewInputStream(
 				new BufferedInputStream(new FileInputStream(sourceFile)))) {
-			return JsonMapper.MAPPER.readValue(input, typeReference);
+			return ObjectMappers.JSON.readValue(input, typeReference);
 		}
 	}
 
@@ -177,7 +177,7 @@ public class ArchiverTool extends AbstractLibrary {
 	public JsonNode decompressJson(final File sourceFile) throws IOException, CompressorException {
 		try (final InputStream input = getCompressorNewInputStream(
 				new BufferedInputStream(new FileInputStream(sourceFile)))) {
-			return JsonMapper.MAPPER.readTree(input);
+			return ObjectMappers.JSON.readTree(input);
 		}
 	}
 

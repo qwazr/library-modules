@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -62,8 +62,8 @@ public class PdfBoxParser extends ParserAbstract {
 
 	final private static ParserField CHARACTER_COUNT = ParserField.newInteger("character_count", null);
 
-	final private static ParserField LANG_DETECTION =
-			ParserField.newString("lang_detection", "Detection of the language");
+	final private static ParserField LANG_DETECTION = ParserField.newString("lang_detection",
+			"Detection of the language");
 
 	final private static ParserField[] FIELDS = { TITLE,
 			AUTHOR,
@@ -167,7 +167,7 @@ public class PdfBoxParser extends ParserAbstract {
 		protected void endPage(PDPage page) throws IOException {
 			super.endPage(page);
 			final ParserFieldsBuilder document = resultBuilder.newDocument();
-			String text = output.toString();
+			final String text = output.toString();
 			document.add(CHARACTER_COUNT, text.length());
 			document.add(CONTENT, text);
 			document.add(LANG_DETECTION, languageDetection(document, CONTENT, 10000));
