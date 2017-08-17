@@ -85,7 +85,7 @@ public class TableRealmConnector extends AbstractLibrary implements IdentityMana
 		PasswordCredential passwordCredential = (PasswordCredential) credential;
 
 		// We request the database
-		final Map<String, Object> row;
+		final Map<String, ?> row;
 		try {
 			row = tableService.getRow(table_name, id, columns);
 			if (row == null)
