@@ -92,7 +92,7 @@ public class FreeMarkerTool extends AbstractLibrary implements Closeable {
 				return new FileTemplateLoader(new File(Objects.requireNonNull(path, "The path is missing")));
 			default:
 			case resource:
-				return new ResourceTemplateLoader(null, p -> path + p);
+				return new ResourceTemplateLoader(null, path == null ? null : p -> path + p);
 			}
 		}
 
