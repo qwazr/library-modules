@@ -37,10 +37,10 @@ public class ResourceTemplateLoader implements TemplateLoader {
 	}
 
 	@Override
-	public Object findTemplateSource(final String path) throws IOException {
-		return pathModifier == null ?
-				classLoader.getResourceAsStream(path) :
-				classLoader.getResourceAsStream(pathModifier.apply(path));
+	public Object findTemplateSource(String path) throws IOException {
+		if (pathModifier != null && path != null)
+			path = pathModifier.apply(path);
+		return path == null ? null : classLoader.getResourceAsStream(path);
 	}
 
 	@Override
