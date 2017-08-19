@@ -21,6 +21,7 @@ import freemarker.template.TemplateException;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -73,10 +74,17 @@ public class FreemarkerToolTest extends AbstractLibraryTest {
 	public void builder() {
 		final FreeMarkerToolBuilder builder = FreeMarkerTool.of();
 		Assert.assertNotNull(builder);
-		final FreeMarkerTool tool = builder.defaultContentType("TEXT/HTML").defaultEncoding("UTF-16").outputEncoding(
-				"UTF-8").localizedLookup(true).templatePath("/tmpl-path").useClassloader(false).templateLoader(
-				FreeMarkerTool.Loader.Type.resource, "/loader-path").templateLoader(FreeMarkerTool.Loader.Type.resource,
-				"/loader-path").build();
+		final FileTemplateLoader fileTemplateLoader = new FileTemplateLoader(new File("."));
+		final FreeMarkerTool tool = builder.defaultContentType("TEXT/HTML")
+				.defaultEncoding("UTF-16")
+				.outputEncoding("UTF-8")
+				.localizedLookup(true)
+				.templatePath("/tmpl-path")
+				.useClassloader(false)
+				.templateLoader(FreeMarkerTool.Loader.Type.resource, "/loader-path")
+				.templateLoader(FreeMarkerTool.Loader.Type.resource, "/loader-path")
+				.templateLoader(fileTemplateLoader)
+				.build();
 		Assert.assertNotNull(tool);
 		Assert.assertEquals("TEXT/HTML", tool.defaultContentType);
 		Assert.assertEquals("UTF-16", tool.defaultEncoding);
@@ -85,9 +93,11 @@ public class FreemarkerToolTest extends AbstractLibraryTest {
 		Assert.assertEquals("/tmpl-path", tool.templatePath);
 		Assert.assertEquals(false, tool.useClassloader);
 		Assert.assertNotNull(tool.templateLoaders);
-		Assert.assertEquals(1, tool.templateLoaders.size());
+		Assert.assertEquals(2, tool.templateLoaders.size());
 		Assert.assertEquals(FreeMarkerTool.Loader.Type.resource, tool.templateLoaders.get(0).type);
 		Assert.assertEquals("/loader-path", tool.templateLoaders.get(0).path);
+		Assert.assertEquals(FreeMarkerToolBuilder.DirectLoader.class, tool.templateLoaders.get(1).getClass());
+		Assert.assertEquals(fileTemplateLoader, tool.templateLoaders.get(1).build());
 	}
 
 }

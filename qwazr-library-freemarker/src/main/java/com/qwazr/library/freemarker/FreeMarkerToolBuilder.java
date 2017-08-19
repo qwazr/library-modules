@@ -15,7 +15,9 @@
  **/
 package com.qwazr.library.freemarker;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.qwazr.library.LibraryManager;
+import freemarker.cache.TemplateLoader;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -66,6 +68,13 @@ public class FreeMarkerToolBuilder {
 		return this;
 	}
 
+	public FreeMarkerToolBuilder templateLoader(TemplateLoader templateLoader) {
+		if (this.templateLoaders == null)
+			this.templateLoaders = new LinkedHashSet<>();
+		templateLoaders.add(new DirectLoader(templateLoader));
+		return this;
+	}
+
 	public FreeMarkerToolBuilder templateLoader(FreeMarkerTool.Loader.Type type, String path) {
 		if (this.templateLoaders == null)
 			this.templateLoaders = new LinkedHashSet<>();
@@ -75,5 +84,20 @@ public class FreeMarkerToolBuilder {
 
 	public FreeMarkerTool build() {
 		return new FreeMarkerTool(this);
+	}
+
+	static class DirectLoader extends FreeMarkerTool.Loader {
+
+		private final TemplateLoader templateLoader;
+
+		DirectLoader(TemplateLoader templateLoader) {
+			super(null, null, templateLoader.hashCode());
+			this.templateLoader = templateLoader;
+		}
+
+		@JsonIgnore
+		public TemplateLoader build() {
+			return templateLoader;
+		}
 	}
 }

@@ -24,21 +24,23 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.function.Function;
 
 public class ResourceTemplateLoader implements TemplateLoader {
 
 	private final ClassLoader classLoader;
-	private final String pathPrefix;
+	private final Function<String, String> pathModifier;
 
-	public ResourceTemplateLoader(ClassLoader classLoader, String pathPrefix) {
+	public ResourceTemplateLoader(ClassLoader classLoader, Function<String, String> pathModifier) {
 		this.classLoader = classLoader == null ? Thread.currentThread().getContextClassLoader() : classLoader;
-		this.pathPrefix = pathPrefix;
+		this.pathModifier = pathModifier;
 	}
 
 	@Override
 	public Object findTemplateSource(final String path) throws IOException {
-		return pathPrefix == null ? classLoader.getResourceAsStream(path) : classLoader.getResourceAsStream(
-				pathPrefix + path);
+		return pathModifier == null ?
+				classLoader.getResourceAsStream(path) :
+				classLoader.getResourceAsStream(pathModifier.apply(path));
 	}
 
 	@Override

@@ -74,10 +74,14 @@ public class FreeMarkerTool extends AbstractLibrary implements Closeable {
 		@JsonIgnore
 		private final int hashCode;
 
-		Loader(@JsonProperty("type") Type type, @JsonProperty("path") String path) {
+		Loader(Type type, String path, int hashCode) {
 			this.type = type;
 			this.path = path;
-			hashCode = new HashCodeBuilder().append(type.ordinal()).append(path).build();
+			this.hashCode = hashCode;
+		}
+
+		Loader(@JsonProperty("type") Type type, @JsonProperty("path") String path) {
+			this(type, path, new HashCodeBuilder().append(type.ordinal()).append(path).build());
 		}
 
 		@JsonIgnore
@@ -88,7 +92,7 @@ public class FreeMarkerTool extends AbstractLibrary implements Closeable {
 				return new FileTemplateLoader(new File(Objects.requireNonNull(path, "The path is missing")));
 			default:
 			case resource:
-				return new ResourceTemplateLoader(null, path);
+				return new ResourceTemplateLoader(null, p -> path + p);
 			}
 		}
 
@@ -162,24 +166,24 @@ public class FreeMarkerTool extends AbstractLibrary implements Closeable {
 		}
 	}
 
-	public void template(String templatePath, Map<String, Object> dataModel, HttpServletResponse response)
-			throws TemplateException, IOException {
+	public void template(final String templatePath, final Map<String, Object> dataModel,
+			final HttpServletResponse response) throws TemplateException, IOException {
 		if (response.getContentType() == null)
 			response.setContentType(defaultContentType == null ? DEFAULT_CONTENT_TYPE : defaultContentType);
 		response.setCharacterEncoding(DEFAULT_CHARSET);
-		Template template = cfg.getTemplate(templatePath);
+		final Template template = cfg.getTemplate(templatePath);
 		template.process(dataModel, response.getWriter());
 	}
 
-	public void template(String templatePath, HttpServletRequest request, HttpServletResponse response)
-			throws IOException, TemplateException {
-		Map<String, Object> variables = new HashMap<>();
+	public void template(final String templatePath, final HttpServletRequest request,
+			final HttpServletResponse response) throws IOException, TemplateException {
+		final Map<String, Object> variables = new HashMap<>();
 		variables.put("request", request);
 		variables.put("session", request.getSession());
-		Enumeration<String> attrNames = request.getAttributeNames();
+		final Enumeration<String> attrNames = request.getAttributeNames();
 		if (attrNames != null) {
 			while (attrNames.hasMoreElements()) {
-				String attrName = attrNames.nextElement();
+				final String attrName = attrNames.nextElement();
 				variables.put(attrName, request.getAttribute(attrName));
 			}
 		}
