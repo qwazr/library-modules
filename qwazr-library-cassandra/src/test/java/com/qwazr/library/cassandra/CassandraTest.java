@@ -21,7 +21,7 @@ import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.qwazr.library.annotations.Library;
 import com.qwazr.library.test.AbstractLibraryTest;
 import com.qwazr.utils.LoggerUtils;
-import com.qwazr.utils.concurrent.ThreadUtils;
+import com.qwazr.utils.concurrent.RunnablePool;
 import org.apache.commons.lang3.RandomUtils;
 import org.junit.Assert;
 import org.junit.Assume;
@@ -30,9 +30,8 @@ import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.logging.Logger;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -74,12 +73,12 @@ public class CassandraTest extends AbstractLibraryTest {
 		try {
 			cassandra.execute("SELECT count(*) FROM qwazr_connector_test.test").all();
 			finalTime = System.currentTimeMillis() + 10000;
-			List<ThreadUtils.ParallelRunnable> threadList = new ArrayList<>();
-			for (int i = 0; i < 50; i++) {
-				threadList.add(new InsertThread());
-				threadList.add(new SelectUpdateThread());
+			try (final RunnablePool<Integer> poll = new RunnablePool<>()) {
+				for (int i = 0; i < 50; i++) {
+					poll.submit(new InsertThread());
+					poll.submit(new SelectUpdateThread());
+				}
 			}
-			ThreadUtils.parallel(threadList);
 		} catch (NoHostAvailableException e) {
 			Assume.assumeNoException("Bypass (no cassandra host is running)", e);
 		}
@@ -100,10 +99,10 @@ public class CassandraTest extends AbstractLibraryTest {
 
 	private String INSERT = "INSERT INTO qwazr_connector_test.test " + "(item_id, cat_id) VALUES (now(), ?)";
 
-	private class InsertThread implements ThreadUtils.ParallelRunnable {
+	private class InsertThread implements Callable<Integer> {
 
 		@Override
-		public void run() throws Exception {
+		public Integer call() throws Exception {
 			long id = Thread.currentThread().getId();
 			LOGGER.info(() -> "Starts - id: " + id);
 			int count = 0;
@@ -112,6 +111,7 @@ public class CassandraTest extends AbstractLibraryTest {
 				count++;
 			}
 			LOGGER.info("Ends - id: " + id + " - count: " + count);
+			return count;
 		}
 	}
 
@@ -119,10 +119,10 @@ public class CassandraTest extends AbstractLibraryTest {
 
 	private String UPDATE = "UPDATE qwazr_connector_test.test" + " SET status='ok' WHERE item_id=?";
 
-	private class SelectUpdateThread implements ThreadUtils.ParallelRunnable {
+	private class SelectUpdateThread implements Callable<Integer> {
 
 		@Override
-		public void run() throws Exception {
+		public Integer call() throws Exception {
 			final long id = Thread.currentThread().getId();
 			LOGGER.info("Starts - id: " + id);
 			int count = 0;
@@ -136,6 +136,7 @@ public class CassandraTest extends AbstractLibraryTest {
 				}
 			}
 			LOGGER.info("Ends - id: " + id + " - count: " + count);
+			return count;
 		}
 	}
 }
