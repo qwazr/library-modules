@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -128,7 +129,7 @@ public class ArchiverTool extends AbstractLibrary {
 	public String decompressString(final File sourceFile) throws IOException, CompressorException {
 		try (final InputStream input = getCompressorNewInputStream(
 				new BufferedInputStream(new FileInputStream(sourceFile)))) {
-			return IOUtils.toString(input, CharsetUtils.CharsetUTF8);
+			return IOUtils.toString(input, StandardCharsets.UTF_8);
 		}
 	}
 

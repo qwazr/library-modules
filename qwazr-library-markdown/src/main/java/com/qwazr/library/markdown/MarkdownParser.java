@@ -19,7 +19,6 @@ import com.qwazr.extractor.ParserAbstract;
 import com.qwazr.extractor.ParserField;
 import com.qwazr.extractor.ParserFieldsBuilder;
 import com.qwazr.extractor.ParserResultBuilder;
-import com.qwazr.utils.CharsetUtils;
 import com.qwazr.utils.StringUtils;
 import org.commonmark.node.Link;
 import org.commonmark.node.Node;
@@ -30,6 +29,7 @@ import org.commonmark.renderer.text.TextContentRenderer;
 import javax.ws.rs.core.MultivaluedMap;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -75,7 +75,7 @@ public class MarkdownParser extends ParserAbstract {
 		final Parser parser = Parser.builder().build();
 		final TextContentRenderer renderer =
 				TextContentRenderer.builder().nodeRendererFactory(context -> new ExtractorNodeRenderer(result)).build();
-		try (final InputStreamReader reader = new InputStreamReader(inputStream, CharsetUtils.CharsetUTF8)) {
+		try (final InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
 			final String[] lines = StringUtils.splitLines(renderer.render(parser.parseReader(reader)));
 			for (String line : lines)
 				result.add(CONTENT, line);

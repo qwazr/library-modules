@@ -20,7 +20,6 @@ import com.qwazr.extractor.ParserAbstract;
 import com.qwazr.extractor.ParserField;
 import com.qwazr.extractor.ParserFieldsBuilder;
 import com.qwazr.extractor.ParserResultBuilder;
-import com.qwazr.utils.CharsetUtils;
 import com.qwazr.utils.DomUtils;
 import com.qwazr.utils.HtmlUtils;
 import com.qwazr.utils.IOUtils;
@@ -41,6 +40,7 @@ import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -276,7 +276,7 @@ public class HtmlParser extends ParserAbstract {
 
 		final String htmlSource;
 		if (isRegExpParam) {
-			htmlSource = IOUtils.toString(inputStream, CharsetUtils.CharsetUTF8);
+			htmlSource = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
 			htmlParser.parse(new InputSource(new StringReader(htmlSource)));
 		} else {
 			htmlSource = null;
