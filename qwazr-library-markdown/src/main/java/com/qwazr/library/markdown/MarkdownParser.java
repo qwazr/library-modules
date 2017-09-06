@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,8 +20,10 @@ import com.qwazr.extractor.ParserField;
 import com.qwazr.extractor.ParserFieldsBuilder;
 import com.qwazr.extractor.ParserResultBuilder;
 import com.qwazr.utils.StringUtils;
+import org.commonmark.node.Heading;
 import org.commonmark.node.Link;
 import org.commonmark.node.Node;
+import org.commonmark.node.Text;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.NodeRenderer;
 import org.commonmark.renderer.text.TextContentRenderer;
@@ -40,13 +42,27 @@ public class MarkdownParser extends ParserAbstract {
 
 	final static String[] DEFAULT_EXTENSIONS = { "md", "markdown" };
 
+	final static ParserField H1 = ParserField.newString("h1", "h1 headers");
+
+	final static ParserField H2 = ParserField.newString("h2", "h2 headers");
+
+	final static ParserField H3 = ParserField.newString("h3", "h3 headers");
+
+	final static ParserField H4 = ParserField.newString("h4", "h4 headers");
+
+	final static ParserField H5 = ParserField.newString("h5", "h5 headers");
+
+	final static ParserField H6 = ParserField.newString("h6", "h6 headers");
+
 	final static ParserField CONTENT = ParserField.newString("content", "The content of the document");
 
 	final static ParserField URL = ParserField.newString("url", "Detected URLs");
 
+	final static ParserField URL_TITLE = ParserField.newString("title", "URL title");
+
 	final static ParserField LANG_DETECTION = ParserField.newString("lang_detection", "Detection of the language");
 
-	final protected static ParserField[] FIELDS = { CONTENT, URL, LANG_DETECTION };
+	final protected static ParserField[] FIELDS = { H1, H2, H3, H4, H5, H6, CONTENT, URL, URL_TITLE, LANG_DETECTION };
 
 	@Override
 	public ParserField[] getParameters() {
@@ -73,17 +89,31 @@ public class MarkdownParser extends ParserAbstract {
 			final String extension, final String mimeType, final ParserResultBuilder resultBuilder) throws Exception {
 		final ParserFieldsBuilder result = resultBuilder.newDocument();
 		final Parser parser = Parser.builder().build();
-		final TextContentRenderer renderer =
-				TextContentRenderer.builder().nodeRendererFactory(context -> new ExtractorNodeRenderer(result)).build();
+
+		final Node documentNode;
+
 		try (final InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
-			final String[] lines = StringUtils.splitLines(renderer.render(parser.parseReader(reader)));
+			documentNode = parser.parseReader(reader);
+		}
+
+		// First pass we extract the meta data fields
+		TextContentRenderer.builder()
+				.nodeRendererFactory(context -> new ExtractorNodeRenderer(result))
+				.build()
+				.render(documentNode);
+
+		// Second pass we extract the text content
+		final String text = TextContentRenderer.builder().build().render(documentNode);
+		if (text != null) {
+			final String[] lines = StringUtils.splitLines(text);
 			for (String line : lines)
 				result.add(CONTENT, line);
 		}
+
 	}
 
 	private final static Set<Class<? extends Node>> TYPES =
-			new HashSet<>(Arrays.asList(Link.class, org.commonmark.node.Image.class));
+			new HashSet<>(Arrays.asList(Link.class, org.commonmark.node.Image.class, Text.class));
 
 	final public class ExtractorNodeRenderer implements NodeRenderer {
 
@@ -103,11 +133,37 @@ public class MarkdownParser extends ParserAbstract {
 			if (node instanceof Link) {
 				final Link link = (Link) node;
 				result.add(URL, link.getDestination());
-				result.add(CONTENT, link.getTitle());
+				result.add(URL_TITLE, link.getTitle());
 			} else if (node instanceof org.commonmark.node.Image) {
 				final org.commonmark.node.Image img = (org.commonmark.node.Image) node;
 				result.add(URL, img.getDestination());
-				result.add(CONTENT, img.getTitle());
+				result.add(URL_TITLE, img.getTitle());
+			} else if (node instanceof Text) {
+				final Text text = (Text) node;
+				final Node parent = node.getParent();
+				if (parent != null && parent instanceof Heading) {
+					final Heading heading = (Heading) parent;
+					switch (heading.getLevel()) {
+					case 1:
+						result.add(H1, text.getLiteral());
+						break;
+					case 2:
+						result.add(H2, text.getLiteral());
+						break;
+					case 3:
+						result.add(H3, text.getLiteral());
+						break;
+					case 4:
+						result.add(H4, text.getLiteral());
+						break;
+					case 5:
+						result.add(H5, text.getLiteral());
+						break;
+					case 6:
+						result.add(H6, text.getLiteral());
+						break;
+					}
+				}
 			}
 		}
 	}

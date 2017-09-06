@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015-2017 Emmanuel Keller
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,9 @@
 package com.qwazr.library.markdown;
 
 import com.qwazr.extractor.ExtractorManager;
+import com.qwazr.extractor.ParserResult;
 import com.qwazr.extractor.ParserTest;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -30,7 +32,8 @@ public class MarkdownParserTest extends ParserTest {
 
 	@Test
 	public void testMarkdown() throws Exception {
-		doTest(MarkdownParser.class, "file.md", "extract data to be indexed");
+		final ParserResult parserResult = doTest(MarkdownParser.class, "file.md", "extract data to be indexed");
+		Assert.assertEquals("Discovering the main concepts", parserResult.getDocumentFieldValue(0, "h1", 0));
 	}
 
 }
