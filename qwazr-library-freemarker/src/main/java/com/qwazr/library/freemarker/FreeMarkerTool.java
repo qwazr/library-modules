@@ -38,6 +38,7 @@ import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
@@ -166,13 +167,18 @@ public class FreeMarkerTool extends AbstractLibrary implements Closeable {
 		}
 	}
 
-	public void template(final String templatePath, final Map<String, Object> dataModel,
+	public void template(final String templatePath, final Locale locale, final Map<String, Object> dataModel,
 			final HttpServletResponse response) throws TemplateException, IOException {
 		if (response.getContentType() == null)
 			response.setContentType(defaultContentType == null ? DEFAULT_CONTENT_TYPE : defaultContentType);
 		response.setCharacterEncoding(DEFAULT_CHARSET);
-		final Template template = cfg.getTemplate(templatePath);
+		final Template template = cfg.getTemplate(templatePath, locale);
 		template.process(dataModel, response.getWriter());
+	}
+
+	public void template(final String templatePath, final Map<String, Object> dataModel,
+			final HttpServletResponse response) throws TemplateException, IOException {
+		template(templatePath, null, dataModel, response);
 	}
 
 	public void template(final String templatePath, final HttpServletRequest request,
@@ -190,13 +196,18 @@ public class FreeMarkerTool extends AbstractLibrary implements Closeable {
 		template(templatePath, variables, response);
 	}
 
-	public String template(final String templatePath, final Map<String, Object> dataModel)
+	public String template(final String templatePath, final Locale locale, final Map<String, Object> dataModel)
 			throws TemplateException, IOException {
-		final Template template = cfg.getTemplate(templatePath);
+		final Template template = cfg.getTemplate(templatePath, locale);
 		try (final StringWriter stringWriter = new StringWriter()) {
 			template.process(dataModel, stringWriter);
 			return stringWriter.toString();
 		}
+	}
+
+	public String template(final String templatePath, final Map<String, Object> dataModel)
+			throws TemplateException, IOException {
+		return template(templatePath, null, dataModel);
 	}
 
 	@JsonIgnore
