@@ -154,7 +154,7 @@ public class FreeMarkerTool extends AbstractLibrary implements Closeable {
 		cfg.setTemplateLoader(builder.build());
 		cfg.setOutputEncoding(outputEncoding == null ? DEFAULT_CHARSET : outputEncoding);
 		cfg.setDefaultEncoding(defaultEncoding == null ? DEFAULT_CHARSET : defaultEncoding);
-		cfg.setLocalizedLookup(false);
+		cfg.setLocalizedLookup(localizedLookup == null ? false : localizedLookup);
 		cfg.setTagSyntax(Configuration.AUTO_DETECT_TAG_SYNTAX);
 		cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
 	}
