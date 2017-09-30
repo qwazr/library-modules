@@ -32,7 +32,6 @@ import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorOutputStream;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.http.entity.ContentType;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -387,11 +386,5 @@ public class ArchiverTool extends AbstractLibrary {
 			IOUtils.closeQuietly(fis);
 		}
 	}
-
-	public final static ContentType APPLICATION_ZIP = ContentType.create("application/zip");
-
-	@JsonIgnore
-	public static ContentType getApplicationZipContentType() {
-		return APPLICATION_ZIP;
-	}
+	
 }
