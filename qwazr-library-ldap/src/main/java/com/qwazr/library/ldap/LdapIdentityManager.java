@@ -50,7 +50,7 @@ public class LdapIdentityManager implements IdentityManager {
 	}
 
 	@Override
-	public Account verify(final String id, final Credential credential) {
+	public LdapAccount verify(final String id, final Credential credential) {
 
 		// This realm only support one type of credential
 		if (!(credential instanceof PasswordCredential))
@@ -66,7 +66,7 @@ public class LdapIdentityManager implements IdentityManager {
 			final Entry entry = connector.auth(connection, userFilter, new String(passwordCredential.getPassword()));
 			if (entry == null)
 				return authenticationFailure("Authentication error: " + userFilter, null);
-			
+
 			final String roleFilter = "(&(objectClass=groupOfNames)(member=" + entry.getDn() + "))";
 
 			final LinkedHashSet<String> roles = new LinkedHashSet<>();
@@ -76,28 +76,18 @@ public class LdapIdentityManager implements IdentityManager {
 					try {
 						roles.add(e.get("cn").getString());
 					} catch (LdapInvalidAttributeValueException e1) {
-						e1.printStackTrace();
+						authenticationFailure(e1.getMessage(), e1);
 					}
 				});
 			}
 
-			return new Account() {
-				@Override
-				public Principal getPrincipal() {
-					return () -> id;
-				}
-
-				@Override
-				public Set<String> getRoles() {
-					return roles;
-				}
-			};
+			return new LdapAccount(id, roles);
 		} catch (IOException | LdapException | CursorException e) {
 			return authenticationFailure(e.getMessage(), e);
 		}
 	}
 
-	private Account authenticationFailure(final String msg, final Throwable cause) {
+	private LdapAccount authenticationFailure(final String msg, final Throwable cause) {
 		if (cause != null)
 			LOGGER.log(Level.WARNING, cause, cause::getMessage);
 		else
@@ -115,4 +105,29 @@ public class LdapIdentityManager implements IdentityManager {
 		return null;
 	}
 
+	public class LdapAccount implements Account, Principal {
+
+		private final String name;
+		private final Set<String> roles;
+
+		private LdapAccount(final String name, final Set<String> roles) {
+			this.name = name;
+			this.roles = roles;
+		}
+
+		@Override
+		public Principal getPrincipal() {
+			return this;
+		}
+
+		@Override
+		public Set<String> getRoles() {
+			return roles;
+		}
+
+		@Override
+		public String getName() {
+			return name;
+		}
+	}
 }

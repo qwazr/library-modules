@@ -15,7 +15,6 @@
  */
 package com.qwazr.library.ldap;
 
-import io.undertow.security.idm.Account;
 import io.undertow.security.idm.PasswordCredential;
 import org.junit.Assert;
 import org.junit.Test;
@@ -39,12 +38,14 @@ public class LdapIdentityManagerTest {
 				false)) {
 			ldapConnector.load();
 			final LdapIdentityManager identityManager = new LdapIdentityManager(ldapConnector);
-			final Account account = identityManager.verify(USERNAME, new PasswordCredential(PASSWORD.toCharArray()));
+			final LdapIdentityManager.LdapAccount account =
+					identityManager.verify(USERNAME, new PasswordCredential(PASSWORD.toCharArray()));
 			Assert.assertNotNull(account);
 			Assert.assertNotNull(account.getPrincipal());
 			Assert.assertEquals(USERNAME, account.getPrincipal().getName());
+			Assert.assertEquals(USERNAME, account.getName());
 			Assert.assertTrue(account.getRoles().contains(ROLE));
-
+			Assert.assertTrue(account.getRoles().contains(ROLE));
 		}
 	}
 }
