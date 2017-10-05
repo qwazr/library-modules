@@ -126,12 +126,13 @@ public class LdapConnector extends AbstractPasswordLibrary implements Closeable 
 	/**
 	 * Check the user password, and reconnect using its credential
 	 *
-	 * @param connection
-	 * @param userFilter
-	 * @param password
-	 * @return
-	 * @throws LdapException
-	 * @throws CursorException
+	 * @param connection the ldap connection
+	 * @param userFilter the user ldap filter
+	 * @param password   the password
+	 * @return the find entry or null
+	 * @throws LdapException   if any LDAP error occurs
+	 * @throws CursorException if any cursor error occurs
+	 * @throws IOException     if any I/O error occurs
 	 */
 	public Entry auth(LdapConnection connection, String userFilter, String password)
 			throws LdapException, CursorException, IOException {
