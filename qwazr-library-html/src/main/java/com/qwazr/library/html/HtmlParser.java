@@ -58,6 +58,9 @@ public class HtmlParser extends ParserAbstract {
 	final private static ParserField CONTENT =
 			ParserField.newString("content", "The text content of the document. One item per paragraph");
 
+	final private static ParserField HEADERS =
+			ParserField.newString("headers", "Extract headers (h1, h2, h3, h4, h5, h6)");
+
 	final private static ParserField H1 = ParserField.newString("h1", "H1 header contents");
 
 	final private static ParserField H2 = ParserField.newString("h2", "H2 header contents");
@@ -98,8 +101,18 @@ public class HtmlParser extends ParserAbstract {
 	final private static ParserField REGEXP_NAME_PARAM =
 			ParserField.newString("regexp_name", "The name of the regular expression");
 
-	final private static ParserField[] PARAMETERS =
-			{ XPATH_PARAM, XPATH_NAME_PARAM, CSS_PARAM, CSS_NAME_PARAM, REGEXP_PARAM, REGEXP_NAME_PARAM };
+	final private static ParserField[] PARAMETERS = { TITLE,
+			CONTENT,
+			HEADERS,
+			ANCHORS,
+			IMAGES,
+			METAS,
+			XPATH_PARAM,
+			XPATH_NAME_PARAM,
+			CSS_PARAM,
+			CSS_NAME_PARAM,
+			REGEXP_PARAM,
+			REGEXP_NAME_PARAM };
 
 	@Override
 	public ParserField[] getParameters() {
@@ -297,16 +310,22 @@ public class HtmlParser extends ParserAbstract {
 		if (isRegExpParam)
 			extractRegExp(parameters, htmlSource, selectorsResult);
 
-		if (!selectorsResult.isEmpty()) {
+		final boolean selectorResultIsEmpty = selectorsResult.isEmpty();
+		if (!selectorResultIsEmpty)
 			parserDocument.set(SELECTORS, selectorsResult);
-		} else {
+
+		if (selectorResultIsEmpty || (parameters != null && parameters.containsKey(TITLE.name)))
 			extractTitle(xPath, htmlDocument, parserDocument);
+		if (selectorResultIsEmpty || (parameters != null && parameters.containsKey(HEADERS.name)))
 			extractHeaders(htmlDocument, parserDocument);
+		if (selectorResultIsEmpty || (parameters != null && parameters.containsKey(ANCHORS.name)))
 			extractAnchors(xPath, htmlDocument, parserDocument);
+		if (selectorResultIsEmpty || (parameters != null && parameters.containsKey(IMAGES.name)))
 			extractImgTags(htmlDocument, parserDocument);
+		if (selectorResultIsEmpty || (parameters != null && parameters.containsKey(CONTENT.name)))
 			extractTextContent(htmlDocument, parserDocument);
+		if (selectorResultIsEmpty || (parameters != null && parameters.containsKey(METAS.name)))
 			extractMeta(htmlDocument, parserDocument);
-		}
 	}
 
 	@Override
