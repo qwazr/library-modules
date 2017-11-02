@@ -127,7 +127,7 @@ public class HtmlParser extends ParserAbstract {
 
 	private void extractTitle(final XPathParser xpath, final Document documentElement,
 			final ParserFieldsBuilder document) throws XPathExpressionException {
-		final String title = xpath.evaluateString(documentElement, "/html/head/title/text()");
+		final String title = xpath.evaluateString(documentElement, "/html/head/title//text()");
 		if (title != null)
 			document.set(TITLE, title);
 	}

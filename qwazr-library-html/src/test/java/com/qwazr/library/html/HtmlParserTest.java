@@ -38,7 +38,7 @@ public class HtmlParserTest extends ParserTest {
 	public void testHtml() throws Exception {
 		final ParserResult result = doTest(HtmlParser.class, "file.html", "search engine software");
 		Assert.assertEquals("OpenSearchServer | Open Source Search Engine and API",
-				result.getDocumentFieldValue(0, "title", 0));
+				result.getDocumentFieldValue(0, "title", 0).toString().trim());
 	}
 
 	private void testSelector(String[] names, String[] selectors, String param, String[] selectorResults) {
