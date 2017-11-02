@@ -39,6 +39,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -293,7 +294,7 @@ public class HtmlParser extends ParserAbstract {
 			htmlParser.parse(new InputSource(new StringReader(htmlSource)));
 		} else {
 			htmlSource = null;
-			htmlParser.parse(new InputSource(inputStream));
+			htmlParser.parse(new InputSource(new InputStreamReader(inputStream, StandardCharsets.UTF_8)));
 		}
 
 		final ParserFieldsBuilder parserDocument = resultBuilder.newDocument();
