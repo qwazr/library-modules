@@ -143,12 +143,12 @@ public class HtmlParser extends ParserAbstract {
 
 	private void extractAnchors(final XPathParser xpath, final Document documentElement,
 			final ParserFieldsBuilder document) throws XPathExpressionException {
-		xpath.evaluateNodes(documentElement, "//a/@href")
-				.forEach(node -> document.add(ANCHORS, DomUtils.getAttributeString(node, "href")));
+		DomUtils.forEach(xpath.evaluateNodes(documentElement, "//a/@href"),
+				node -> document.add(ANCHORS, DomUtils.getAttributeString(node, "href")));
 	}
 
 	private void extractImgTags(final Document documentElement, final ParserFieldsBuilder document) {
-		DomUtils.iterator(documentElement.getElementsByTagName("img")).forEach(node -> {
+		DomUtils.forEach(documentElement.getElementsByTagName("img"), node -> {
 			final Map<String, String> map = new LinkedHashMap<>();
 			addToMap(map, "src", DomUtils.getAttributeString(node, "src"));
 			addToMap(map, "alt", DomUtils.getAttributeString(node, "alt"));
@@ -172,7 +172,7 @@ public class HtmlParser extends ParserAbstract {
 		if (head.getNodeType() != Node.ELEMENT_NODE)
 			return;
 		final Map<String, String> map = new LinkedHashMap<>();
-		DomUtils.iterator(((Element) head).getElementsByTagName("meta")).forEach(meta -> {
+		DomUtils.forEach((((Element) head).getElementsByTagName("meta")), meta -> {
 			final String name = DomUtils.getAttributeString(meta, "name");
 			final String content = DomUtils.getAttributeString(meta, "content");
 			if (!StringUtils.isEmpty(name) && !StringUtils.isEmpty(content))
@@ -266,7 +266,7 @@ public class HtmlParser extends ParserAbstract {
 
 	private void addToField(final ParserFieldsBuilder document, final ParserField parserField,
 			final NodeList elements) {
-		DomUtils.iterator(elements).forEach(node -> document.add(parserField, node.getTextContent()));
+		DomUtils.forEach(elements, node -> document.add(parserField, node.getTextContent()));
 	}
 
 	@Override
