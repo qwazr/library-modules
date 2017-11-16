@@ -16,7 +16,7 @@
 package com.qwazr.library.files;
 
 import com.qwazr.library.AbstractLibrary;
-import com.qwazr.link.Component;
+import com.qwazr.component.annotations.Component;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 
 import java.io.IOException;
