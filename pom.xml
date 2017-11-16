@@ -30,6 +30,11 @@
             <artifactId>qwazr-extractor</artifactId>
             <version>1.4.0-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>com.qwazr</groupId>
+            <artifactId>qwazr-link</artifactId>
+            <version>1.4.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
     <modules>

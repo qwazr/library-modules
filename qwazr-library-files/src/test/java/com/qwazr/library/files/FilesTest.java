@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- **/
+ */
 package com.qwazr.library.files;
 
 import com.qwazr.library.annotations.Library;
@@ -30,6 +30,7 @@ public class FilesTest extends AbstractLibraryTest {
 	@Test
 	public void test() throws IOException {
 		Assert.assertNotNull(files);
+		files.browse("src/test/java", 1, null);
 	}
 
 }
