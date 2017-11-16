@@ -15,6 +15,7 @@
  */
 package com.qwazr.library.files;
 
+import com.qwazr.component.ComponentsManager;
 import com.qwazr.library.annotations.Library;
 import com.qwazr.library.test.AbstractLibraryTest;
 import org.junit.Assert;
@@ -28,9 +29,13 @@ public class FilesTest extends AbstractLibraryTest {
 	private FilesTool files;
 
 	@Test
-	public void test() throws IOException {
+	public void testLibrary() throws IOException {
 		Assert.assertNotNull(files);
 		files.browse("src/test/java", 1, null);
 	}
 
+	@Test
+	public void testComponent() throws IOException, ClassNotFoundException {
+		Assert.assertNotNull(new ComponentsManager().registerServices().getComponents().get(FilesTool.class.getName()));
+	}
 }

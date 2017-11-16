@@ -15,15 +15,16 @@
  */
 package com.qwazr.library.files;
 
-import com.qwazr.library.AbstractLibrary;
+import com.qwazr.component.ComponentInterface;
 import com.qwazr.component.annotations.Component;
+import com.qwazr.library.AbstractLibrary;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 
 import java.io.IOException;
 import java.nio.file.Paths;
 
 @Component("File system browser")
-public class FilesTool extends AbstractLibrary {
+public class FilesTool extends AbstractLibrary implements ComponentInterface {
 
 	@Component("Browse a directory")
 	public void browse(@Component("The path of the directory to browse") final String path,
