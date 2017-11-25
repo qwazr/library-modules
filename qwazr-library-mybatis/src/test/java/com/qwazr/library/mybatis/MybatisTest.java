@@ -47,7 +47,7 @@ public class MybatisTest extends AbstractLibraryTest {
 		checkSession(mybatis.getSqlSessionFactory());
 		IOUtils.CloseableContext context = new IOUtils.CloseableList();
 		checkSession(mybatis.getSqlSessionFactory(context));
-		IOUtils.close(context);
+		IOUtils.closeQuietly(context);
 	}
 
 	@Test

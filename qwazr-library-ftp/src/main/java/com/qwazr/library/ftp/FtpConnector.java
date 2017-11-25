@@ -27,10 +27,12 @@ import org.apache.commons.net.ftp.FTPReply;
 import org.apache.commons.net.ftp.FTPSClient;
 
 import java.io.Closeable;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -106,11 +108,11 @@ public class FtpConnector extends AbstractPasswordLibrary {
 		/**
 		 * Download the file if any
 		 *
-		 * @param remote the name of the file
-		 * @param file   the destination file
+		 * @param remote   the name of the file
+		 * @param filePath the path of the destination file
 		 * @throws IOException
 		 */
-		public void retrieve(final String remote, final File file, final Boolean binary) throws IOException {
+		public void retrieve(final String remote, final Path filePath, final Boolean binary) throws IOException {
 			if (binary != null) {
 				if (binary) {
 					if (!ftp.setFileType(FTP.BINARY_FILE_TYPE))
@@ -121,45 +123,43 @@ public class FtpConnector extends AbstractPasswordLibrary {
 				}
 			}
 			checkPassiveMode();
-			InputStream is = ftp.retrieveFileStream(remote);
-			if (is == null)
-				throw new FileNotFoundException("FTP file not found: " + hostname + "/" + remote);
-			try {
-				IOUtils.copy(is, file);
-			} finally {
-				IOUtils.closeQuietly(is);
+
+			try (final InputStream is = ftp.retrieveFileStream(remote)) {
+				if (is == null)
+					throw new FileNotFoundException("FTP file not found: " + hostname + "/" + remote);
+				IOUtils.copy(is, filePath);
 			}
 			ftp.completePendingCommand();
 		}
 
-		public void retrieve(final FTPFile remote, final File file, final Boolean binary) throws IOException {
-			retrieve(remote.getName(), file, binary);
+		public void retrieve(final FTPFile remote, final Path filePath, final Boolean binary) throws IOException {
+			retrieve(remote.getName(), filePath, binary);
 		}
 
 		public void retrieve(final FTPFile remote, final String local_path, final Boolean binary) throws IOException {
-			retrieve(remote.getName(), new File(local_path), binary);
+			retrieve(remote.getName(), Paths.get(local_path), binary);
 		}
 
-		public void retrieve(String remote, String local_path, Boolean binary) throws IOException {
-			retrieve(remote, new File(local_path), binary);
+		public void retrieve(final String remote, final String local_path, final Boolean binary) throws IOException {
+			retrieve(remote, Paths.get(local_path), binary);
 		}
 
-		public void sync_files(final ScriptObjectMirror browser, final String remote_path, final File localDirectory,
+		public void sync_files(final ScriptObjectMirror browser, final String remote_path, final Path localDirectory,
 				final Boolean downloadOnlyIfNotExists, final Boolean binary) throws IOException {
 
-			final boolean file_method = browser != null ? browser.hasMember("file") : false;
-			final boolean dir_method = browser != null ? browser.hasMember("directory") : false;
+			final boolean file_method = browser != null && browser.hasMember("file");
+			final boolean dir_method = browser != null && browser.hasMember("directory");
 			if (!ftp.changeWorkingDirectory(remote_path))
 				throw new IOException("Remote working directory change failed: " + hostname + "/" + remote_path);
-			if (!localDirectory.exists())
+			if (!Files.exists(localDirectory))
 				throw new FileNotFoundException("The destination directory does not exist: " + localDirectory);
-			if (!localDirectory.isDirectory())
+			if (!Files.isDirectory(localDirectory))
 				throw new IOException("The destination path is not a directory: " + localDirectory);
 			checkPassiveMode();
 			FTPFile[] remoteFiles = ftp.listFiles();
 			if (remoteFiles == null)
 				return;
-			final LinkedHashMap<FTPFile, File> remoteDirs = new LinkedHashMap<>();
+			final LinkedHashMap<FTPFile, Path> remoteDirs = new LinkedHashMap<>();
 			for (FTPFile remoteFile : remoteFiles) {
 				if (remoteFile == null)
 					continue;
@@ -172,32 +172,32 @@ public class FtpConnector extends AbstractPasswordLibrary {
 					if (dir_method)
 						if (Boolean.FALSE.equals(browser.callMember("directory", remote_path + '/' + remoteName)))
 							continue;
-					File localDir = new File(localDirectory, remoteName);
-					if (!localDir.exists())
-						localDir.mkdir();
+					final Path localDir = localDirectory.resolve(remoteName);
+					if (!Files.exists(localDir))
+						Files.createDirectory(localDir);
 					remoteDirs.put(remoteFile, localDir);
 					continue;
 				}
 				if (!remoteFile.isFile())
 					continue;
-				File localFile = new File(localDirectory, remoteName);
+				final Path localFilePath = localDirectory.resolve(remoteName);
 				if (file_method)
 					if (Boolean.FALSE.equals(
-							browser.callMember("file", remote_path + '/' + remoteName, localFile.exists())))
+							browser.callMember("file", remote_path + '/' + remoteName, Files.exists(localFilePath))))
 						continue;
-				if (downloadOnlyIfNotExists != null && downloadOnlyIfNotExists && localFile.exists())
+				if (downloadOnlyIfNotExists != null && downloadOnlyIfNotExists && Files.exists(localFilePath))
 					continue;
 				LOGGER.info(() -> "FTP download: " + hostname + '/' + remote_path + '/' + remoteName);
-				retrieve(remoteFile, localFile, binary);
+				retrieve(remoteFile, localFilePath, binary);
 			}
-			for (Map.Entry<FTPFile, File> entry : remoteDirs.entrySet())
+			for (Map.Entry<FTPFile, Path> entry : remoteDirs.entrySet())
 				sync_files(browser, remote_path + '/' + entry.getKey().getName(), entry.getValue(),
 						downloadOnlyIfNotExists, binary);
 		}
 
-		public void sync_files(ScriptObjectMirror browser, String remote_path, String local_path,
-				Boolean downloadOnlyIfNotExists, Boolean binary) throws IOException {
-			sync_files(browser, remote_path, new File(local_path), downloadOnlyIfNotExists, binary);
+		public void sync_files(final ScriptObjectMirror browser, final String remote_path, final String local_path,
+				final Boolean downloadOnlyIfNotExists, final Boolean binary) throws IOException {
+			sync_files(browser, remote_path, Paths.get(local_path), downloadOnlyIfNotExists, binary);
 		}
 
 		public void logout() throws IOException {

@@ -27,10 +27,10 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.text.PDFTextStripper;
 
 import javax.ws.rs.core.MultivaluedMap;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.nio.file.Path;
 
 public class PdfBoxParser extends ParserAbstract {
 
@@ -62,8 +62,8 @@ public class PdfBoxParser extends ParserAbstract {
 
 	final private static ParserField CHARACTER_COUNT = ParserField.newInteger("character_count", null);
 
-	final private static ParserField LANG_DETECTION = ParserField.newString("lang_detection",
-			"Detection of the language");
+	final private static ParserField LANG_DETECTION =
+			ParserField.newString("lang_detection", "Detection of the language");
 
 	final private static ParserField[] FIELDS = { TITLE,
 			AUTHOR,
@@ -130,9 +130,9 @@ public class PdfBoxParser extends ParserAbstract {
 	}
 
 	@Override
-	public void parseContent(final MultivaluedMap<String, String> parameters, final File file, String extension,
+	public void parseContent(final MultivaluedMap<String, String> parameters, final Path filePath, String extension,
 			final String mimeType, final ParserResultBuilder resultBuilder) throws Exception {
-		parseContent(PDDocument.load(file, getPassword(parameters)), resultBuilder);
+		parseContent(PDDocument.load(filePath.toFile(), getPassword(parameters)), resultBuilder);
 	}
 
 	@Override

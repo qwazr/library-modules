@@ -26,7 +26,6 @@ import net.sourceforge.tess4j.TesseractException;
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.MultivaluedMap;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -53,8 +52,8 @@ public class OcrParser extends ParserAbstract {
 
 	final private static ParserField CONTENT = ParserField.newString("content", "The content of the document");
 
-	final private static ParserField LANG_DETECTION = ParserField.newString("lang_detection",
-			"Detection of the language");
+	final private static ParserField LANG_DETECTION =
+			ParserField.newString("lang_detection", "Detection of the language");
 
 	final private static ParserField[] FIELDS = { CONTENT, LANG_DETECTION };
 
@@ -136,15 +135,16 @@ public class OcrParser extends ParserAbstract {
 	}
 
 	@Override
-	public void parseContent(final MultivaluedMap<String, String> parameters, final File file, final String extension,
-			final String mimeType, final ParserResultBuilder resultBuilder) throws IOException, TesseractException {
+	public void parseContent(final MultivaluedMap<String, String> parameters, final Path filePath,
+			final String extension, final String mimeType, final ParserResultBuilder resultBuilder)
+			throws IOException, TesseractException {
 		final Tesseract1 tesseract = new Tesseract1();
 		final String lang = this.getParameterValue(parameters, LANGUAGE, 0);
 		if (lang != null)
 			tesseract.setLanguage(lang);
 		if (TESSDATA_PREFIX != null)
 			tesseract.setDatapath(TESSDATA_PREFIX);
-		final String result = tesseract.doOCR(file);
+		final String result = tesseract.doOCR(filePath.toFile());
 		if (StringUtils.isEmpty(result))
 			return;
 		final ParserFieldsBuilder document = resultBuilder.newDocument();
@@ -161,11 +161,12 @@ public class OcrParser extends ParserAbstract {
 			if (extension == null)
 				throw new BadRequestException("The mime-type is not suppored: " + mimeType);
 		}
-		final File tempFile = ParserAbstract.createTempFile(inputStream, "." + extension);
+		final Path tempFile = ParserAbstract.createTempFile(inputStream, "." + extension);
 		try {
 			parseContent(parameters, tempFile, extension, mimeType, resultBuilder);
 		} finally {
-			tempFile.delete();
+			if (tempFile != null)
+				Files.deleteIfExists(tempFile);
 		}
 	}
 

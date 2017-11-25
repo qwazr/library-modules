@@ -23,6 +23,7 @@ import com.qwazr.utils.CharsetUtils;
 import com.qwazr.utils.IOUtils;
 import com.qwazr.utils.LoggerUtils;
 import com.qwazr.utils.ObjectMappers;
+import com.qwazr.utils.concurrent.ConcurrentUtils;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveException;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
@@ -39,12 +40,15 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -106,28 +110,28 @@ public class ArchiverTool extends AbstractLibrary {
 		return reader;
 	}
 
-	public void decompress(final File source, final File destFile) throws IOException, CompressorException {
-		if (destFile.exists() && destFile.length() > 0)
-			throw new IOException("The file already exists: " + destFile.getPath());
+	public void decompress(final Path source, final Path destFile) throws IOException, CompressorException {
+		if (Files.exists(destFile) && Files.size(destFile) > 0)
+			throw new IOException("The file already exists: " + destFile.toAbsolutePath());
 		try (final InputStream input = getCompressorNewInputStream(
-				new BufferedInputStream(new FileInputStream(source)))) {
+				new BufferedInputStream(Files.newInputStream(source)))) {
 			IOUtils.copy(input, destFile);
 		} catch (IOException e) {
-			throw new IOException("Unable to decompress the file: " + source.getPath(), e);
+			throw new IOException("Unable to decompress the file: " + source.toAbsolutePath(), e);
 		}
 	}
 
 	/**
 	 * Decompress the file as a String
 	 *
-	 * @param sourceFile the file to uncompress
+	 * @param sourceFile the path to the file to uncompress
 	 * @return a string with the uncompressed content
 	 * @throws IOException         related to I/O errors
 	 * @throws CompressorException if any compression error occurs
 	 */
-	public String decompressString(final File sourceFile) throws IOException, CompressorException {
+	public String decompressString(final Path sourceFile) throws IOException, CompressorException {
 		try (final InputStream input = getCompressorNewInputStream(
-				new BufferedInputStream(new FileInputStream(sourceFile)))) {
+				new BufferedInputStream(Files.newInputStream(sourceFile)))) {
 			return IOUtils.toString(input, StandardCharsets.UTF_8);
 		}
 	}
@@ -181,26 +185,25 @@ public class ArchiverTool extends AbstractLibrary {
 		}
 	}
 
-	public void decompress_dir(final File sourceDir, String sourceExtension, final File destDir,
+	public void decompress_dir(final Path sourceDir, String sourceExtension, final Path destDir,
 			final String destExtension) throws IOException, CompressorException {
-		if (!sourceDir.exists())
-			throw new FileNotFoundException("The source directory does not exist: " + sourceDir.getPath());
-		if (!destDir.exists())
-			throw new FileNotFoundException("The destination directory does not exist: " + destDir.getPath());
-		final File[] sourceFiles = sourceDir.listFiles();
+		if (!Files.exists(sourceDir))
+			throw new FileNotFoundException("The source directory does not exist: " + sourceDir.toAbsolutePath());
+		if (!Files.exists(destDir))
+			throw new FileNotFoundException("The destination directory does not exist: " + destDir.toAbsolutePath());
+		final Path[] sourceFiles = Files.list(sourceDir).filter(p -> Files.isRegularFile(p)).toArray(Path[]::new);
 		if (sourceFiles == null)
 			return;
-		for (File sourceFile : sourceFiles) {
-			if (!sourceFile.isFile())
-				continue;
-			final String ext = FilenameUtils.getExtension(sourceFile.getName());
+		for (Path sourceFile : sourceFiles) {
+			final String fileName = sourceFile.getFileName().toString();
+			final String ext = FilenameUtils.getExtension(fileName);
 			if (!sourceExtension.equals(ext))
 				continue;
-			String newName = FilenameUtils.getBaseName(sourceFile.getName());
+			String newName = FilenameUtils.getBaseName(fileName);
 			if (destExtension != null)
 				newName += '.' + destExtension;
-			final File destFile = new File(destDir, newName);
-			if (destFile.exists())
+			final Path destFile = destDir.resolve(newName);
+			if (Files.exists(destFile))
 				continue;
 			decompress(sourceFile, destFile);
 		}
@@ -208,7 +211,7 @@ public class ArchiverTool extends AbstractLibrary {
 
 	public void decompress_dir(final String sourcePath, final String sourceExtension, final String destPath,
 			final String destExtension) throws IOException, CompressorException {
-		decompress_dir(new File(sourcePath), sourceExtension, new File(destPath), destExtension);
+		decompress_dir(Paths.get(sourcePath), sourceExtension, Paths.get(destPath), destExtension);
 	}
 
 	public void decompress_dir(final String sourcePath, final String sourceExtension, final String destPath)
@@ -216,57 +219,53 @@ public class ArchiverTool extends AbstractLibrary {
 		decompress_dir(sourcePath, sourceExtension, destPath, null);
 	}
 
-	public void extract(final File sourceFile, final File destDir) throws IOException, ArchiveException {
-		try (final InputStream is = new BufferedInputStream(new FileInputStream(sourceFile))) {
+	public void extract(final Path sourceFile, final Path destDir) throws IOException, ArchiveException {
+		try (final InputStream is = new BufferedInputStream(Files.newInputStream(sourceFile))) {
 			try (final ArchiveInputStream in = new ArchiveStreamFactory().createArchiveInputStream(is)) {
 				ArchiveEntry entry;
 				while ((entry = in.getNextEntry()) != null) {
 					if (!in.canReadEntryData(entry))
 						continue;
 					if (entry.isDirectory()) {
-						File newDir = new File(destDir, entry.getName());
-						if (newDir.exists() && newDir.isDirectory())
-							continue;
-						if (!newDir.mkdir())
-							throw new IOException("Can't create directory : " + newDir.getPath());
+						final Path newDir = destDir.resolve(entry.getName());
+						if (!Files.exists(newDir))
+							Files.createDirectory(newDir);
 						continue;
 					}
 					if (entry instanceof ZipArchiveEntry)
 						if (((ZipArchiveEntry) entry).isUnixSymlink())
 							continue;
-					final File destFile = new File(destDir, entry.getName());
-					final File parentDir = destFile.getParentFile();
-					if (!parentDir.exists())
-						if (!parentDir.mkdirs())
-							throw new IOException("Can't create directory : " + parentDir.getPath());
+					final Path destFile = destDir.resolve(entry.getName());
+					final Path parentDir = destFile.getParent();
+					if (!Files.exists(parentDir))
+						Files.createDirectories(parentDir);
 					final long entryLastModified = entry.getLastModifiedDate().getTime();
-					if (destFile.exists() && destFile.isFile() && destFile.lastModified() == entryLastModified &&
-							entry.getSize() == destFile.length())
+					if (Files.exists(destFile) && Files.isRegularFile(destFile) &&
+							Files.getLastModifiedTime(destFile).toMillis() == entryLastModified &&
+							entry.getSize() == Files.size(destFile))
 						continue;
 					IOUtils.copy(in, destFile);
-					destFile.setLastModified(entryLastModified);
+					Files.setLastModifiedTime(destFile, FileTime.fromMillis(entryLastModified));
 				}
 			} catch (IOException e) {
-				throw new IOException("Unable to extract the archive: " + sourceFile.getPath(), e);
+				throw new IOException("Unable to extract the archive: " + sourceFile.toAbsolutePath(), e);
 			}
 		} catch (ArchiveException e) {
-			throw new ArchiveException("Unable to extract the archive: " + sourceFile.getPath(), e);
+			throw new ArchiveException("Unable to extract the archive: " + sourceFile.toAbsolutePath(), e);
 		}
 	}
 
-	public void extract_dir(final File sourceDir, final String sourceExtension, final File destDir,
+	public void extract_dir(final Path sourceDir, final String sourceExtension, final Path destDir,
 			final Boolean logErrorAndContinue) throws IOException, ArchiveException {
-		if (!sourceDir.exists())
-			throw new FileNotFoundException("The source directory does not exist: " + sourceDir.getPath());
-		if (!destDir.exists())
-			throw new FileNotFoundException("The destination directory does not exist: " + destDir.getPath());
-		final File[] sourceFiles = sourceDir.listFiles();
+		if (!Files.exists(sourceDir))
+			throw new FileNotFoundException("The source directory does not exist: " + sourceDir.toAbsolutePath());
+		if (!Files.exists(destDir))
+			throw new FileNotFoundException("The destination directory does not exist: " + destDir.toAbsolutePath());
+		final Path[] sourceFiles = Files.list(sourceDir).filter(p -> Files.isRegularFile(p)).toArray(Path[]::new);
 		if (sourceFiles == null)
 			return;
-		for (File sourceFile : sourceFiles) {
-			if (!sourceFile.isFile())
-				continue;
-			final String ext = FilenameUtils.getExtension(sourceFile.getName());
+		for (final Path sourceFile : sourceFiles) {
+			final String ext = FilenameUtils.getExtension(sourceFile.getFileName().toString());
 			if (!sourceExtension.equals(ext))
 				continue;
 			try {
@@ -282,7 +281,7 @@ public class ArchiverTool extends AbstractLibrary {
 
 	public void extract_dir(String sourcePath, String sourceExtension, String destPath, Boolean logErrorAndContinue)
 			throws IOException, ArchiveException {
-		extract_dir(new File(sourcePath), sourceExtension, new File(destPath), logErrorAndContinue);
+		extract_dir(Paths.get(sourcePath), sourceExtension, Paths.get(destPath), logErrorAndContinue);
 	}
 
 	private CompressorOutputStream getCompressor(OutputStream input) throws CompressorException {
@@ -293,16 +292,13 @@ public class ArchiverTool extends AbstractLibrary {
 	 * Compress a stream an write the compressed content in a file
 	 *
 	 * @param input    the stream to compress
-	 * @param destFile the compressed file
+	 * @param destFile the path of the compressed file
 	 * @throws CompressorException if any compression error occurs
 	 * @throws IOException         if any I/O error occurs
 	 */
-	public void compress(InputStream input, File destFile) throws IOException, CompressorException {
-		OutputStream output = getCompressor(new BufferedOutputStream(new FileOutputStream(destFile)));
-		try {
+	public void compress(final InputStream input, final Path destFile) throws IOException, CompressorException {
+		try (final OutputStream output = getCompressor(new BufferedOutputStream(Files.newOutputStream(destFile)))) {
 			IOUtils.copy(input, output);
-		} finally {
-			IOUtils.closeQuietly(output);
 		}
 	}
 
@@ -310,16 +306,13 @@ public class ArchiverTool extends AbstractLibrary {
 	 * Compress an array of byte and write it to a file
 	 *
 	 * @param bytes    the bytes to compress
-	 * @param destFile the compressed file
+	 * @param destFile the path of the compressed file
 	 * @throws CompressorException if any compression error occurs
 	 * @throws IOException         related to I/O errors
 	 */
-	public void compress(byte[] bytes, File destFile) throws CompressorException, IOException {
-		InputStream input = new ByteArrayInputStream(bytes);
-		try {
+	public void compress(final byte[] bytes, final Path destFile) throws CompressorException, IOException {
+		try (final InputStream input = new ByteArrayInputStream(bytes)) {
 			compress(input, destFile);
-		} finally {
-			IOUtils.closeQuietly(input);
 		}
 	}
 
@@ -327,64 +320,52 @@ public class ArchiverTool extends AbstractLibrary {
 	 * Compress an UTF-8 string and write it to a file
 	 *
 	 * @param content  the text to compress
-	 * @param destFile the compressed file
+	 * @param destFile the path of the compressed file
 	 * @throws CompressorException if any compression error occurs
 	 * @throws IOException         related to I/O errors
 	 */
-	public void compress(String content, File destFile) throws CompressorException, IOException {
+	public void compress(final String content, final Path destFile) throws CompressorException, IOException {
 		compress(CharsetUtils.encodeUtf8(content), destFile);
 	}
 
 	/**
 	 * Compress the content of a file to a new file
 	 *
-	 * @param sourceFile the file to compress
-	 * @param destFile   the compressed file
+	 * @param sourceFile the path of the file to compress
+	 * @param destFile   the path of the compressed file
 	 * @throws CompressorException if any compression error occurs
 	 * @throws IOException         related to I/O errors
 	 */
-	public void compress(File sourceFile, File destFile) throws CompressorException, IOException {
-		InputStream input = new BufferedInputStream(new FileInputStream(sourceFile));
-		try {
+	public void compress(final Path sourceFile, final Path destFile) throws CompressorException, IOException {
+		try (final InputStream input = new BufferedInputStream(Files.newInputStream(sourceFile))) {
 			compress(input, destFile);
-		} finally {
-			IOUtils.closeQuietly(input);
 		}
 	}
 
-	public void createZipArchive(Map<String, Object> sourcePaths, File zipFile) throws IOException {
-		FileOutputStream fos = new FileOutputStream(zipFile);
-		try {
-			ZipOutputStream zos = new ZipOutputStream(fos);
-			try {
-				for (Map.Entry<String, Object> entry : sourcePaths.entrySet())
-					addToZipFile(entry.getKey(), entry.getValue().toString(), zos);
-			} finally {
-				IOUtils.closeQuietly(zos);
-			}
-		} finally {
-			IOUtils.closeQuietly(fos);
+	public void createZipArchive(final Map<String, Object> sourcePaths, final Path zipFile) throws IOException {
+		try (final OutputStream out = Files.newOutputStream(zipFile);
+				final BufferedOutputStream bOut = new BufferedOutputStream(out);
+				final ZipOutputStream zOut = new ZipOutputStream(bOut)) {
+			ConcurrentUtils.forEachEx(sourcePaths, (key, value) -> addToZipFile(key, value.toString(), zOut));
 		}
 	}
 
-	public void createZipArchive(Map<String, Object> sourcePaths, String zipFilePath) throws IOException {
-		createZipArchive(sourcePaths, new File(zipFilePath));
+	public void createZipArchive(final Map<String, Object> sourcePaths, final String zipFilePath) throws IOException {
+		createZipArchive(sourcePaths, Paths.get(zipFilePath));
 	}
 
-	public void addToZipFile(String entryName, String filePath, ZipOutputStream zos) throws IOException {
-
-		File srcFile = new File(filePath);
-		if (!srcFile.exists())
-			throw new FileNotFoundException("The file does not exists: " + srcFile.getPath());
-		FileInputStream fis = new FileInputStream(srcFile);
-		try {
+	public void addToZipFile(final String entryName, final String filePath, final ZipOutputStream zos)
+			throws IOException {
+		final Path srcFile = Paths.get(filePath);
+		if (!Files.exists(srcFile))
+			throw new FileNotFoundException("The file does not exists: " + srcFile.toAbsolutePath());
+		try (final InputStream in = Files.newInputStream(srcFile);
+				final BufferedInputStream bIn = new BufferedInputStream(in)) {
 			ZipEntry zipEntry = new ZipEntry(entryName);
 			zos.putNextEntry(zipEntry);
-			IOUtils.copy(fis, zos);
+			IOUtils.copy(bIn, zos);
 			zos.closeEntry();
-		} finally {
-			IOUtils.closeQuietly(fis);
 		}
 	}
-	
+
 }

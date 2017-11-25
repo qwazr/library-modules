@@ -1,5 +1,5 @@
-/**
- * Copyright 2016 Emmanuel Keller / QWAZR
+/*
+ * Copyright 2016-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- **/
+ */
 package com.qwazr.library.archiver;
 
 import com.qwazr.library.annotations.Library;
@@ -23,9 +23,10 @@ import org.apache.commons.compress.compressors.CompressorException;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class ArchiverTest extends AbstractLibraryTest {
 
@@ -40,27 +41,27 @@ public class ArchiverTest extends AbstractLibraryTest {
 	@Test
 	public void compressDecompress() throws CompressorException, IOException {
 		Assert.assertNotNull(archiver);
-		File zipFile = Files.createTempFile("archiverToolTest", ".zip").toFile();
+		Path zipFile = Files.createTempFile("archiverToolTest", ".zip");
 		archiver.compress(TEST_STRING, zipFile);
 		Assert.assertEquals(TEST_STRING, archiver.decompressString(zipFile));
-		File clearFile = Files.createTempFile("archiverToolTest", ".txt").toFile();
+		Path clearFile = Files.createTempFile("archiverToolTest", ".txt");
 		archiver.decompress(zipFile, clearFile);
-		Assert.assertEquals(TEST_STRING, IOUtils.readFileAsString(clearFile));
+		Assert.assertEquals(TEST_STRING, IOUtils.readPathAsString(clearFile, StandardCharsets.UTF_8));
 	}
 
 	@Test
 	public void extractDir() throws IOException, ArchiveException, CompressorException {
-		File destDir = Files.createTempDirectory("archiverToolTest").toFile();
+		Path destDir = Files.createTempDirectory("archiverToolTest");
 
 		Assert.assertNotNull(gzipArchiver);
 		gzipArchiver.decompress_dir("src/test/resources/com/qwazr/library/archiver", "gz",
-				destDir.getAbsolutePath());
-		Assert.assertTrue(new File(destDir, "test1.tar").exists());
-		Assert.assertTrue(new File(destDir, "test2.tar").exists());
+				destDir.toAbsolutePath().toString());
+		Assert.assertTrue(Files.exists(destDir.resolve("test1.tar")));
+		Assert.assertTrue(Files.exists(destDir.resolve("test2.tar")));
 
 		Assert.assertNotNull(archiver);
-		archiver.extract_dir(destDir.getPath(), "tar", destDir.getAbsolutePath(), false);
-		Assert.assertTrue(new File(destDir, "test1").exists());
-		Assert.assertTrue(new File(destDir, "test2").exists());
+		archiver.extract_dir(destDir.toAbsolutePath().toString(), "tar", destDir.toAbsolutePath().toString(), false);
+		Assert.assertTrue(Files.exists(destDir.resolve("test1")));
+		Assert.assertTrue(Files.exists(destDir.resolve("test2")));
 	}
 }

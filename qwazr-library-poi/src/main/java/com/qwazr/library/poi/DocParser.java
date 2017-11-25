@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,7 @@ import com.qwazr.extractor.ParserAbstract;
 import com.qwazr.extractor.ParserField;
 import com.qwazr.extractor.ParserFieldsBuilder;
 import com.qwazr.extractor.ParserResultBuilder;
-import org.apache.commons.io.IOUtils;
+import com.qwazr.utils.IOUtils;
 import org.apache.poi.hpsf.SummaryInformation;
 import org.apache.poi.hwpf.OldWordFileFormatException;
 import org.apache.poi.hwpf.extractor.Word6Extractor;

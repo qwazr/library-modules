@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,8 +29,9 @@ import org.jaudiotagger.tag.TagField;
 import org.jaudiotagger.tag.TagTextField;
 
 import javax.ws.rs.core.MultivaluedMap;
-import java.io.File;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -111,9 +112,9 @@ final public class AudioParser extends ParserAbstract {
 	}
 
 	@Override
-	public void parseContent(final MultivaluedMap<String, String> parameters, final File file, String extension,
+	public void parseContent(final MultivaluedMap<String, String> parameters, final Path filePath, String extension,
 			final String mimeType, final ParserResultBuilder resultBuilder) throws Exception {
-		final AudioFile f = AudioFileIO.read(file);
+		final AudioFile f = AudioFileIO.read(filePath.toFile());
 		final Tag tag = f.getTag();
 		if (tag == null)
 			return;
@@ -142,11 +143,11 @@ final public class AudioParser extends ParserAbstract {
 			format = MIMEMAP.get(mimeType.intern());
 		if (StringUtils.isEmpty(format))
 			throw new Exception("The format is not found");
-		final File tempFile = ParserAbstract.createTempFile(inputStream, '.' + format);
+		final Path tempFile = ParserAbstract.createTempFile(inputStream, '.' + format);
 		try {
 			parseContent(parameters, tempFile, extension, mimeType, resultBuilder);
 		} finally {
-			tempFile.delete();
+			Files.deleteIfExists(tempFile);
 		}
 	}
 

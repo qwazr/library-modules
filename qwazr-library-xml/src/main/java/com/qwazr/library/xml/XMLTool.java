@@ -17,7 +17,6 @@ package com.qwazr.library.xml;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.jamesmurty.utils.XMLBuilder2;
-import com.qwazr.utils.IOUtils;
 import com.qwazr.utils.ObjectMappers;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import jdk.nashorn.api.scripting.ScriptUtils;
@@ -103,11 +102,8 @@ public class XMLTool extends AbstractXmlFactoryTool {
 	 */
 	public void parseFile(ScriptObjectMirror jsObject, String path)
 			throws IOException, SAXException, ParserConfigurationException {
-		InputStream in = new BufferedInputStream(new FileInputStream(path));
-		try {
+		try (final InputStream in = new BufferedInputStream(new FileInputStream(path))) {
 			parseStream(jsObject, in);
-		} finally {
-			IOUtils.closeQuietly(in);
 		}
 	}
 

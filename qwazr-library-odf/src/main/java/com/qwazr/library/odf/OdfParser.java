@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,8 +25,8 @@ import org.odftoolkit.simple.common.TextExtractor;
 import org.odftoolkit.simple.meta.Meta;
 
 import javax.ws.rs.core.MultivaluedMap;
-import java.io.File;
 import java.io.InputStream;
+import java.nio.file.Path;
 
 public class OdfParser extends ParserAbstract {
 
@@ -136,8 +136,8 @@ public class OdfParser extends ParserAbstract {
 	}
 
 	@Override
-	public void parseContent(final MultivaluedMap<String, String> parameters, final File file, String extension,
+	public void parseContent(final MultivaluedMap<String, String> parameters, final Path filePath, String extension,
 			final String mimeType, final ParserResultBuilder resultBuilder) throws Exception {
-		parseContent(Document.loadDocument(file), resultBuilder);
+		parseContent(Document.loadDocument(filePath.toFile()), resultBuilder);
 	}
 }

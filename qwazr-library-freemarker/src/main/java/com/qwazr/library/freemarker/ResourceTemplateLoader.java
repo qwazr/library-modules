@@ -19,7 +19,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.qwazr.utils.IOUtils;
 import freemarker.cache.TemplateLoader;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -56,9 +55,9 @@ public class ResourceTemplateLoader implements TemplateLoader {
 	}
 
 	@Override
-	public void closeTemplateSource(final Object templateSource) throws IOException {
-		if (templateSource instanceof Closeable)
-			IOUtils.close((Closeable) templateSource);
+	public void closeTemplateSource(final Object templateSource) {
+		if (templateSource != null && templateSource instanceof AutoCloseable)
+			IOUtils.closeQuietly((AutoCloseable) templateSource);
 	}
 
 }

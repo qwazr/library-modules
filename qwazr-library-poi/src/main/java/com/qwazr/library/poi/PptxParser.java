@@ -22,13 +22,25 @@ import com.qwazr.extractor.ParserResultBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.POIXMLProperties.CoreProperties;
 import org.apache.poi.xslf.extractor.XSLFPowerPointExtractor;
-import org.apache.poi.xslf.usermodel.*;
+import org.apache.poi.xslf.usermodel.DrawingParagraph;
+import org.apache.poi.xslf.usermodel.DrawingTextBody;
+import org.apache.poi.xslf.usermodel.DrawingTextPlaceholder;
+import org.apache.poi.xslf.usermodel.XMLSlideShow;
+import org.apache.poi.xslf.usermodel.XSLFCommentAuthors;
+import org.apache.poi.xslf.usermodel.XSLFComments;
+import org.apache.poi.xslf.usermodel.XSLFCommonSlideData;
+import org.apache.poi.xslf.usermodel.XSLFNotes;
+import org.apache.poi.xslf.usermodel.XSLFSlide;
+import org.apache.poi.xslf.usermodel.XSLFSlideLayout;
+import org.apache.poi.xslf.usermodel.XSLFSlideMaster;
+import org.apache.poi.xslf.usermodel.XSLFSlideShow;
 import org.openxmlformats.schemas.presentationml.x2006.main.CTComment;
 import org.openxmlformats.schemas.presentationml.x2006.main.CTCommentAuthor;
 
 import javax.ws.rs.core.MultivaluedMap;
-import java.io.File;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 public class PptxParser extends ParserAbstract {
@@ -101,19 +113,19 @@ public class PptxParser extends ParserAbstract {
 			String extension, final String mimeType, final ParserResultBuilder resultBuilder) throws Exception {
 		if (StringUtils.isEmpty(extension))
 			extension = ".pptx";
-		File tempFile = ParserAbstract.createTempFile(inputStream, extension);
+		final Path tempFile = ParserAbstract.createTempFile(inputStream, extension);
 		try {
 			parseContent(parameters, tempFile, extension, mimeType, resultBuilder);
 		} finally {
-			tempFile.delete();
+			Files.deleteIfExists(tempFile);
 		}
 	}
 
 	@Override
-	public void parseContent(final MultivaluedMap<String, String> parameters, final File file, final String extension,
-			final String mimeType, final ParserResultBuilder resultBuilder) throws Exception {
+	public void parseContent(final MultivaluedMap<String, String> parameters, final Path filePath,
+			final String extension, final String mimeType, final ParserResultBuilder resultBuilder) throws Exception {
 
-		final XSLFSlideShow pptSlideShow = new XSLFSlideShow(file.getAbsolutePath());
+		final XSLFSlideShow pptSlideShow = new XSLFSlideShow(filePath.toAbsolutePath().toString());
 		final XMLSlideShow slideshow = new XMLSlideShow(pptSlideShow.getPackage());
 
 		// Extract metadata
