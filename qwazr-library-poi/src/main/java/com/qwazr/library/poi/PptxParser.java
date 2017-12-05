@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,8 +50,6 @@ public class PptxParser extends ParserAbstract {
 
 	private static final String[] DEFAULT_EXTENSIONS = { "pptx" };
 
-	final private static ParserField TITLE = ParserField.newString("title", "The title of the document");
-
 	final private static ParserField CREATOR = ParserField.newString("creator", "The name of the creator");
 
 	final private static ParserField DESCRIPTION = ParserField.newString("description", null);
@@ -71,9 +69,6 @@ public class PptxParser extends ParserAbstract {
 	final private static ParserField NOTES = ParserField.newString("notes", null);
 
 	final private static ParserField COMMENTS = ParserField.newString("comments", null);
-
-	final private static ParserField LANG_DETECTION =
-			ParserField.newString("lang_detection", "Detection of the language");
 
 	final private static ParserField[] FIELDS = { TITLE,
 			CREATOR,
@@ -128,11 +123,13 @@ public class PptxParser extends ParserAbstract {
 		final XSLFSlideShow pptSlideShow = new XSLFSlideShow(filePath.toAbsolutePath().toString());
 		final XMLSlideShow slideshow = new XMLSlideShow(pptSlideShow.getPackage());
 
+		final ParserFieldsBuilder metas = resultBuilder.metas();
+		metas.set(MIME_TYPE, findMimeType(extension, mimeType, this::findMimeTypeUsingDefault));
+
 		// Extract metadata
 		try (XSLFPowerPointExtractor poiExtractor = new XSLFPowerPointExtractor(slideshow)) {
 			final CoreProperties info = poiExtractor.getCoreProperties();
 			if (info != null) {
-				final ParserFieldsBuilder metas = resultBuilder.metas();
 				metas.add(TITLE, info.getTitle());
 				metas.add(CREATOR, info.getCreator());
 				metas.add(SUBJECT, info.getSubject());

@@ -38,13 +38,9 @@ public class PdfBoxParser extends ParserAbstract {
 
 	private static final String[] DEFAULT_EXTENSIONS = { "pdf" };
 
-	final private static ParserField TITLE = ParserField.newString("title", "The title of the Word document");
-
 	final private static ParserField AUTHOR = ParserField.newString("author", "The name of the author");
 
 	final private static ParserField SUBJECT = ParserField.newString("subject", "The subject of the document");
-
-	final private static ParserField CONTENT = ParserField.newString("content", "The content of the document");
 
 	final private static ParserField PRODUCER = ParserField.newString("producer", "The producer of the document");
 
@@ -61,9 +57,6 @@ public class PdfBoxParser extends ParserAbstract {
 	final private static ParserField NUMBER_OF_PAGES = ParserField.newInteger("number_of_pages", null);
 
 	final private static ParserField CHARACTER_COUNT = ParserField.newInteger("character_count", null);
-
-	final private static ParserField LANG_DETECTION =
-			ParserField.newString("lang_detection", "Detection of the language");
 
 	final private static ParserField[] FIELDS = { TITLE,
 			AUTHOR,
@@ -82,7 +75,8 @@ public class PdfBoxParser extends ParserAbstract {
 
 	final private static ParserField[] PARAMETERS = { PASSWORD };
 
-	private void extractMetaData(final PDDocument pdf, final ParserFieldsBuilder metas) throws IOException {
+	private void extractMetaData(final PDDocument pdf, final ParserFieldsBuilder metas) {
+		metas.set(MIME_TYPE, DEFAULT_MIMETYPES[0]);
 		final PDDocumentInformation info = pdf.getDocumentInformation();
 		if (info != null) {
 			metas.add(TITLE, info.getTitle());

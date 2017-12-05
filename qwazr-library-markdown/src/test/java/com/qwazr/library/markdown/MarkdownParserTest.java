@@ -32,7 +32,8 @@ public class MarkdownParserTest extends ParserTest {
 
 	@Test
 	public void testMarkdown() throws Exception {
-		final ParserResult parserResult = doTest(MarkdownParser.class, "file.md", "extract data to be indexed");
+		final ParserResult parserResult =
+				doTest(MarkdownParser.class, "file.md", "text/markdown", "extract data to be indexed");
 		Assert.assertEquals("Discovering the main concepts", parserResult.getDocumentFieldValue(0, "h1", 0));
 	}
 

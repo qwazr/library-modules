@@ -40,6 +40,7 @@ import java.util.Map;
 final public class AudioParser extends ParserAbstract {
 
 	private static final HashMap<String, String> MIMEMAP;
+	private static final HashMap<String, String> EXTENSIONMAP;
 
 	private static final String[] DEFAULT_EXTENSIONS;
 	private static final String[] DEFAULT_MIMETYPES;
@@ -49,15 +50,20 @@ final public class AudioParser extends ParserAbstract {
 		MIMEMAP.put("audio/ogg", "ogg");
 		MIMEMAP.put("audio/mpeg", "mpg");
 		MIMEMAP.put("audio/mpeg3", "mp3");
-		MIMEMAP.put("audio/flac", "flag");
+		MIMEMAP.put("audio/flac", "flac");
 		MIMEMAP.put("audio/mp4", "mp4");
 		MIMEMAP.put("audio/vnd.rn-realaudio", "ra");
 		MIMEMAP.put("audio/x-pn-realaudio", "ra");
 		MIMEMAP.put("audio/x-realaudio", "ra");
 		MIMEMAP.put("audio/wav", "wav");
 		MIMEMAP.put("audio/x-wav", "wav");
+		MIMEMAP.put("audio/x-ms-wma", "wma");
 
 		DEFAULT_MIMETYPES = MIMEMAP.keySet().toArray(new String[MIMEMAP.size()]);
+
+		EXTENSIONMAP = new HashMap<>();
+		MIMEMAP.forEach((k, v) -> EXTENSIONMAP.putIfAbsent(v, k));
+		EXTENSIONMAP.put("m4a", "audio/mp4");
 	}
 
 	private final static Map<FieldKey, ParserField> FIELDMAP;
@@ -82,11 +88,11 @@ final public class AudioParser extends ParserAbstract {
 		FORMAT = ParserField.newString("format", sb.toString());
 
 		// Build the list of fields returned by the library
-		FIELDMAP = new HashMap<FieldKey, ParserField>();
+		FIELDMAP = new HashMap<>();
 		for (FieldKey fieldKey : FieldKey.values())
 			FIELDMAP.put(fieldKey, ParserField.newString(fieldKey.name().toLowerCase(), null));
 		FIELDS = FIELDMAP.values().toArray(new ParserField[FIELDMAP.size()]);
-		Arrays.sort(FIELDS, ParserField.COMPARATOR);
+		Arrays.sort(FIELDS, (o1, o2) -> StringUtils.compare(o1.name, o2.name));
 	}
 
 	private final static ParserField[] PARAMETERS = { FORMAT };
@@ -115,16 +121,17 @@ final public class AudioParser extends ParserAbstract {
 	public void parseContent(final MultivaluedMap<String, String> parameters, final Path filePath, String extension,
 			final String mimeType, final ParserResultBuilder resultBuilder) throws Exception {
 		final AudioFile f = AudioFileIO.read(filePath.toFile());
+		final ParserFieldsBuilder metas = resultBuilder.metas();
+		metas.set(MIME_TYPE, findMimeType(extension, mimeType, EXTENSIONMAP::get));
 		final Tag tag = f.getTag();
 		if (tag == null)
 			return;
 		if (tag.getFieldCount() == 0)
 			return;
 		for (Map.Entry<FieldKey, ParserField> entry : FIELDMAP.entrySet()) {
-			List<TagField> tagFields = tag.getFields(entry.getKey());
+			final List<TagField> tagFields = tag.getFields(entry.getKey());
 			if (tagFields == null)
 				continue;
-			final ParserFieldsBuilder metas = resultBuilder.metas();
 			for (TagField tagField : tagFields) {
 				if (!(tagField instanceof TagTextField))
 					continue;

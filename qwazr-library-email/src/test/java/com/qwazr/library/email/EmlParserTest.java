@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015-2017 Emmanuel Keller
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,7 +30,7 @@ public class EmlParserTest extends ParserTest {
 
 	@Test
 	public void testEml() throws Exception {
-		doTest(EmlParser.class, "file.eml", "Maximum actions in one visit");
+		doTest(EmlParser.class, "file.eml", "message/rfc822", "Maximum actions in one visit");
 	}
 
 }

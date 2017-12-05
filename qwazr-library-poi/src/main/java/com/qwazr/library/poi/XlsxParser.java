@@ -33,8 +33,6 @@ public class XlsxParser extends ParserAbstract {
 
 	private static final String[] DEFAULT_EXTENSIONS = { "xlsx" };
 
-	final private static ParserField TITLE = ParserField.newString("title", "The title of the document");
-
 	final private static ParserField CREATOR = ParserField.newString("creator", "The name of the creator");
 
 	final private static ParserField CREATION_DATE = ParserField.newDate("creation_date", null);
@@ -46,11 +44,6 @@ public class XlsxParser extends ParserAbstract {
 	final private static ParserField KEYWORDS = ParserField.newString("keywords", null);
 
 	final private static ParserField SUBJECT = ParserField.newString("subject", "The subject of the document");
-
-	final private static ParserField CONTENT = ParserField.newString("content", "The content of the document");
-
-	final private static ParserField LANG_DETECTION =
-			ParserField.newString("lang_detection", "Detection of the language");
 
 	final private static ParserField[] FIELDS = { TITLE,
 			CREATOR,
@@ -90,9 +83,11 @@ public class XlsxParser extends ParserAbstract {
 
 			try (final XSSFExcelExtractor excelExtractor = new XSSFExcelExtractor(workbook)) {
 
+				final ParserFieldsBuilder metas = resultBuilder.metas();
+				metas.set(MIME_TYPE, findMimeType(extension, mimeType, this::findMimeTypeUsingDefault));
+
 				final CoreProperties info = excelExtractor.getCoreProperties();
 				if (info != null) {
-					final ParserFieldsBuilder metas = resultBuilder.metas();
 					metas.add(TITLE, info.getTitle());
 					metas.add(CREATOR, info.getCreator());
 					metas.add(CREATION_DATE, info.getCreated());

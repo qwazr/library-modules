@@ -38,7 +38,7 @@ import java.util.Set;
 
 public class MarkdownParser extends ParserAbstract {
 
-	final static String[] DEFAULT_MIMETYPES = { "text/x-markdown", "text/markdown" };
+	final static String[] DEFAULT_MIMETYPES = { "text/markdown" };
 
 	final static String[] DEFAULT_EXTENSIONS = { "md", "markdown" };
 
@@ -54,13 +54,9 @@ public class MarkdownParser extends ParserAbstract {
 
 	final static ParserField H6 = ParserField.newString("h6", "h6 headers");
 
-	final static ParserField CONTENT = ParserField.newString("content", "The content of the document");
-
 	final static ParserField URL = ParserField.newString("url", "Detected URLs");
 
 	final static ParserField URL_TITLE = ParserField.newString("title", "URL title");
-
-	final static ParserField LANG_DETECTION = ParserField.newString("lang_detection", "Detection of the language");
 
 	final protected static ParserField[] FIELDS = { H1, H2, H3, H4, H5, H6, CONTENT, URL, URL_TITLE, LANG_DETECTION };
 
@@ -87,6 +83,8 @@ public class MarkdownParser extends ParserAbstract {
 	@Override
 	final public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
 			final String extension, final String mimeType, final ParserResultBuilder resultBuilder) throws Exception {
+
+		resultBuilder.metas().set(MIME_TYPE, DEFAULT_MIMETYPES[0]);
 		final ParserFieldsBuilder result = resultBuilder.newDocument();
 		final Parser parser = Parser.builder().build();
 

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -272,6 +272,8 @@ public class HtmlParser extends ParserAbstract {
 	@Override
 	public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
 			final String extension, final String mimeType, final ParserResultBuilder resultBuilder) throws Exception {
+
+		resultBuilder.metas().set(MIME_TYPE, DEFAULT_MIMETYPES[0]);
 
 		final boolean isXpathParam = parameters != null && parameters.containsKey(XPATH_PARAM.name);
 		final boolean isCssParam = parameters != null && parameters.containsKey(CSS_PARAM.name);

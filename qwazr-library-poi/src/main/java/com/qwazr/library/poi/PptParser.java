@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -73,6 +73,9 @@ public class PptParser extends ParserAbstract {
 			final String extension, final String mimeType, final ParserResultBuilder resultBuilder) throws Exception {
 
 		final HSLFSlideShow ppt = new HSLFSlideShow(inputStream);
+
+		final ParserFieldsBuilder metas = resultBuilder.metas();
+		metas.set(MIME_TYPE, findMimeType(extension, mimeType, this::findMimeTypeUsingDefault));
 
 		final List<HSLFSlide> slides = ppt.getSlides();
 		for (HSLFSlide slide : slides) {

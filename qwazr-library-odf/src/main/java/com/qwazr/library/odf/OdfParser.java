@@ -40,8 +40,6 @@ public class OdfParser extends ParserAbstract {
 
 	public static final String[] DEFAULT_EXTENSIONS = { "ods", "ots", "odt", "odm", "ott", "odp", "otp" };
 
-	final protected static ParserField TITLE = ParserField.newString("title", "The title of the document");
-
 	final protected static ParserField CREATOR = ParserField.newString("creator", "The name of the creator");
 
 	final protected static ParserField CREATION_DATE = ParserField.newDate("creation_date", "The date of creation");
@@ -54,15 +52,10 @@ public class OdfParser extends ParserAbstract {
 	final protected static ParserField KEYWORDS = ParserField.newString("keywords", null);
 
 	final protected static ParserField SUBJECT = ParserField.newString("subject", "The subject of the document");
-
-	final protected static ParserField CONTENT = ParserField.newString("content", "The content of the document");
-
+	
 	final protected static ParserField LANGUAGE = ParserField.newString("language", null);
 
 	final protected static ParserField PRODUCER = ParserField.newString("producer", "The producer of the document");
-
-	final protected static ParserField LANG_DETECTION =
-			ParserField.newString("lang_detection", "Detection of the language");
 
 	final protected static ParserField[] FIELDS = { TITLE,
 			CREATOR,
@@ -132,12 +125,14 @@ public class OdfParser extends ParserAbstract {
 	@Override
 	public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
 			String extension, final String mimeType, final ParserResultBuilder resultBuilder) throws Exception {
+		resultBuilder.metas().set(MIME_TYPE, findMimeType(extension, mimeType, this::findMimeTypeUsingDefault));
 		parseContent(Document.loadDocument(inputStream), resultBuilder);
 	}
 
 	@Override
 	public void parseContent(final MultivaluedMap<String, String> parameters, final Path filePath, String extension,
 			final String mimeType, final ParserResultBuilder resultBuilder) throws Exception {
+		resultBuilder.metas().set(MIME_TYPE, findMimeType(extension, mimeType, this::findMimeTypeUsingDefault));
 		parseContent(Document.loadDocument(filePath.toFile()), resultBuilder);
 	}
 }

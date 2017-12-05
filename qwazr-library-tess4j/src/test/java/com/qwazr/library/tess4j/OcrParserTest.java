@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- **/
+ */
 package com.qwazr.library.tess4j;
 
 import com.qwazr.extractor.ExtractorManager;
@@ -34,7 +34,7 @@ public class OcrParserTest extends ParserTest {
 	@Test
 	public void testOcr() throws Exception {
 		try {
-			doTest(OcrParser.class, "file.pdf", DEFAULT_TEST_STRING);
+			doTest(OcrParser.class, "file.pdf", "application/pdf", DEFAULT_TEST_STRING);
 		} catch (UnsatisfiedLinkError e) {
 			Assume.assumeNoException("OCR skipped: no TESSDATA_PREFIX", e);
 		}

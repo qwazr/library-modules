@@ -1,5 +1,5 @@
-/**
- * Copyright 2014-2016 Emmanuel Keller / QWAZR
+/*
+ * Copyright 2014-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,6 @@ public class DocxParser extends ParserAbstract {
 
 	private static final String[] DEFAULT_EXTENSIONS = { "docx", "dotx" };
 
-	final private static ParserField TITLE = ParserField.newString("title", "The title of the document");
-
 	final private static ParserField CREATOR = ParserField.newString("creator", "The name of the creator");
 
 	final private static ParserField CREATION_DATE = ParserField.newDate("creation_date", null);
@@ -48,11 +46,6 @@ public class DocxParser extends ParserAbstract {
 	final private static ParserField KEYWORDS = ParserField.newString("keywords", null);
 
 	final private static ParserField SUBJECT = ParserField.newString("subject", "The subject of the document");
-
-	final private static ParserField CONTENT = ParserField.newString("content", "The content of the document");
-
-	final private static ParserField LANG_DETECTION =
-			ParserField.newString("lang_detection", "Detection of the language");
 
 	final private static ParserField[] FIELDS = { TITLE,
 			CREATOR,
@@ -92,9 +85,11 @@ public class DocxParser extends ParserAbstract {
 
 		try (XWPFWordExtractor word = new XWPFWordExtractor(document)) {
 
+			final ParserFieldsBuilder metas = resultBuilder.metas();
+			metas.set(MIME_TYPE, findMimeType(extension, mimeType, this::findMimeTypeUsingDefault));
+
 			final CoreProperties info = word.getCoreProperties();
 			if (info != null) {
-				final ParserFieldsBuilder metas = resultBuilder.metas();
 				metas.add(TITLE, info.getTitle());
 				metas.add(CREATOR, info.getCreator());
 				metas.add(CREATION_DATE, info.getCreated());

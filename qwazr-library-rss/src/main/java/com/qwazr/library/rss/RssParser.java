@@ -179,7 +179,7 @@ public class RssParser extends ParserAbstract {
 				return;
 
 			final ParserFieldsBuilder metas = resultBuilder.metas();
-
+			metas.set(MIME_TYPE, DEFAULT_MIMETYPES[0]);
 			metas.add(CHANNEL_TITLE, feed.getTitle());
 			metas.add(CHANNEL_DESCRIPTION, feed.getDescription());
 

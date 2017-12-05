@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,8 +32,6 @@ public class XlsParser extends ParserAbstract {
 
 	private static final String[] DEFAULT_EXTENSIONS = { "xls" };
 
-	final private static ParserField TITLE = ParserField.newString("title", "The title of the document");
-
 	final private static ParserField AUTHOR = ParserField.newString("author", "The name of the author");
 
 	final private static ParserField KEYWORDS = ParserField.newString("keywords", null);
@@ -43,11 +41,6 @@ public class XlsParser extends ParserAbstract {
 	final private static ParserField CREATION_DATE = ParserField.newDate("creation_date", null);
 
 	final private static ParserField MODIFICATION_DATE = ParserField.newDate("modification_date", null);
-
-	final private static ParserField CONTENT = ParserField.newString("content", "The content of the document");
-
-	final private static ParserField LANG_DETECTION =
-			ParserField.newString("lang_detection", "Detection of the language");
 
 	final private static ParserField[] FIELDS =
 			{ TITLE, AUTHOR, KEYWORDS, SUBJECT, CREATION_DATE, MODIFICATION_DATE, CONTENT, LANG_DETECTION };
@@ -80,9 +73,11 @@ public class XlsParser extends ParserAbstract {
 
 		try (final ExcelExtractor excel = new ExcelExtractor(workbook)) {
 
+			final ParserFieldsBuilder metas = resultBuilder.metas();
+			metas.set(MIME_TYPE, findMimeType(extension, mimeType, this::findMimeTypeUsingDefault));
+
 			final SummaryInformation info = excel.getSummaryInformation();
 			if (info != null) {
-				final ParserFieldsBuilder metas = resultBuilder.metas();
 				metas.add(TITLE, info.getTitle());
 				metas.add(AUTHOR, info.getAuthor());
 				metas.add(SUBJECT, info.getSubject());

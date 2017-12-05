@@ -35,8 +35,6 @@ public class DocParser extends ParserAbstract {
 
 	private static final String[] DEFAULT_EXTENSIONS = { "doc", "dot" };
 
-	final private static ParserField TITLE = ParserField.newString("title", "The title of the document");
-
 	final private static ParserField AUTHOR = ParserField.newString("author", "The name of the author");
 
 	final private static ParserField CREATION_DATE = ParserField.newDate("creation_date", null);
@@ -46,11 +44,6 @@ public class DocParser extends ParserAbstract {
 	final private static ParserField SUBJECT = ParserField.newString("subject", "The subject of the document");
 
 	final private static ParserField KEYWORDS = ParserField.newString("keywords", null);
-
-	final private static ParserField CONTENT = ParserField.newString("content", "The content of the document");
-
-	final private static ParserField LANG_DETECTION =
-			ParserField.newString("lang_detection", "Detection of the language");
 
 	final private static ParserField[] FIELDS =
 			{ TITLE, AUTHOR, CREATION_DATE, MODIFICATION_DATE, SUBJECT, KEYWORDS, CONTENT, LANG_DETECTION };
@@ -83,6 +76,7 @@ public class DocParser extends ParserAbstract {
 			final SummaryInformation info = word.getSummaryInformation();
 			if (info != null) {
 				final ParserFieldsBuilder metas = resultBuilder.metas();
+				metas.set(MIME_TYPE, DEFAULT_MIMETYPES[0]);
 				metas.add(TITLE, info.getTitle());
 				metas.add(AUTHOR, info.getAuthor());
 				metas.add(SUBJECT, info.getSubject());
@@ -105,9 +99,12 @@ public class DocParser extends ParserAbstract {
 		Word6Extractor word6 = null;
 		try {
 			word6 = new Word6Extractor(inputStream);
+
+			final ParserFieldsBuilder metas = resultBuilder.metas();
+			metas.set(MIME_TYPE, DEFAULT_MIMETYPES[0]);
+			
 			SummaryInformation si = word6.getSummaryInformation();
 			if (si != null) {
-				final ParserFieldsBuilder metas = resultBuilder.metas();
 				metas.add(TITLE, si.getTitle());
 				metas.add(AUTHOR, si.getAuthor());
 				metas.add(SUBJECT, si.getSubject());

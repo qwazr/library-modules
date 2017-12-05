@@ -33,33 +33,33 @@ public class AudioParserTest extends ParserTest {
 	}
 
 	@Test
-	public void testAudioFlag() throws Exception {
-		doTest(AudioParser.class, "file.flac", AUDIO_TEST_STRING, "format", "flac");
+	public void testAudioFlac() throws Exception {
+		doTest(AudioParser.class, "file.flac", "audio/flac", AUDIO_TEST_STRING, "format", "flac");
 	}
 
 	@Test
 	public void testAudioM4a() throws Exception {
-		doTest(AudioParser.class, "file.m4a", DEFAULT_TEST_STRING, "format", "m4a");
+		doTest(AudioParser.class, "file.m4a", "audio/mp4", DEFAULT_TEST_STRING, "format", "m4a");
 	}
 
 	@Test
 	public void testAudioMp3() throws Exception {
-		doTest(AudioParser.class, "file.mp3", DEFAULT_TEST_STRING, "format", "mp3");
+		doTest(AudioParser.class, "file.mp3", "audio/mpeg3", DEFAULT_TEST_STRING, "format", "mp3");
 	}
 
 	@Test
 	public void testAudioOgg() throws Exception {
-		doTest(AudioParser.class, "file.ogg", AUDIO_TEST_STRING, "format", "ogg");
+		doTest(AudioParser.class, "file.ogg", "audio/ogg", AUDIO_TEST_STRING, "format", "ogg");
 	}
 
 	@Test
 	public void testAudioWav() throws Exception {
-		doTest(AudioParser.class, "file.wav", null, "format", "wav");
+		doTest(AudioParser.class, "file.wav", "audio/wav", null, "format", "wav");
 	}
 
 	@Test
 	public void testAudioWma() throws Exception {
-		doTest(AudioParser.class, "file.wma", AUDIO_TEST_STRING, "format", "wma");
+		doTest(AudioParser.class, "file.wma", "audio/x-ms-wma", AUDIO_TEST_STRING, "format", "wma");
 	}
 
 }

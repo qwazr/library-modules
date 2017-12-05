@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright 2015-2017 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -60,9 +60,6 @@ public class MapiMsgParser extends ParserAbstract {
 
 	final private static ParserField HTML_CONTENT = ParserField.newString("html_content", "The html text body content");
 
-	final private static ParserField LANG_DETECTION =
-			ParserField.newString("lang_detection", "Detection of the language");
-
 	final private static ParserField[] FIELDS = { SUBJECT,
 			FROM,
 			RECIPIENT_TO,
@@ -110,6 +107,9 @@ public class MapiMsgParser extends ParserAbstract {
 
 		final MAPIMessage msg = new MAPIMessage(inputStream);
 		msg.setReturnNullOnMissingChunk(true);
+
+		final ParserFieldsBuilder metas = resultBuilder.metas();
+		metas.set(MIME_TYPE, DEFAULT_MIMETYPES[0]);
 
 		final ParserFieldsBuilder document = resultBuilder.newDocument();
 

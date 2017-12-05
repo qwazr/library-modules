@@ -63,9 +63,6 @@ public class EmlParser extends ParserAbstract {
 
 	private final static ParserField HTML_CONTENT = ParserField.newString("html_content", "The html text body content");
 
-	private final static ParserField LANG_DETECTION =
-			ParserField.newString("lang_detection", "Detection of the language");
-
 	private final static ParserField[] FIELDS = { SUBJECT,
 			FROM,
 			RECIPIENT_TO,
@@ -111,6 +108,8 @@ public class EmlParser extends ParserAbstract {
 	public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
 			final String extension, final String mimeType, final ParserResultBuilder resultBuilder) throws Exception {
 		final Session session = Session.getDefaultInstance(JAVAMAIL_PROPS);
+
+		resultBuilder.metas().set(MIME_TYPE, findMimeType(extension, mimeType, this::findMimeTypeUsingDefault));
 
 		final MimeMessage mimeMessage = new MimeMessage(session, inputStream);
 		final MimeMessageParser mimeMessageParser = new MimeMessageParser(mimeMessage).parse();

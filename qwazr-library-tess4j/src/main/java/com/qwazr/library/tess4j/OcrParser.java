@@ -26,12 +26,12 @@ import net.sourceforge.tess4j.TesseractException;
 
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.MultivaluedMap;
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 
 public class OcrParser extends ParserAbstract {
@@ -136,8 +136,8 @@ public class OcrParser extends ParserAbstract {
 
 	@Override
 	public void parseContent(final MultivaluedMap<String, String> parameters, final Path filePath,
-			final String extension, final String mimeType, final ParserResultBuilder resultBuilder)
-			throws IOException, TesseractException {
+			final String extension, String mimeType, final ParserResultBuilder resultBuilder)
+			throws TesseractException {
 		final Tesseract1 tesseract = new Tesseract1();
 		final String lang = this.getParameterValue(parameters, LANGUAGE, 0);
 		if (lang != null)
@@ -147,6 +147,15 @@ public class OcrParser extends ParserAbstract {
 		final String result = tesseract.doOCR(filePath.toFile());
 		if (StringUtils.isEmpty(result))
 			return;
+		if (StringUtils.isBlank(mimeType)) {
+			for (Map.Entry<String, String> entry : MIMEMAP.entrySet()) {
+				if (entry.getValue().equals(extension)) {
+					mimeType = entry.getKey();
+					break;
+				}
+			}
+		}
+		resultBuilder.metas().set(MIME_TYPE, mimeType);
 		final ParserFieldsBuilder document = resultBuilder.newDocument();
 		document.add(CONTENT, result);
 	}
@@ -159,7 +168,7 @@ public class OcrParser extends ParserAbstract {
 				throw new BadRequestException("The file extension or the mime-type is required.");
 			extension = MIMEMAP.get(mimeType);
 			if (extension == null)
-				throw new BadRequestException("The mime-type is not suppored: " + mimeType);
+				throw new BadRequestException("The mime-type is not supported: " + mimeType);
 		}
 		final Path tempFile = ParserAbstract.createTempFile(inputStream, "." + extension);
 		try {
