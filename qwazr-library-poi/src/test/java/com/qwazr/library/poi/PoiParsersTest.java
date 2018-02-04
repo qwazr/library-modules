@@ -50,6 +50,12 @@ public class PoiParsersTest extends ParserTest {
 	}
 
 	@Test
+	public void testDocx2() throws Exception {
+		doTest(DocxParser.class, "x.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+				DEFAULT_TEST_STRING);
+	}
+
+	@Test
 	public void testPpt() throws Exception {
 		doTest(PptParser.class, "file.ppt", "application/vnd.ms-powerpoint", DEFAULT_TEST_STRING);
 	}
