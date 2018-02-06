@@ -54,8 +54,10 @@ public abstract class AbstractLibraryTest {
 
 	@AfterClass
 	public static void cleanup() {
-		tableSingleton.close();
-		tableSingleton = null;
+		if (tableSingleton != null) {
+			tableSingleton.close();
+			tableSingleton = null;
+		}
 	}
 
 	@Before
