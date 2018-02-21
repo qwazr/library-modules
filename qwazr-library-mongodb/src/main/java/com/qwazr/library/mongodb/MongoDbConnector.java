@@ -17,12 +17,46 @@ package com.qwazr.library.mongodb;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.mongodb.*;
+import com.mongodb.MongoClient;
+import com.mongodb.MongoCredential;
+import com.mongodb.MongoNamespace;
+import com.mongodb.ReadConcern;
+import com.mongodb.ReadPreference;
+import com.mongodb.ServerAddress;
+import com.mongodb.WriteConcern;
 import com.mongodb.bulk.BulkWriteResult;
-import com.mongodb.client.*;
-import com.mongodb.client.model.*;
+import com.mongodb.client.AggregateIterable;
+import com.mongodb.client.ChangeStreamIterable;
+import com.mongodb.client.DistinctIterable;
+import com.mongodb.client.FindIterable;
+import com.mongodb.client.ListIndexesIterable;
+import com.mongodb.client.MapReduceIterable;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.BulkWriteOptions;
+import com.mongodb.client.model.CountOptions;
+import com.mongodb.client.model.CreateIndexOptions;
+import com.mongodb.client.model.DeleteManyModel;
+import com.mongodb.client.model.DeleteOneModel;
+import com.mongodb.client.model.DeleteOptions;
+import com.mongodb.client.model.DropIndexOptions;
+import com.mongodb.client.model.FindOneAndDeleteOptions;
+import com.mongodb.client.model.FindOneAndReplaceOptions;
+import com.mongodb.client.model.FindOneAndUpdateOptions;
+import com.mongodb.client.model.IndexModel;
+import com.mongodb.client.model.IndexOptions;
+import com.mongodb.client.model.InsertManyOptions;
+import com.mongodb.client.model.InsertOneModel;
+import com.mongodb.client.model.InsertOneOptions;
+import com.mongodb.client.model.RenameCollectionOptions;
+import com.mongodb.client.model.ReplaceOneModel;
+import com.mongodb.client.model.UpdateManyModel;
+import com.mongodb.client.model.UpdateOneModel;
+import com.mongodb.client.model.UpdateOptions;
+import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
+import com.mongodb.session.ClientSession;
 import com.qwazr.library.AbstractLibrary;
 import com.qwazr.utils.IOUtils;
 import com.qwazr.utils.StringUtils;
@@ -310,6 +344,34 @@ public class MongoDbConnector extends AbstractLibrary implements Closeable {
 		}
 
 		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public long count(ClientSession clientSession) {
+			return collection.count(clientSession);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public long count(ClientSession clientSession, Bson filter) {
+			return collection.count(clientSession, filter);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		public long count(ClientSession clientSession, final Map<String, Object> filter) {
+			return collection.count(clientSession, new Document(filter));
+		}
+
+		@Override
+		public long count(ClientSession clientSession, Bson filter, CountOptions options) {
+			return 0;
+		}
+
+		/**
 		 * @return a new CountOptions instance
 		 * @see CountOptions
 		 */
@@ -348,6 +410,29 @@ public class MongoDbConnector extends AbstractLibrary implements Closeable {
 		 * {@inheritDoc}
 		 */
 		@Override
+		public <TResult> DistinctIterable<TResult> distinct(ClientSession clientSession, String fieldName,
+				Class<TResult> tResultClass) {
+			return collection.distinct(clientSession, fieldName, tResultClass);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public <TResult> DistinctIterable<TResult> distinct(ClientSession clientSession, String fieldName, Bson filter,
+				Class<TResult> tResultClass) {
+			return collection.distinct(clientSession, fieldName, filter, tResultClass);
+		}
+
+		public <TResult> DistinctIterable<TResult> distinct(ClientSession clientSession, String fieldName,
+				Map<String, Object> filter, Class<TResult> tResultClass) {
+			return collection.distinct(clientSession, fieldName, new Document(filter), tResultClass);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
 		public FindIterable<Document> find() {
 			return collection.find();
 		}
@@ -358,6 +443,41 @@ public class MongoDbConnector extends AbstractLibrary implements Closeable {
 		@Override
 		public <TResult> FindIterable<TResult> find(final Class<TResult> tResultClass) {
 			return collection.find(tResultClass);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public <TResult> FindIterable<TResult> find(final ClientSession clienSession,
+				final Class<TResult> tResultClass) {
+			return collection.find(clienSession, tResultClass);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public FindIterable<Document> find(ClientSession clientSession, Bson filter) {
+			return collection.find(clientSession, filter);
+		}
+
+		public FindIterable<Document> find(ClientSession clientSession, Map<String, Object> filter) {
+			return collection.find(clientSession, new Document(filter));
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public <TResult> FindIterable<TResult> find(ClientSession clientSession, Bson filter,
+				Class<TResult> tResultClass) {
+			return collection.find(clientSession, filter, tResultClass);
+		}
+
+		public <TResult> FindIterable<TResult> find(ClientSession clientSession, Map<String, Object> filter,
+				Class<TResult> tResultClass) {
+			return collection.find(clientSession, new Document(filter), tResultClass);
 		}
 
 		/**
@@ -389,6 +509,14 @@ public class MongoDbConnector extends AbstractLibrary implements Closeable {
 		 * {@inheritDoc}
 		 */
 		@Override
+		public FindIterable<Document> find(ClientSession clientSession) {
+			return collection.find(clientSession);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
 		public AggregateIterable<Document> aggregate(List<? extends Bson> pipeline) {
 			return collection.aggregate(pipeline);
 		}
@@ -400,6 +528,89 @@ public class MongoDbConnector extends AbstractLibrary implements Closeable {
 		public <TResult> AggregateIterable<TResult> aggregate(final List<? extends Bson> pipeline,
 				final Class<TResult> tResultClass) {
 			return collection.aggregate(pipeline, tResultClass);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public AggregateIterable<Document> aggregate(ClientSession clientSession, List<? extends Bson> pipeline) {
+			return collection.aggregate(clientSession, pipeline);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public <TResult> AggregateIterable<TResult> aggregate(ClientSession clientSession,
+				List<? extends Bson> pipeline, Class<TResult> tResultClass) {
+			return collection.aggregate(clientSession, pipeline, tResultClass);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public ChangeStreamIterable<Document> watch() {
+			return collection.watch();
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public <TResult> ChangeStreamIterable<TResult> watch(Class<TResult> tResultClass) {
+			return collection.watch(tResultClass);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public ChangeStreamIterable<Document> watch(List<? extends Bson> pipeline) {
+			return collection.watch(pipeline);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public <TResult> ChangeStreamIterable<TResult> watch(List<? extends Bson> pipeline,
+				Class<TResult> tResultClass) {
+			return collection.watch(pipeline, tResultClass);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public ChangeStreamIterable<Document> watch(ClientSession clientSession) {
+			return collection.watch(clientSession);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public <TResult> ChangeStreamIterable<TResult> watch(ClientSession clientSession, Class<TResult> tResultClass) {
+			return collection.watch(clientSession, tResultClass);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public ChangeStreamIterable<Document> watch(ClientSession clientSession, List<? extends Bson> pipeline) {
+			return collection.watch(clientSession, pipeline);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public <TResult> ChangeStreamIterable<TResult> watch(ClientSession clientSession, List<? extends Bson> pipeline,
+				Class<TResult> tResultClass) {
+			return collection.watch(clientSession, pipeline, tResultClass);
 		}
 
 		/**
@@ -423,6 +634,28 @@ public class MongoDbConnector extends AbstractLibrary implements Closeable {
 		 * {@inheritDoc}
 		 */
 		@Override
+		public MapReduceIterable<Document> mapReduce(ClientSession clientSession, String mapFunction,
+				String reduceFunction) {
+			return collection.mapReduce(clientSession, mapFunction, reduceFunction);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public <TResult> MapReduceIterable<TResult> mapReduce(ClientSession clientSession, String mapFunction,
+				String reduceFunction, Class<TResult> tResultClass) {
+			return collection.mapReduce(clientSession, mapFunction, reduceFunction, tResultClass);
+		}
+
+		public BulkWriteOptions getNewBulkWriteOptions() {
+			return new BulkWriteOptions();
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
 		public BulkWriteResult bulkWrite(final List<? extends WriteModel<? extends Document>> requests) {
 			return collection.bulkWrite(requests);
 		}
@@ -434,6 +667,24 @@ public class MongoDbConnector extends AbstractLibrary implements Closeable {
 		public BulkWriteResult bulkWrite(final List<? extends WriteModel<? extends Document>> requests,
 				final BulkWriteOptions options) {
 			return collection.bulkWrite(requests, options);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public BulkWriteResult bulkWrite(ClientSession clientSession,
+				List<? extends WriteModel<? extends Document>> requests) {
+			return collection.bulkWrite(clientSession, requests);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public BulkWriteResult bulkWrite(ClientSession clientSession,
+				List<? extends WriteModel<? extends Document>> requests, BulkWriteOptions options) {
+			return collection.bulkWrite(clientSession, requests, options);
 		}
 
 		/**
@@ -461,6 +712,22 @@ public class MongoDbConnector extends AbstractLibrary implements Closeable {
 		@Override
 		public void insertOne(final Document document, final InsertOneOptions insertOneOptions) {
 			collection.insertOne(document, insertOneOptions);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public void insertOne(ClientSession clientSession, Document document) {
+			collection.insertOne(clientSession, document);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public void insertOne(ClientSession clientSession, Document document, InsertOneOptions options) {
+			collection.insertOne(clientSession, document, options);
 		}
 
 		/**
@@ -522,6 +789,23 @@ public class MongoDbConnector extends AbstractLibrary implements Closeable {
 			collection.insertMany(documents, options);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public void insertMany(ClientSession clientSession, List<? extends Document> documents) {
+			collection.insertMany(clientSession, documents);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public void insertMany(ClientSession clientSession, List<? extends Document> documents,
+				InsertManyOptions options) {
+			collection.insertMany(clientSession, documents, options);
+		}
+
 		public void insertMany(ScriptObjectMirror documents, InsertManyOptions options) throws ScriptException {
 			collection.insertMany(getNewDocumentList(documents), options);
 		}
@@ -542,13 +826,16 @@ public class MongoDbConnector extends AbstractLibrary implements Closeable {
 			return collection.deleteOne(filter);
 		}
 
+		public DeleteResult deleteOne(final Map<String, Object> filter) {
+			return collection.deleteOne(new Document(filter));
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public DeleteResult deleteOne(Bson bson, DeleteOptions deleteOptions) {
 			return collection.deleteOne(bson, deleteOptions);
-		}
-
-		public DeleteResult deleteOne(final Map<String, Object> filter) {
-			return collection.deleteOne(new Document(filter));
 		}
 
 		public DeleteResult deleteOne(final Map<String, Object> filter, final DeleteOptions deleteOptions) {
@@ -559,13 +846,56 @@ public class MongoDbConnector extends AbstractLibrary implements Closeable {
 		 * {@inheritDoc}
 		 */
 		@Override
+		public DeleteResult deleteOne(ClientSession clientSession, Bson filter) {
+			return collection.deleteOne(clientSession, filter);
+		}
+
+		public DeleteResult deleteOne(ClientSession clientSession, Map<String, Object> filter) {
+			return collection.deleteOne(clientSession, new Document(filter));
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public DeleteResult deleteOne(ClientSession clientSession, Bson filter, DeleteOptions options) {
+			return collection.deleteOne(clientSession, filter, options);
+		}
+
+		public DeleteResult deleteOne(ClientSession clientSession, Map<String, Object> filter, DeleteOptions options) {
+			return collection.deleteOne(clientSession, new Document(filter), options);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
 		public DeleteResult deleteMany(final Bson filter) {
 			return collection.deleteMany(filter);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
 		@Override
 		public DeleteResult deleteMany(Bson bson, DeleteOptions deleteOptions) {
 			return collection.deleteMany(bson, deleteOptions);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public DeleteResult deleteMany(ClientSession clientSession, Bson filter) {
+			return collection.deleteMany(clientSession, filter);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public DeleteResult deleteMany(ClientSession clientSession, Bson filter, DeleteOptions options) {
+			return collection.deleteMany(clientSession, filter, options);
 		}
 
 		public DeleteResult deleteMany(final Map<String, Object> filter) {
@@ -574,6 +904,14 @@ public class MongoDbConnector extends AbstractLibrary implements Closeable {
 
 		public DeleteResult deleteMany(final Map<String, Object> filter, final DeleteOptions deleteOptions) {
 			return collection.deleteMany(new Document(filter), deleteOptions);
+		}
+
+		public DeleteResult deleteMany(ClientSession clientSession, Map<String, Object> filter) {
+			return collection.deleteMany(clientSession, new Document(filter));
+		}
+
+		public DeleteResult deleteMany(ClientSession clientSession, Map<String, Object> filter, DeleteOptions options) {
+			return collection.deleteMany(clientSession, new Document(filter), options);
 		}
 
 		/**
@@ -597,10 +935,36 @@ public class MongoDbConnector extends AbstractLibrary implements Closeable {
 			return collection.replaceOne(filter, replacement, updateOptions);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public UpdateResult replaceOne(ClientSession clientSession, Bson filter, Document replacement) {
+			return collection.replaceOne(clientSession, filter, replacement);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public UpdateResult replaceOne(ClientSession clientSession, Bson filter, Document replacement,
+				UpdateOptions updateOptions) {
+			return collection.replaceOne(clientSession, filter, replacement, updateOptions);
+		}
+
 		public UpdateResult replaceOne(final Map<String, Object> filter, final Map<String, Object> replacement,
 				final boolean upsert) {
 			return collection.replaceOne(new Document(filter), new Document(replacement),
 					new UpdateOptions().upsert(upsert));
+		}
+
+		public UpdateResult replaceOne(ClientSession clientSession, Map<String, Object> filter, Document replacement) {
+			return collection.replaceOne(clientSession, new Document(filter), replacement);
+		}
+
+		public UpdateResult replaceOne(ClientSession clientSession, Map<String, Object> filter, Document replacement,
+				UpdateOptions updateOptions) {
+			return collection.replaceOne(clientSession, new Document(filter), replacement, updateOptions);
 		}
 
 		/**
@@ -623,9 +987,36 @@ public class MongoDbConnector extends AbstractLibrary implements Closeable {
 			return collection.updateOne(filter, update, updateOptions);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public UpdateResult updateOne(ClientSession clientSession, Bson filter, Bson update) {
+			return collection.updateOne(clientSession, filter, update);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public UpdateResult updateOne(ClientSession clientSession, Bson filter, Bson update,
+				UpdateOptions updateOptions) {
+			return collection.updateOne(clientSession, filter, update, updateOptions);
+		}
+
 		public UpdateResult updateOne(final Map<String, Object> filter, final Map<String, Object> update,
 				final boolean upsert) {
 			return collection.updateOne(new Document(filter), new Document(update), new UpdateOptions().upsert(upsert));
+		}
+
+		public UpdateResult updateOne(ClientSession clientSession, Map<String, Object> filter,
+				Map<String, Object> update) {
+			return collection.updateOne(clientSession, new Document(filter), new Document(update));
+		}
+
+		public UpdateResult updateOne(ClientSession clientSession, Map<String, Object> filter,
+				Map<String, Object> update, UpdateOptions updateOptions) {
+			return collection.updateOne(clientSession, new Document(filter), new Document(update), updateOptions);
 		}
 
 		/**
@@ -648,10 +1039,37 @@ public class MongoDbConnector extends AbstractLibrary implements Closeable {
 			return collection.updateMany(filter, update, updateOptions);
 		}
 
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public UpdateResult updateMany(ClientSession clientSession, Bson filter, Bson update) {
+			return collection.updateMany(clientSession, filter, update);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public UpdateResult updateMany(ClientSession clientSession, Bson filter, Bson update,
+				UpdateOptions updateOptions) {
+			return collection.updateMany(clientSession, filter, update, updateOptions);
+		}
+
 		public UpdateResult updateMany(final Map<String, Object> filter, final Map<String, Object> update,
 				final boolean upsert) {
 			return collection.updateMany(new Document(filter), new Document(update),
 					new UpdateOptions().upsert(upsert));
+		}
+
+		public UpdateResult updateMany(ClientSession clientSession, Map<String, Object> filter,
+				Map<String, Object> update) {
+			return collection.updateMany(clientSession, new Document(filter), new Document(update));
+		}
+
+		public UpdateResult updateMany(ClientSession clientSession, Map<String, Object> filter,
+				Map<String, Object> update, UpdateOptions updateOptions) {
+			return collection.updateMany(clientSession, new Document(filter), new Document(update), updateOptions);
 		}
 
 		/**
@@ -678,6 +1096,35 @@ public class MongoDbConnector extends AbstractLibrary implements Closeable {
 			return collection.findOneAndDelete(filter, options);
 		}
 
+		public Document findOneAndDelete(final Map<String, Object> filter, final FindOneAndDeleteOptions options) {
+			return collection.findOneAndDelete(new Document(filter), options);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public Document findOneAndDelete(ClientSession clientSession, Bson filter) {
+			return collection.findOneAndDelete(clientSession, filter);
+		}
+
+		public Document findOneAndDelete(ClientSession clientSession, Map<String, Object> filter) {
+			return collection.findOneAndDelete(clientSession, new Document(filter));
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public Document findOneAndDelete(ClientSession clientSession, Bson filter, FindOneAndDeleteOptions options) {
+			return collection.findOneAndDelete(clientSession, filter, options);
+		}
+
+		public Document findOneAndDelete(ClientSession clientSession, Map<String, Object> filter,
+				FindOneAndDeleteOptions options) {
+			return collection.findOneAndDelete(clientSession, new Document(filter), options);
+		}
+
 		/**
 		 * {@inheritDoc}
 		 */
@@ -697,6 +1144,33 @@ public class MongoDbConnector extends AbstractLibrary implements Closeable {
 		public Document findOneAndReplace(final Bson filter, final Document replacement,
 				final FindOneAndReplaceOptions options) {
 			return collection.findOneAndReplace(filter, replacement, options);
+		}
+
+		public Document findOneAndReplace(final Map<String, Object> filter, final Map<String, Object> replacement,
+				final FindOneAndReplaceOptions options) {
+			return collection.findOneAndReplace(new Document(filter), new Document(replacement), options);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public Document findOneAndReplace(ClientSession clientSession, Bson filter, Document replacement) {
+			return collection.findOneAndReplace(clientSession, filter, replacement);
+		}
+
+		public Document findOneAndReplace(ClientSession clientSession, Map<String, Object> filter,
+				Map<String, Object> replacement) {
+			return collection.findOneAndReplace(clientSession, new Document(filter), new Document(replacement));
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public Document findOneAndReplace(ClientSession clientSession, Bson filter, Document replacement,
+				FindOneAndReplaceOptions options) {
+			return collection.findOneAndReplace(clientSession, filter, replacement, options);
 		}
 
 		/**
@@ -719,12 +1193,56 @@ public class MongoDbConnector extends AbstractLibrary implements Closeable {
 			return collection.findOneAndUpdate(filter, update, options);
 		}
 
+		public Document findOneAndUpdate(final Map<String, Object> filter, final Map<String, Object> update,
+				final FindOneAndUpdateOptions options) {
+			return collection.findOneAndUpdate(new Document(filter), new Document(update), options);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public Document findOneAndUpdate(ClientSession clientSession, Bson filter, Bson update) {
+			return collection.findOneAndUpdate(clientSession, filter, update);
+		}
+
+		public Document findOneAndUpdate(ClientSession clientSession, Map<String, Object> filter,
+				Map<String, Object> update) {
+			return collection.findOneAndUpdate(clientSession, new Document(filter), new Document(update));
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public Document findOneAndUpdate(ClientSession clientSession, Bson filter, Bson update,
+				FindOneAndUpdateOptions options) {
+			return collection.findOneAndUpdate(clientSession, filter, update, options);
+		}
+
+		public Document findOneAndUpdate(ClientSession clientSession, Map<String, Object> filter,
+				Map<String, Object> update, FindOneAndUpdateOptions options) {
+			return collection.findOneAndUpdate(clientSession, new Document(filter), new Document(update), options);
+		}
+
 		/**
 		 * {@inheritDoc}
 		 */
 		@Override
 		public void drop() {
 			collection.drop();
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public void drop(ClientSession clientSession) {
+			collection.drop(clientSession);
+		}
+
+		public IndexOptions getNewIndexOptions() {
+			return new IndexOptions();
 		}
 
 		/**
@@ -743,12 +1261,69 @@ public class MongoDbConnector extends AbstractLibrary implements Closeable {
 			return collection.createIndex(keys, indexOptions);
 		}
 
+		public String createIndex(final Map<String, Object> keys, final IndexOptions indexOptions) {
+			return collection.createIndex(new Document(keys), indexOptions);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public String createIndex(ClientSession clientSession, Bson keys) {
+			return collection.createIndex(clientSession, keys);
+		}
+
+		public String createIndex(ClientSession clientSession, Map<String, Object> keys) {
+			return collection.createIndex(clientSession, new Document(keys));
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public String createIndex(ClientSession clientSession, Bson keys, IndexOptions indexOptions) {
+			return collection.createIndex(clientSession, keys, indexOptions);
+		}
+
+		public String createIndex(ClientSession clientSession, Map<String, Object> keys, IndexOptions indexOptions) {
+			return collection.createIndex(clientSession, new Document(keys), indexOptions);
+		}
+
+		public CreateIndexOptions getNewCreateIndexOptions() {
+			return new CreateIndexOptions();
+		}
+
 		/**
 		 * {@inheritDoc}
 		 */
 		@Override
 		public List<String> createIndexes(final List<IndexModel> indexes) {
 			return collection.createIndexes(indexes);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public List<String> createIndexes(List<IndexModel> indexes, CreateIndexOptions createIndexOptions) {
+			return collection.createIndexes(indexes, createIndexOptions);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public List<String> createIndexes(ClientSession clientSession, List<IndexModel> indexes) {
+			return collection.createIndexes(clientSession, indexes);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public List<String> createIndexes(ClientSession clientSession, List<IndexModel> indexes,
+				CreateIndexOptions createIndexOptions) {
+			return collection.createIndexes(clientSession, indexes, createIndexOptions);
 		}
 
 		/**
@@ -771,8 +1346,33 @@ public class MongoDbConnector extends AbstractLibrary implements Closeable {
 		 * {@inheritDoc}
 		 */
 		@Override
+		public ListIndexesIterable<Document> listIndexes(ClientSession clientSession) {
+			return collection.listIndexes(clientSession);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public <TResult> ListIndexesIterable<TResult> listIndexes(ClientSession clientSession,
+				Class<TResult> tResultClass) {
+			return collection.listIndexes(clientSession, tResultClass);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
 		public void dropIndex(final String indexName) {
 			collection.dropIndex(indexName);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public void dropIndex(String indexName, DropIndexOptions dropIndexOptions) {
+			collection.dropIndex(indexName, dropIndexOptions);
 		}
 
 		/**
@@ -787,8 +1387,89 @@ public class MongoDbConnector extends AbstractLibrary implements Closeable {
 		 * {@inheritDoc}
 		 */
 		@Override
+		public void dropIndex(Bson keys, DropIndexOptions dropIndexOptions) {
+			collection.dropIndex(keys, dropIndexOptions);
+		}
+
+		public void dropIndex(Map<String, Object> keys, DropIndexOptions dropIndexOptions) {
+			collection.dropIndex(new Document(keys), dropIndexOptions);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public void dropIndex(ClientSession clientSession, String indexName) {
+			collection.dropIndex(clientSession, indexName);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public void dropIndex(ClientSession clientSession, Bson keys) {
+			collection.dropIndex(clientSession, keys);
+		}
+
+		public void dropIndex(ClientSession clientSession, Map<String, Object> keys) {
+			collection.dropIndex(clientSession, new Document(keys));
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public void dropIndex(ClientSession clientSession, String indexName, DropIndexOptions dropIndexOptions) {
+			collection.dropIndex(clientSession, indexName, dropIndexOptions);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public void dropIndex(ClientSession clientSession, Bson keys, DropIndexOptions dropIndexOptions) {
+			collection.dropIndex(clientSession, keys, dropIndexOptions);
+		}
+
+		public void dropIndex(ClientSession clientSession, Map<String, Object> keys,
+				DropIndexOptions dropIndexOptions) {
+			collection.dropIndex(clientSession, new Document(keys), dropIndexOptions);
+		}
+
+		public DropIndexOptions getNewDropIndexOptions() {
+			return new DropIndexOptions();
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
 		public void dropIndexes() {
 			collection.dropIndexes();
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public void dropIndexes(ClientSession clientSession) {
+			collection.dropIndexes(clientSession);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public void dropIndexes(final DropIndexOptions dropIndexOptions) {
+			collection.dropIndexes(dropIndexOptions);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public void dropIndexes(ClientSession clientSession, DropIndexOptions dropIndexOptions) {
+			collection.dropIndexes(clientSession, dropIndexOptions);
 		}
 
 		/**
@@ -799,6 +1480,10 @@ public class MongoDbConnector extends AbstractLibrary implements Closeable {
 			collection.renameCollection(newCollectionNamespace);
 		}
 
+		public RenameCollectionOptions getRenameCollectionOptions() {
+			return new RenameCollectionOptions();
+		}
+
 		/**
 		 * {@inheritDoc}
 		 */
@@ -806,6 +1491,23 @@ public class MongoDbConnector extends AbstractLibrary implements Closeable {
 		public void renameCollection(final MongoNamespace newCollectionNamespace,
 				final RenameCollectionOptions renameCollectionOptions) {
 			collection.renameCollection(newCollectionNamespace, renameCollectionOptions);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public void renameCollection(ClientSession clientSession, MongoNamespace newCollectionNamespace) {
+			collection.renameCollection(clientSession, newCollectionNamespace);
+		}
+
+		/**
+		 * {@inheritDoc}
+		 */
+		@Override
+		public void renameCollection(ClientSession clientSession, MongoNamespace newCollectionNamespace,
+				RenameCollectionOptions renameCollectionOptions) {
+			collection.renameCollection(clientSession, newCollectionNamespace, renameCollectionOptions);
 		}
 	}
 
