@@ -58,11 +58,15 @@ public abstract class AbstractLibraryTest {
 			tableSingleton.close();
 			tableSingleton = null;
 		}
+		if (libraryManager != null) {
+			libraryManager.close();
+			libraryManager = null;
+		}
 	}
 
 	@Before
 	public void inject() {
-		libraryManager.inject(this);
+		libraryManager.getService().inject(this);
 	}
 
 }
