@@ -24,6 +24,7 @@ import org.apache.directory.api.ldap.model.cursor.CursorException;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.api.ldap.model.exception.LdapInvalidAttributeValueException;
+import org.apache.directory.api.ldap.model.filter.FilterEncoder;
 import org.apache.directory.ldap.client.api.LdapConnection;
 
 import java.io.IOException;
@@ -61,13 +62,15 @@ public class LdapIdentityManager implements IdentityManager {
 		try (LdapConnection connection = connector.getConnection(null, 60000L)) {
 			// We request the database
 
-			final String userFilter = "(&(objectClass=inetOrgPerson)(uid=" + id + "))";
+			final String userFilter = "(&(objectClass=inetOrgPerson)(uid=" + FilterEncoder.encodeFilterValue(id) + "))";
 
 			final Entry entry = connector.auth(connection, userFilter, new String(passwordCredential.getPassword()));
 			if (entry == null)
 				return authenticationFailure("Authentication error: " + userFilter, null);
 
-			final String roleFilter = "(&(objectClass=groupOfNames)(member=" + entry.getDn() + "))";
+			final String roleFilter =
+					"(&(objectClass=groupOfNames)(member=" + FilterEncoder.encodeFilterValue(entry.getDn().toString()) +
+							"))";
 
 			final LinkedHashSet<String> roles = new LinkedHashSet<>();
 			final List<Entry> roleEntries = connector.search(connection, roleFilter, 0, 1000);

@@ -32,6 +32,7 @@ import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.entry.Modification;
 import org.apache.directory.api.ldap.model.entry.ModificationOperation;
 import org.apache.directory.api.ldap.model.exception.LdapException;
+import org.apache.directory.api.ldap.model.filter.FilterEncoder;
 import org.apache.directory.api.ldap.model.message.SearchRequest;
 import org.apache.directory.api.ldap.model.message.SearchRequestImpl;
 import org.apache.directory.api.ldap.model.message.SearchScope;
@@ -199,6 +200,7 @@ public class LdapConnector extends AbstractPasswordLibrary implements Closeable 
 
 	public void createUser(LdapConnection connection, String dn, String passwordAttribute, String clearPassword,
 			final Map<String, Object> attrs) throws LdapException {
+		dn = FilterEncoder.encodeFilterValue(dn);
 		connection.bind();
 		final Entry entry = new DefaultEntry(dn + ", " + baseDn);
 		if (clearPassword != null)
@@ -234,6 +236,7 @@ public class LdapConnector extends AbstractPasswordLibrary implements Closeable 
 		Modification changePassword =
 				new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE, passwordAttribute,
 						getShaPassword(clearPassword));
+		dn = FilterEncoder.encodeFilterValue(dn);
 		connection.modify(dn + ", " + baseDn, changePassword);
 	}
 
@@ -244,6 +247,7 @@ public class LdapConnector extends AbstractPasswordLibrary implements Closeable 
 	public void updateString(LdapConnection connection, String dn, String attr, String... values) throws LdapException {
 		connection.bind();
 		final Modification modif = new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE, attr, values);
+		dn = FilterEncoder.encodeFilterValue(dn);
 		connection.modify(dn + ", " + baseDn, modif);
 	}
 
