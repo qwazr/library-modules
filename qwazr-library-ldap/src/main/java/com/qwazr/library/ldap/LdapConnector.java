@@ -135,7 +135,7 @@ public class LdapConnector extends AbstractPasswordLibrary implements Closeable 
 	 * @throws CursorException if any cursor error occurs
 	 * @throws IOException     if any I/O error occurs
 	 */
-	public Entry auth(LdapConnection connection, String userFilter, String password)
+	public Entry auth(final LdapConnection connection, final String userFilter, final String password)
 			throws LdapException, CursorException, IOException {
 		final Entry entry = getEntry(connection, userFilter);
 		if (entry == null)
@@ -146,18 +146,18 @@ public class LdapConnector extends AbstractPasswordLibrary implements Closeable 
 		return entry;
 	}
 
-	public static String escapeDn(String dn) {
-		if (dn == null)
+	public static String escapeName(String name) {
+		if (name == null)
 			return null;
 		final String[] search = { "#", ",", ";", "=", "+", "<", ">", "\"" };
 		final String[] replace = { "\\#", "\\,", "\\;", "\\=", "\\+", "\\<", "\\>", "\\\"" };
 		int i = 0;
 		for (String s : search)
-			dn = StringUtils.replace(dn, s, replace[i++]);
-		return dn;
+			name = StringUtils.replace(name, s, replace[i++]);
+		return name;
 	}
 
-	public List<Entry> search(LdapConnection connection, String filter, int start, int rows)
+	public List<Entry> search(final LdapConnection connection, final String filter, final int start, final int rows)
 			throws LdapException, CursorException, IOException {
 		connection.bind();
 
@@ -177,7 +177,7 @@ public class LdapConnector extends AbstractPasswordLibrary implements Closeable 
 		}
 	}
 
-	public int count(LdapConnection connection, String filter, int max)
+	public int count(final LdapConnection connection, final String filter, final int max)
 			throws LdapException, CursorException, IOException {
 		connection.bind();
 		final SearchRequest request = new SearchRequestImpl();
@@ -194,7 +194,7 @@ public class LdapConnector extends AbstractPasswordLibrary implements Closeable 
 	}
 
 	@JsonIgnore
-	public Entry getEntry(LdapConnection connection, String filter, String... attributes)
+	public Entry getEntry(final LdapConnection connection, final String filter, final String... attributes)
 			throws LdapException, CursorException, IOException {
 		connection.bind();
 		try (final EntryCursor cursor = connection.search(baseDn, filter, SearchScope.SUBTREE, attributes)) {
@@ -204,14 +204,13 @@ public class LdapConnector extends AbstractPasswordLibrary implements Closeable 
 		}
 	}
 
-	public void add(LdapConnection connection, String dn, Object... elements) throws LdapException {
+	public void add(final LdapConnection connection, final String dn, final Object... elements) throws LdapException {
 		connection.bind();
 		connection.add(new DefaultEntry(dn, elements));
 	}
 
-	public void createUser(LdapConnection connection, String dn, String passwordAttribute, String clearPassword,
-			final Map<String, Object> attrs) throws LdapException {
-		dn = escapeDn(dn);
+	public void createUser(final LdapConnection connection, final String dn, final String passwordAttribute,
+			final String clearPassword, final Map<String, Object> attrs) throws LdapException {
 		connection.bind();
 		final Entry entry = new DefaultEntry(dn + ", " + baseDn);
 		if (clearPassword != null)
@@ -236,33 +235,33 @@ public class LdapConnector extends AbstractPasswordLibrary implements Closeable 
 		connection.add(entry);
 	}
 
-	public void createUser(LdapConnection connection, String dn, String clearPassword, ScriptObjectMirror attrs)
-			throws LdapException {
+	public void createUser(final LdapConnection connection, final String dn, final String clearPassword,
+			final ScriptObjectMirror attrs) throws LdapException {
 		createUser(connection, dn, DEFAULT_PASSWORD_ATTRIBUTE, clearPassword, attrs);
 	}
 
-	public void updatePassword(LdapConnection connection, String dn, String passwordAttribute, String clearPassword)
-			throws LdapException {
+	public void updatePassword(final LdapConnection connection, String dn, final String passwordAttribute,
+			final String clearPassword) throws LdapException {
 		connection.bind();
 		Modification changePassword =
 				new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE, passwordAttribute,
 						getShaPassword(clearPassword));
-		dn = escapeDn(dn);
 		connection.modify(dn + ", " + baseDn, changePassword);
 	}
 
-	public void updatePassword(LdapConnection connection, String dn, String clearPassword) throws LdapException {
+	public void updatePassword(final LdapConnection connection, final String dn, final String clearPassword)
+			throws LdapException {
 		updatePassword(connection, dn, DEFAULT_PASSWORD_ATTRIBUTE, clearPassword);
 	}
 
-	public void updateString(LdapConnection connection, String dn, String attr, String... values) throws LdapException {
+	public void updateString(final LdapConnection connection, final String dn, final String attr,
+			final String... values) throws LdapException {
 		connection.bind();
 		final Modification modif = new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE, attr, values);
-		dn = escapeDn(dn);
 		connection.modify(dn + ", " + baseDn, modif);
 	}
 
-	public byte[] getShaPassword(String clearPassword) {
+	public byte[] getShaPassword(final String clearPassword) {
 		return PasswordUtil.createStoragePassword(clearPassword.getBytes(), LdapSecurityConstants.HASH_METHOD_SHA);
 	}
 

@@ -32,6 +32,6 @@ public class LdapConnectorTest extends AbstractLibraryTest {
 
 	@Test
 	public void encoder() {
-		Assert.assertEquals("test\\+test@qwazr.com", LdapConnector.escapeDn("test+test@qwazr.com"));
+		Assert.assertEquals("test\\+test@qwazr.com", LdapConnector.escapeName("test+test@qwazr.com"));
 	}
 }
