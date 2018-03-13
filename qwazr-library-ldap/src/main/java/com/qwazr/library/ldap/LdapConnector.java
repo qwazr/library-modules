@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.qwazr.library.AbstractPasswordLibrary;
 import com.qwazr.utils.IOUtils;
 import com.qwazr.utils.LoggerUtils;
+import com.qwazr.utils.StringUtils;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import org.apache.directory.api.ldap.model.constants.LdapSecurityConstants;
 import org.apache.directory.api.ldap.model.cursor.CursorException;
@@ -32,7 +33,6 @@ import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.entry.Modification;
 import org.apache.directory.api.ldap.model.entry.ModificationOperation;
 import org.apache.directory.api.ldap.model.exception.LdapException;
-import org.apache.directory.api.ldap.model.filter.FilterEncoder;
 import org.apache.directory.api.ldap.model.message.SearchRequest;
 import org.apache.directory.api.ldap.model.message.SearchRequestImpl;
 import org.apache.directory.api.ldap.model.message.SearchScope;
@@ -146,6 +146,17 @@ public class LdapConnector extends AbstractPasswordLibrary implements Closeable 
 		return entry;
 	}
 
+	public static String escapeDn(String dn) {
+		if (dn == null)
+			return null;
+		final String[] search = { "#", ",", ";", "=", "+", "<", ">", "\"" };
+		final String[] replace = { "\\#", "\\,", "\\;", "\\=", "\\+", "\\<", "\\>", "\\\"" };
+		int i = 0;
+		for (String s : search)
+			dn = StringUtils.replace(dn, s, replace[i++]);
+		return dn;
+	}
+
 	public List<Entry> search(LdapConnection connection, String filter, int start, int rows)
 			throws LdapException, CursorException, IOException {
 		connection.bind();
@@ -200,7 +211,7 @@ public class LdapConnector extends AbstractPasswordLibrary implements Closeable 
 
 	public void createUser(LdapConnection connection, String dn, String passwordAttribute, String clearPassword,
 			final Map<String, Object> attrs) throws LdapException {
-		dn = FilterEncoder.encodeFilterValue(dn);
+		dn = escapeDn(dn);
 		connection.bind();
 		final Entry entry = new DefaultEntry(dn + ", " + baseDn);
 		if (clearPassword != null)
@@ -236,7 +247,7 @@ public class LdapConnector extends AbstractPasswordLibrary implements Closeable 
 		Modification changePassword =
 				new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE, passwordAttribute,
 						getShaPassword(clearPassword));
-		dn = FilterEncoder.encodeFilterValue(dn);
+		dn = escapeDn(dn);
 		connection.modify(dn + ", " + baseDn, changePassword);
 	}
 
@@ -247,7 +258,7 @@ public class LdapConnector extends AbstractPasswordLibrary implements Closeable 
 	public void updateString(LdapConnection connection, String dn, String attr, String... values) throws LdapException {
 		connection.bind();
 		final Modification modif = new DefaultModification(ModificationOperation.REPLACE_ATTRIBUTE, attr, values);
-		dn = FilterEncoder.encodeFilterValue(dn);
+		dn = escapeDn(dn);
 		connection.modify(dn + ", " + baseDn, modif);
 	}
 

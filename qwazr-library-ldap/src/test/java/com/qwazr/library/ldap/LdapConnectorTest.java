@@ -30,4 +30,8 @@ public class LdapConnectorTest extends AbstractLibraryTest {
 		Assert.assertNotNull(ldap);
 	}
 
+	@Test
+	public void encoder() {
+		Assert.assertEquals("test\\+test@qwazr.com", LdapConnector.escapeDn("test+test@qwazr.com"));
+	}
 }
