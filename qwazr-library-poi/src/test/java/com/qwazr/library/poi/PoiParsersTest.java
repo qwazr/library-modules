@@ -20,8 +20,6 @@ import com.qwazr.extractor.ParserTest;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
-
 public class PoiParsersTest extends ParserTest {
 
 	static final String DEFAULT_TEST_STRING = "osstextextractor";
@@ -29,7 +27,7 @@ public class PoiParsersTest extends ParserTest {
 	static ExtractorManager manager;
 
 	@BeforeClass
-	public static void init() throws IOException, ClassNotFoundException {
+	public static void init() {
 		manager = new ExtractorManager();
 		manager.registerServices();
 	}

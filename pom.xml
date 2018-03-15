@@ -62,6 +62,7 @@
         <module>qwazr-library-rss</module>
         <module>qwazr-library-tess4j</module>
         <module>qwazr-library-thymeleaf</module>
+        <module>qwazr-library-wpd</module>
         <module>qwazr-library-xml</module>
     </modules>
 

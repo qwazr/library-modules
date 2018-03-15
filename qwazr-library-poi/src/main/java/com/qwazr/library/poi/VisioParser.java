@@ -54,11 +54,6 @@ public class VisioParser extends ParserAbstract {
 			{ TITLE, AUTHOR, CREATION_DATE, MODIFICATION_DATE, KEYWORDS, SUBJECT, CONTENT, LANG_DETECTION };
 
 	@Override
-	public ParserField[] getParameters() {
-		return null;
-	}
-
-	@Override
 	public ParserField[] getFields() {
 		return FIELDS;
 	}

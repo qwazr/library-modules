@@ -61,11 +61,6 @@ public class MarkdownParser extends ParserAbstract {
 	final protected static ParserField[] FIELDS = { H1, H2, H3, H4, H5, H6, CONTENT, URL, URL_TITLE, LANG_DETECTION };
 
 	@Override
-	public ParserField[] getParameters() {
-		return null;
-	}
-
-	@Override
 	public ParserField[] getFields() {
 		return FIELDS;
 	}

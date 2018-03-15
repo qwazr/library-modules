@@ -37,7 +37,6 @@ import se.fishtank.css.selectors.dom.W3CNode;
 
 import javax.ws.rs.core.MultivaluedMap;
 import javax.xml.xpath.XPathExpressionException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
@@ -49,6 +48,23 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class HtmlParser extends ParserAbstract {
+
+	final private static HTMLConfiguration NEKO_CONFIG;
+
+	// Setup NekoHTML
+	static {
+		NEKO_CONFIG = new HTMLConfiguration();
+		NEKO_CONFIG.setFeature("http://xml.org/sax/features/namespaces", true);
+		NEKO_CONFIG.setFeature("http://cyberneko.org/html/features/balance-tags/ignore-outside-content", false);
+		NEKO_CONFIG.setFeature("http://cyberneko.org/html/features/balance-tags", true);
+		NEKO_CONFIG.setFeature("http://cyberneko.org/html/features/report-errors", false);
+		NEKO_CONFIG.setProperty("http://cyberneko.org/html/properties/names/elems", "lower");
+		NEKO_CONFIG.setProperty("http://cyberneko.org/html/properties/names/attrs", "lower");
+	}
+
+	static public DOMParser getNewDomParser() {
+		return new DOMParser(NEKO_CONFIG);
+	}
 
 	final private static String[] DEFAULT_MIMETYPES = { "text/html" };
 
@@ -157,8 +173,7 @@ public class HtmlParser extends ParserAbstract {
 		});
 	}
 
-	private void extractTextContent(final Document documentElement, final ParserFieldsBuilder document)
-			throws IOException {
+	private void extractTextContent(final Document documentElement, final ParserFieldsBuilder document) {
 		HtmlUtils.domTextExtractor(documentElement, line -> document.add(CONTENT, line));
 		// Lang detection
 		document.add(LANG_DETECTION, languageDetection(document, CONTENT, 10000));
@@ -280,15 +295,7 @@ public class HtmlParser extends ParserAbstract {
 		final boolean isRegExpParam = parameters != null && parameters.containsKey(REGEXP_PARAM.name);
 		final boolean isSelector = isXpathParam || isCssParam || isRegExpParam;
 
-		// Setup NekoHTML
-		final HTMLConfiguration config = new HTMLConfiguration();
-		config.setFeature("http://xml.org/sax/features/namespaces", true);
-		config.setFeature("http://cyberneko.org/html/features/balance-tags/ignore-outside-content", false);
-		config.setFeature("http://cyberneko.org/html/features/balance-tags", true);
-		config.setFeature("http://cyberneko.org/html/features/report-errors", false);
-		config.setProperty("http://cyberneko.org/html/properties/names/elems", "lower");
-		config.setProperty("http://cyberneko.org/html/properties/names/attrs", "lower");
-		final DOMParser htmlParser = new DOMParser(config);
+		final DOMParser htmlParser = getNewDomParser();
 
 		final String htmlSource;
 		if (isRegExpParam) {

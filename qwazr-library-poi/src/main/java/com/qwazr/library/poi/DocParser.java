@@ -49,11 +49,6 @@ public class DocParser extends ParserAbstract {
 			{ TITLE, AUTHOR, CREATION_DATE, MODIFICATION_DATE, SUBJECT, KEYWORDS, CONTENT, LANG_DETECTION };
 
 	@Override
-	public ParserField[] getParameters() {
-		return null;
-	}
-
-	@Override
 	public ParserField[] getFields() {
 		return FIELDS;
 	}

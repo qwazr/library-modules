@@ -46,11 +46,6 @@ public class XlsParser extends ParserAbstract {
 			{ TITLE, AUTHOR, KEYWORDS, SUBJECT, CREATION_DATE, MODIFICATION_DATE, CONTENT, LANG_DETECTION };
 
 	@Override
-	public ParserField[] getParameters() {
-		return null;
-	}
-
-	@Override
 	public ParserField[] getFields() {
 		return FIELDS;
 	}

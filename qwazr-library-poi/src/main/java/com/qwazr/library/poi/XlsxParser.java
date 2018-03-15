@@ -56,11 +56,6 @@ public class XlsxParser extends ParserAbstract {
 			LANG_DETECTION };
 
 	@Override
-	public ParserField[] getParameters() {
-		return null;
-	}
-
-	@Override
 	public ParserField[] getFields() {
 		return FIELDS;
 	}

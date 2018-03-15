@@ -49,11 +49,6 @@ public class PptParser extends ParserAbstract {
 	final private static ParserField[] FIELDS = { TITLE, BODY, NOTES, OTHER, LANG_DETECTION };
 
 	@Override
-	public ParserField[] getParameters() {
-		return null;
-	}
-
-	@Override
 	public ParserField[] getFields() {
 		return FIELDS;
 	}
