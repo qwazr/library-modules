@@ -20,13 +20,11 @@ import com.qwazr.extractor.ParserTest;
 import org.junit.Assume;
 import org.junit.Test;
 
-import java.io.IOException;
-
 public class OcrParserTest extends ParserTest {
 
 	static final String DEFAULT_TEST_STRING = "osstextextractor";
 
-	public OcrParserTest() throws IOException, ClassNotFoundException {
+	public OcrParserTest() {
 		super(new ExtractorManager());
 		manager.registerServices();
 	}
@@ -34,7 +32,7 @@ public class OcrParserTest extends ParserTest {
 	@Test
 	public void testOcr() throws Exception {
 		try {
-			doTest(OcrParser.class, "file.pdf", "application/pdf", DEFAULT_TEST_STRING);
+			doTest(OcrParser.class, "file.pdf", "application/pdf", "content", DEFAULT_TEST_STRING);
 		} catch (UnsatisfiedLinkError e) {
 			Assume.assumeNoException("OCR skipped: no TESSDATA_PREFIX", e);
 		}

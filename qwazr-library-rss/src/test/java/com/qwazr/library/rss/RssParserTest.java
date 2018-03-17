@@ -19,18 +19,16 @@ import com.qwazr.extractor.ExtractorManager;
 import com.qwazr.extractor.ParserTest;
 import org.junit.Test;
 
-import java.io.IOException;
-
 public class RssParserTest extends ParserTest {
 
-	public RssParserTest() throws IOException, ClassNotFoundException {
+	public RssParserTest() {
 		super(new ExtractorManager());
 		manager.registerServices();
 	}
 
 	@Test
 	public void testRss() throws Exception {
-		doTest(RssParser.class, "file.rss", "application/rss+xml", "oss-text-extractor");
+		doTest(RssParser.class, "file.rss", "application/rss+xml", "atom_title", "oss-text-extractor");
 	}
 
 }

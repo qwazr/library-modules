@@ -30,9 +30,7 @@ public class VisioParser extends ParserAbstract {
 	private static final String[] DEFAULT_MIMETYPES = { "application/vnd.visio" };
 
 	private static final String[] DEFAULT_EXTENSIONS = { "vsd" };
-
-	final private static ParserField TITLE = ParserField.newString("title", "The title of the document");
-
+	
 	final private static ParserField AUTHOR = ParserField.newString("author", "The name of the author");
 
 	final private static ParserField CREATION_DATE = ParserField.newDate("creation_date", null);
@@ -44,11 +42,6 @@ public class VisioParser extends ParserAbstract {
 	final private static ParserField SUBJECT = ParserField.newString("subject", "The subject of the document");
 
 	final private static ParserField COMMENTS = ParserField.newString("comments", null);
-
-	final private static ParserField CONTENT = ParserField.newString("content", "The content of the document");
-
-	final private static ParserField LANG_DETECTION =
-			ParserField.newString("lang_detection", "Detection of the language");
 
 	final private static ParserField[] FIELDS =
 			{ TITLE, AUTHOR, CREATION_DATE, MODIFICATION_DATE, KEYWORDS, SUBJECT, CONTENT, LANG_DETECTION };

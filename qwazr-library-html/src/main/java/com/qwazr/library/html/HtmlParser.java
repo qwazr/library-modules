@@ -69,12 +69,6 @@ public class HtmlParser extends ParserAbstract {
 	final private static String[] DEFAULT_MIMETYPES = { "text/html" };
 
 	final private static String[] DEFAULT_EXTENSIONS = { "htm", "html" };
-
-	final private static ParserField TITLE = ParserField.newString("title", "The title of the document");
-
-	final private static ParserField CONTENT =
-			ParserField.newString("content", "The text content of the document. One item per paragraph");
-
 	final private static ParserField HEADERS =
 			ParserField.newString("headers", "Extract headers (h1, h2, h3, h4, h5, h6)");
 
@@ -97,9 +91,6 @@ public class HtmlParser extends ParserAbstract {
 	final private static ParserField METAS = ParserField.newMap("metas", "Meta tags");
 
 	final private static ParserField SELECTORS = ParserField.newMap("selectors", "Selector results");
-
-	final private static ParserField LANG_DETECTION =
-			ParserField.newString("lang_detection", "Detection of the language");
 
 	final private static ParserField[] FIELDS =
 			{ TITLE, CONTENT, H1, H2, H3, H4, H5, H6, ANCHORS, IMAGES, METAS, LANG_DETECTION, SELECTORS };

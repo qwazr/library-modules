@@ -35,18 +35,13 @@ public class PptParser extends ParserAbstract {
 
 	private static final String[] DEFAULT_EXTENSIONS = { "ppt" };
 
-	final private static ParserField TITLE = ParserField.newString("title", "The title of the document");
-
 	final private static ParserField BODY = ParserField.newString("body", "The body of the document");
 
 	final private static ParserField NOTES = ParserField.newString("notes", null);
 
 	final private static ParserField OTHER = ParserField.newString("other", null);
 
-	final private static ParserField LANG_DETECTION =
-			ParserField.newString("lang_detection", "Detection of the language");
-
-	final private static ParserField[] FIELDS = { TITLE, BODY, NOTES, OTHER, LANG_DETECTION };
+	final private static ParserField[] FIELDS = { TITLE, CONTENT, BODY, NOTES, OTHER, LANG_DETECTION };
 
 	@Override
 	public ParserField[] getFields() {
@@ -78,7 +73,7 @@ public class PptParser extends ParserAbstract {
 			final List<List<HSLFTextParagraph>> textLevel0 = slide.getTextParagraphs();
 			for (List<HSLFTextParagraph> textLevel1 : textLevel0) {
 				for (HSLFTextParagraph textPara : textLevel1) {
-					ParserField parserField;
+					final ParserField parserField;
 					switch (textPara.getRunType()) {
 					case TextHeaderAtom.TITLE_TYPE:
 					case TextHeaderAtom.CENTER_TITLE_TYPE:
@@ -103,10 +98,13 @@ public class PptParser extends ParserAbstract {
 						sb.append(textRun.getRawText());
 						sb.append(' ');
 					}
-					document.add(parserField, sb.toString().trim());
+					final String text = sb.toString().trim();
+					document.add(parserField, text);
+					if (parserField != TITLE)
+						document.add(CONTENT, text);
 				}
 			}
-			document.add(LANG_DETECTION, languageDetection(document, BODY, 10000));
+			document.add(LANG_DETECTION, languageDetection(document, CONTENT, 10000));
 		}
 
 	}

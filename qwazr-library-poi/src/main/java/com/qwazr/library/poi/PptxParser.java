@@ -71,6 +71,7 @@ public class PptxParser extends ParserAbstract {
 	final private static ParserField COMMENTS = ParserField.newString("comments", null);
 
 	final private static ParserField[] FIELDS = { TITLE,
+			CONTENT,
 			CREATOR,
 			DESCRIPTION,
 			KEYWORDS,
@@ -184,15 +185,20 @@ public class PptxParser extends ParserAbstract {
 			// (Stored in docProps/app.xml)
 
 			// Do the slide's text
-			result.add(SLIDES, extractText(slide.getCommonSlideData(), false));
-			result.add(LANG_DETECTION, languageDetection(result, SLIDES, 10000));
+			final String slideText = extractText(slide.getCommonSlideData(), false);
+			result.add(SLIDES, slideText);
+			result.add(CONTENT, slideText);
 
 			// If requested, get text from the master and it's layout
 			if (layout != null) {
-				result.add(MASTER, extractText(layout.getCommonSlideData(), true));
+				final String text = extractText(layout.getCommonSlideData(), true);
+				result.add(MASTER, text);
+				result.add(CONTENT, text);
 			}
 			if (master != null) {
-				result.add(MASTER, extractText(master.getCommonSlideData(), true));
+				final String text = extractText(master.getCommonSlideData(), true);
+				result.add(MASTER, text);
+				result.add(CONTENT, text);
 			}
 
 			// If the slide has comments, do those too
@@ -211,15 +217,23 @@ public class PptxParser extends ParserAbstract {
 					// Then the comment text, with a new line afterwards
 					sbComment.append(comment.getText());
 					sbComment.append("\n");
-					if (sbComment.length() > 0)
-						result.add(COMMENTS, sbComment.toString());
+					if (sbComment.length() > 0) {
+						final String text = sbComment.toString();
+						result.add(COMMENTS, text);
+						result.add(CONTENT, text);
+					}
 				}
 			}
 
 			// Do the notes if requested
 			if (notes != null) {
-				result.add(NOTES, extractText(notes.getCommonSlideData(), false));
+				final String text = extractText(notes.getCommonSlideData(), false);
+				result.add(NOTES, text);
+				result.add(CONTENT, text);
 			}
+
+			result.add(LANG_DETECTION, languageDetection(result, CONTENT, 10000));
+
 		}
 	}
 }

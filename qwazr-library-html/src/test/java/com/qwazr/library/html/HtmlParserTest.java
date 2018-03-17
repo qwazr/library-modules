@@ -23,20 +23,20 @@ import org.junit.Test;
 
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
 public class HtmlParserTest extends ParserTest {
 
-	public HtmlParserTest() throws IOException, ClassNotFoundException {
+	public HtmlParserTest() {
 		super(new ExtractorManager());
 		manager.registerServices();
 	}
 
 	@Test
 	public void testHtml() throws Exception {
-		final ParserResult result = doTest(HtmlParser.class, "file.html", "text/html", "search engine software");
+		final ParserResult result =
+				doTest(HtmlParser.class, "file.html", "text/html", "content", "search engine software");
 		Assert.assertEquals("OpenSearchServer | Open Source Search Engine and API",
 				result.getDocumentFieldValue(0, "title", 0).toString().trim());
 	}

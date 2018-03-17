@@ -19,47 +19,45 @@ import com.qwazr.extractor.ExtractorManager;
 import com.qwazr.extractor.ParserTest;
 import org.junit.Test;
 
-import java.io.IOException;
-
 public class AudioParserTest extends ParserTest {
 
 	static final String DEFAULT_TEST_STRING = "osstextextractor";
 
 	static final String AUDIO_TEST_STRING = "opensearchserver";
 
-	public AudioParserTest() throws IOException, ClassNotFoundException {
+	public AudioParserTest() {
 		super(new ExtractorManager());
 		manager.registerServices();
 	}
 
 	@Test
 	public void testAudioFlac() throws Exception {
-		doTest(AudioParser.class, "file.flac", "audio/flac", AUDIO_TEST_STRING, "format", "flac");
+		doTest(AudioParser.class, "file.flac", "audio/flac", null, AUDIO_TEST_STRING, "format", "flac");
 	}
 
 	@Test
 	public void testAudioM4a() throws Exception {
-		doTest(AudioParser.class, "file.m4a", "audio/mp4", DEFAULT_TEST_STRING, "format", "m4a");
+		doTest(AudioParser.class, "file.m4a", "audio/mp4", null, DEFAULT_TEST_STRING, "format", "m4a");
 	}
 
 	@Test
 	public void testAudioMp3() throws Exception {
-		doTest(AudioParser.class, "file.mp3", "audio/mpeg3", DEFAULT_TEST_STRING, "format", "mp3");
+		doTest(AudioParser.class, "file.mp3", "audio/mpeg3", null, DEFAULT_TEST_STRING, "format", "mp3");
 	}
 
 	@Test
 	public void testAudioOgg() throws Exception {
-		doTest(AudioParser.class, "file.ogg", "audio/ogg", AUDIO_TEST_STRING, "format", "ogg");
+		doTest(AudioParser.class, "file.ogg", "audio/ogg", null, AUDIO_TEST_STRING, "format", "ogg");
 	}
 
 	@Test
 	public void testAudioWav() throws Exception {
-		doTest(AudioParser.class, "file.wav", "audio/wav", null, "format", "wav");
+		doTest(AudioParser.class, "file.wav", "audio/wav", null, null, "format", "wav");
 	}
 
 	@Test
 	public void testAudioWma() throws Exception {
-		doTest(AudioParser.class, "file.wma", "audio/x-ms-wma", AUDIO_TEST_STRING, "format", "wma");
+		doTest(AudioParser.class, "file.wma", "audio/x-ms-wma", null, AUDIO_TEST_STRING, "format", "wma");
 	}
 
 }

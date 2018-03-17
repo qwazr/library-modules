@@ -19,18 +19,16 @@ import com.qwazr.extractor.ExtractorManager;
 import com.qwazr.extractor.ParserTest;
 import org.junit.Test;
 
-import java.io.IOException;
-
 public class EmlParserTest extends ParserTest {
 
-	public EmlParserTest() throws IOException, ClassNotFoundException {
+	public EmlParserTest() {
 		super(new ExtractorManager());
 		manager.registerServices();
 	}
 
 	@Test
 	public void testEml() throws Exception {
-		doTest(EmlParser.class, "file.eml", "message/rfc822", "Maximum actions in one visit");
+		doTest(EmlParser.class, "file.eml", "message/rfc822", "html_content", "Maximum actions in one visit");
 	}
 
 }

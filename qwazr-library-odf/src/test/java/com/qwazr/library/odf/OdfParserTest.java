@@ -25,24 +25,26 @@ public class OdfParserTest extends ParserTest {
 
 	static final String DEFAULT_TEST_STRING = "osstextextractor";
 
-	public OdfParserTest() throws IOException, ClassNotFoundException {
+	public OdfParserTest() {
 		super(new ExtractorManager());
 		manager.registerServices();
 	}
 
 	@Test
 	public void testOdt() throws Exception {
-		doTest(OdfParser.class, "file.odt", "application/vnd.oasis.opendocument.text", DEFAULT_TEST_STRING);
+		doTest(OdfParser.class, "file.odt", "application/vnd.oasis.opendocument.text", "content", DEFAULT_TEST_STRING);
 	}
 
 	@Test
 	public void testOds() throws Exception {
-		doTest(OdfParser.class, "file.ods", "application/vnd.oasis.opendocument.spreadsheet", DEFAULT_TEST_STRING);
+		doTest(OdfParser.class, "file.ods", "application/vnd.oasis.opendocument.spreadsheet", "content",
+				DEFAULT_TEST_STRING);
 	}
 
 	@Test
 	public void testOdp() throws Exception {
-		doTest(OdfParser.class, "file.odp", "application/vnd.oasis.opendocument.presentation", DEFAULT_TEST_STRING);
+		doTest(OdfParser.class, "file.odp", "application/vnd.oasis.opendocument.presentation", "content",
+				DEFAULT_TEST_STRING);
 	}
 
 }

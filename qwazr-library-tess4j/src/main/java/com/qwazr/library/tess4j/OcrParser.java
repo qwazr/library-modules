@@ -50,11 +50,6 @@ public class OcrParser extends ParserAbstract {
 		MIMEMAP.put("application/pdf", "pdf");
 	}
 
-	final private static ParserField CONTENT = ParserField.newString("content", "The content of the document");
-
-	final private static ParserField LANG_DETECTION =
-			ParserField.newString("lang_detection", "Detection of the language");
-
 	final private static ParserField[] FIELDS = { CONTENT, LANG_DETECTION };
 
 	final private static ParserField LANGUAGE = ParserField.newString("language",

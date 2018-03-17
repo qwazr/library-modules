@@ -38,41 +38,42 @@ public class PoiParsersTest extends ParserTest {
 
 	@Test
 	public void testDoc() throws Exception {
-		doTest(DocParser.class, "file.doc", "application/msword", DEFAULT_TEST_STRING);
+		doTest(DocParser.class, "file.doc", "application/msword", "content", DEFAULT_TEST_STRING);
 	}
 
 	@Test
 	public void testDocx() throws Exception {
 		doTest(DocxParser.class, "file.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-				DEFAULT_TEST_STRING);
+				"content", DEFAULT_TEST_STRING);
 	}
 
 	@Test
 	public void testDocx2() throws Exception {
-		doTest(DocxParser.class, "x.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-				"X");
+		doTest(DocxParser.class, "file.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+				"content", DEFAULT_TEST_STRING);
 	}
 
 	@Test
 	public void testPpt() throws Exception {
-		doTest(PptParser.class, "file.ppt", "application/vnd.ms-powerpoint", DEFAULT_TEST_STRING);
+		doTest(PptParser.class, "file.ppt", "application/vnd.ms-powerpoint", "content", DEFAULT_TEST_STRING);
 	}
 
 	@Test
 	public void testPptx() throws Exception {
 		doTest(PptxParser.class, "file.pptx",
-				"application/vnd.openxmlformats-officedocument.presentationml.presentation", DEFAULT_TEST_STRING);
+				"application/vnd.openxmlformats-officedocument.presentationml.presentation", "content",
+				DEFAULT_TEST_STRING);
 	}
 
 	@Test
 	public void testXls() throws Exception {
-		doTest(XlsParser.class, "file.xls", "application/vnd.ms-excel", DEFAULT_TEST_STRING);
+		doTest(XlsParser.class, "file.xls", "application/vnd.ms-excel", "content", DEFAULT_TEST_STRING);
 	}
 
 	@Test
 	public void testXlsx() throws Exception {
 		doTest(XlsxParser.class, "file.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-				DEFAULT_TEST_STRING);
+				"content", DEFAULT_TEST_STRING);
 	}
 
 }

@@ -68,7 +68,7 @@ public class RssParser extends ParserAbstract {
 	final private static ParserField ATOM_LINK = ParserField.newString("atom_link", "The link of the atom");
 
 	final private static ParserField ATOM_DESCRIPTION =
-			ParserField.newString("atom_description", "The descriptiln of the atom");
+			ParserField.newString("atom_description", "The description of the atom");
 
 	final private static ParserField ATOM_CATEGORY = ParserField.newString("atom_category", "The category of the atom");
 
@@ -88,9 +88,6 @@ public class RssParser extends ParserAbstract {
 			ParserField.newString("atom_published_date", "The published date");
 
 	final private static ParserField ATOM_UPDATED_DATE = ParserField.newString("atom_updated_date", "The updated date");
-
-	final private static ParserField LANG_DETECTION =
-			ParserField.newString("lang_detection", "Detection of the language");
 
 	final private static ParserField[] FIELDS = { CHANNEL_TITLE,
 			CHANNEL_LINK,

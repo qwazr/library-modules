@@ -32,12 +32,13 @@ public class PdfBoxParserTest extends ParserTest {
 
 	@Test
 	public void testPdf() throws Exception {
-		doTest(PdfBoxParser.class, "file.pdf", "application/pdf", DEFAULT_TEST_STRING);
+		doTest(PdfBoxParser.class, "file.pdf", "application/pdf", "content", DEFAULT_TEST_STRING);
 	}
 
 	@Test
 	public void testPwdPdf() throws Exception {
-		doTest(PdfBoxParser.class, "file-pass.pdf", "application/pdf", DEFAULT_TEST_STRING, "password", "1234");
+		doTest(PdfBoxParser.class, "file-pass.pdf", "application/pdf", "content", DEFAULT_TEST_STRING, "password",
+				"1234");
 	}
 
 }

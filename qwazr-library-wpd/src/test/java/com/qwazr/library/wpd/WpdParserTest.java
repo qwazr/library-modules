@@ -38,7 +38,7 @@ public class WpdParserTest extends ParserTest {
 
 	@Test
 	public void test() throws Exception {
-		doTest(WpdParser.class, "file.wpd", "application/wordperfect", DEFAULT_TEST_STRING);
+		doTest(WpdParser.class, "file.wpd", "application/wordperfect", "content", DEFAULT_TEST_STRING);
 
 	}
 }
