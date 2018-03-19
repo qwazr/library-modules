@@ -49,21 +49,31 @@ import java.util.regex.Pattern;
 
 public class HtmlParser extends ParserAbstract {
 
-	final private static HTMLConfiguration NEKO_CONFIG;
-
-	// Setup NekoHTML
-	static {
-		NEKO_CONFIG = new HTMLConfiguration();
-		NEKO_CONFIG.setFeature("http://xml.org/sax/features/namespaces", true);
-		NEKO_CONFIG.setFeature("http://cyberneko.org/html/features/balance-tags/ignore-outside-content", false);
-		NEKO_CONFIG.setFeature("http://cyberneko.org/html/features/balance-tags", true);
-		NEKO_CONFIG.setFeature("http://cyberneko.org/html/features/report-errors", false);
-		NEKO_CONFIG.setProperty("http://cyberneko.org/html/properties/names/elems", "lower");
-		NEKO_CONFIG.setProperty("http://cyberneko.org/html/properties/names/attrs", "lower");
+	/**
+	 * Create a new NekoHTML configuration
+	 *
+	 * @return
+	 */
+	static public HTMLConfiguration getNewHtmlConfiguration() {
+		final HTMLConfiguration config = new HTMLConfiguration();
+		config.setFeature("http://xml.org/sax/features/namespaces", true);
+		config.setFeature("http://cyberneko.org/html/features/balance-tags/ignore-outside-content", false);
+		config.setFeature("http://cyberneko.org/html/features/balance-tags", true);
+		config.setFeature("http://cyberneko.org/html/features/report-errors", false);
+		config.setProperty("http://cyberneko.org/html/properties/names/elems", "lower");
+		config.setProperty("http://cyberneko.org/html/properties/names/attrs", "lower");
+		return config;
 	}
 
 	static public DOMParser getNewDomParser() {
-		return new DOMParser(NEKO_CONFIG);
+		return new DOMParser(getNewHtmlConfiguration());
+	}
+
+	private final static ThreadLocal<DOMParser> DOM_PARSER_THREAD_LOCAL =
+			ThreadLocal.withInitial(() -> getNewDomParser());
+
+	static public DOMParser getThreadLocalDomParser() {
+		return DOM_PARSER_THREAD_LOCAL.get();
 	}
 
 	final private static String[] DEFAULT_MIMETYPES = { "text/html" };
@@ -286,7 +296,7 @@ public class HtmlParser extends ParserAbstract {
 		final boolean isRegExpParam = parameters != null && parameters.containsKey(REGEXP_PARAM.name);
 		final boolean isSelector = isXpathParam || isCssParam || isRegExpParam;
 
-		final DOMParser htmlParser = getNewDomParser();
+		final DOMParser htmlParser = getThreadLocalDomParser();
 
 		final String htmlSource;
 		if (isRegExpParam) {

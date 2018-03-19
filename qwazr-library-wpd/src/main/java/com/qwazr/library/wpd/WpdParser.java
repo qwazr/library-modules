@@ -78,7 +78,7 @@ public class WpdParser extends ParserAbstract {
 
 			final ParserFieldsBuilder parserDocument = resultBuilder.newDocument();
 
-			final DOMParser htmlParser = HtmlParser.getNewDomParser();
+			final DOMParser htmlParser = HtmlParser.getThreadLocalDomParser();
 			try (final BufferedReader reader = Files.newBufferedReader(htmlFile, StandardCharsets.UTF_8)) {
 				htmlParser.parse(new InputSource(reader));
 				HtmlUtils.domTextExtractor(htmlParser.getDocument(), text -> parserDocument.add(CONTENT, text));
