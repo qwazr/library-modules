@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 Emmanuel Keller / QWAZR
+ * Copyright 2015-2018 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,48 +21,52 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Iterator;
+import java.util.stream.Stream;
 
 class FileBrowser {
 
-	private final boolean file_method;
-	private final boolean dir_method;
-	private final int max_depth;
+    private final boolean file_method;
+    private final boolean dir_method;
+    private final int max_depth;
 
-	FileBrowser(final ScriptObjectMirror browser, final int max_depth, final Path rootPath) throws IOException {
-		this.max_depth = max_depth;
-		if (browser != null) {
-			file_method = browser.hasMember("file");
-			dir_method = browser.hasMember("directory");
-		} else {
-			file_method = false;
-			dir_method = false;
-		}
-		if (Files.exists(rootPath))
-			browse(browser, rootPath, 0);
-	}
+    FileBrowser(final ScriptObjectMirror browser, final int max_depth, final Path rootPath) throws IOException {
+        this.max_depth = max_depth;
+        if (browser != null) {
+            file_method = browser.hasMember("file");
+            dir_method = browser.hasMember("directory");
+        } else {
+            file_method = false;
+            dir_method = false;
+        }
+        if (Files.exists(rootPath))
+            browse(browser, rootPath, 0);
+    }
 
-	private boolean browse(final ScriptObjectMirror browser, final Path path, final int depth) throws IOException {
-		if (Files.isRegularFile(path))
-			return browseFile(browser, path, depth);
-		else if (Files.isDirectory(path) && depth < max_depth)
-			return browseDir(browser, path, depth + 1);
-		return true;
-	}
+    private boolean browse(final ScriptObjectMirror browser, final Path path, final int depth) throws IOException {
+        if (Files.isRegularFile(path))
+            return browseFile(browser, path, depth);
+        else if (Files.isDirectory(path) && depth < max_depth)
+            return browseDir(browser, path, depth + 1);
+        return true;
+    }
 
-	private boolean browseFile(final ScriptObjectMirror browser, final Path filePath, final int depth) {
-		return file_method && !Boolean.FALSE.equals(browser.callMember("file", filePath, depth));
-	}
+    private boolean browseFile(final ScriptObjectMirror browser, final Path filePath, final int depth) {
+        return file_method && !Boolean.FALSE.equals(browser.callMember("file", filePath, depth));
+    }
 
-	private boolean browseDir(final ScriptObjectMirror browser, final Path dirPath, final int depth)
-			throws IOException {
-		if (dir_method)
-			if (Boolean.FALSE.equals(browser.callMember("directory", dirPath, depth)))
-				return false;
-		final Iterator<Path> it = Files.list(dirPath).iterator();
-		while (it.hasNext())
-			if (!browse(browser, it.next(), depth))
-				return false;
-		return true;
-	}
+    private boolean browseDir(final ScriptObjectMirror browser, final Path dirPath, final int depth)
+            throws IOException {
+        if (dir_method)
+            if (Boolean.FALSE.equals(browser.callMember("directory", dirPath, depth)))
+                return false;
+
+        try (final Stream<Path> stream = Files.list(dirPath)) {
+            final Iterator<Path> it = stream.iterator();
+            while (it.hasNext())
+                if (!browse(browser, it.next(), depth))
+                    return false;
+        }
+        return true;
+    }
 
 }
