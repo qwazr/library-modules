@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 Emmanuel Keller / QWAZR
+ * Copyright 2015-2018 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,10 @@ import io.undertow.security.idm.Credential;
 import io.undertow.security.idm.IdentityManager;
 import io.undertow.security.idm.PasswordCredential;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.SystemUtils;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
-import java.net.URISyntaxException;
 import java.security.Principal;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -53,11 +53,12 @@ public class TableRealmConnector extends AbstractLibrary implements IdentityMana
 	@JsonIgnore
 	private volatile Set<String> columns;
 
-	public void load() throws URISyntaxException {
+	public void load() {
 		tableService = libraryManager.getInstancesSupplier().getInstance(TableServiceInterface.class);
 		final Set<String> tables = tableService.list();
 		if (!tables.contains(table_name)) {
-			tableService.createTable(table_name, KeyStore.Impl.leveldb);
+			tableService.createTable(table_name,
+					SystemUtils.IS_OS_WINDOWS ? KeyStore.Impl.lmdb : KeyStore.Impl.leveldb);
 			tableService.setColumn(table_name, login_column,
 					new ColumnDefinition(ColumnDefinition.Type.STRING, ColumnDefinition.Mode.INDEXED));
 			tableService.setColumn(table_name, password_column,
