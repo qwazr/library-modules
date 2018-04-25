@@ -17,7 +17,6 @@ package com.qwazr.library.tess4j;
 
 import com.qwazr.extractor.ExtractorManager;
 import com.qwazr.extractor.ParserTest;
-import org.junit.Assume;
 import org.junit.Test;
 
 public class OcrParserTest extends ParserTest {
@@ -31,11 +30,7 @@ public class OcrParserTest extends ParserTest {
 
 	@Test
 	public void testOcr() throws Exception {
-		try {
-			doTest(OcrParser.class, "file.pdf", "application/pdf", "content", DEFAULT_TEST_STRING);
-		} catch (UnsatisfiedLinkError e) {
-			Assume.assumeNoException("OCR skipped: no TESSDATA_PREFIX", e);
-		}
+		doTest(OcrParser.class, "file.pdf", "application/pdf", "content", DEFAULT_TEST_STRING);
 	}
 
 }
