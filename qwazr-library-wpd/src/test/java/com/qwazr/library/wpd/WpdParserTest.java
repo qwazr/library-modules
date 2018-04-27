@@ -17,28 +17,38 @@ package com.qwazr.library.wpd;
 
 import com.qwazr.extractor.ExtractorManager;
 import com.qwazr.extractor.ParserTest;
+import com.qwazr.utils.LoggerUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.logging.Logger;
+
 public class WpdParserTest extends ParserTest {
 
-	static final String DEFAULT_TEST_STRING = "HANDRAILS AND RAILINGS";
+    static final private Logger LOGGER = LoggerUtils.getLogger(WpdParserTest.class);
 
-	static ExtractorManager manager;
+    static final String DEFAULT_TEST_STRING = "HANDRAILS AND RAILINGS";
 
-	@BeforeClass
-	public static void init() {
-		manager = new ExtractorManager();
-		manager.registerServices();
-	}
+    static ExtractorManager manager;
 
-	public WpdParserTest() {
-		super(manager);
-	}
+    @BeforeClass
+    public static void init() {
+        manager = new ExtractorManager();
+        manager.registerServices();
+    }
 
-	@Test
-	public void test() throws Exception {
-		doTest(WpdParser.class, "file.wpd", "application/wordperfect", "content", DEFAULT_TEST_STRING);
+    public WpdParserTest() {
+        super(manager);
+    }
 
-	}
+    @Test
+    public void test() throws Exception {
+        if (SystemUtils.IS_OS_WINDOWS) {
+            LOGGER.warning("This module does not work on Windows OS. Deps on C++ library (libwpd)");
+            return;
+        }
+        doTest(WpdParser.class, "file.wpd", "application/wordperfect", "content", DEFAULT_TEST_STRING);
+
+    }
 }
