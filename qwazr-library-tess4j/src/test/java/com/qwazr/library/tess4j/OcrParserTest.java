@@ -19,18 +19,24 @@ import com.qwazr.extractor.ExtractorManager;
 import com.qwazr.extractor.ParserTest;
 import org.junit.Test;
 
+import java.nio.file.Paths;
+
 public class OcrParserTest extends ParserTest {
 
-	static final String DEFAULT_TEST_STRING = "osstextextractor";
+    static final String DEFAULT_TEST_STRING = "osstextextractor";
 
-	public OcrParserTest() {
-		super(new ExtractorManager());
-		manager.registerServices();
-	}
+    static {
+        System.setProperty("TESSDATA_PREFIX", Paths.get("src", "test").toString());
+    }
 
-	@Test
-	public void testOcr() throws Exception {
-		doTest(OcrParser.class, "file.pdf", "application/pdf", "content", DEFAULT_TEST_STRING);
-	}
+    public OcrParserTest() {
+        super(new ExtractorManager());
+        manager.registerServices();
+    }
+
+    @Test
+    public void testOcr() throws Exception {
+        doTest(OcrParser.class, "file.pdf", "application/pdf", "content", DEFAULT_TEST_STRING);
+    }
 
 }
