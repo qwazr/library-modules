@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 Emmanuel Keller / QWAZR
+ * Copyright 2015-2018 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -42,11 +43,11 @@ public abstract class AbstractLibraryTest {
 		if (libraryManager != null)
 			return;
 		final Path dataDirectory = Files.createTempDirectory("library-test");
-		final Collection<File> etcFiles = Arrays.asList(new File("src/test/resources/etc/library.json"));
+		final Collection<Path> etcFiles = Arrays.asList(Paths.get("src/test/resources/etc/library.json"));
 		final TableSingleton tableSingleton = new TableSingleton(dataDirectory, null);
 		final InstancesSupplier instancesSupplier = InstancesSupplier.withConcurrentMap();
 		instancesSupplier.registerInstance(TableServiceInterface.class, tableSingleton.getTableManager().getService());
-		libraryManager = new LibraryManager(dataDirectory.toFile(), etcFiles, instancesSupplier);
+		libraryManager = new LibraryManager(dataDirectory, etcFiles, instancesSupplier);
 		final File resourcesDirectory = new File("src/test/resources");
 		if (resourcesDirectory.exists())
 			FileUtils.copyDirectory(resourcesDirectory, dataDirectory.toFile());

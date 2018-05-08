@@ -57,7 +57,7 @@ public class ThymeleafTool extends AbstractLibrary implements Closeable {
 		else {
 			templateResolver = new FileTemplateResolver();
 			templateResolver.setPrefix(
-					StringUtils.ensureSuffix(libraryManager.getDataDirectory().getAbsolutePath(), "/"));
+					StringUtils.ensureSuffix(libraryManager.getDataDirectory().toAbsolutePath().toString(), "/"));
 		}
 		if (cache_enabled != null)
 			templateResolver.setCacheable(cache_enabled);

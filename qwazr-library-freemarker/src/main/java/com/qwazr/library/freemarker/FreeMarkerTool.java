@@ -148,7 +148,7 @@ public class FreeMarkerTool extends AbstractLibrary implements Closeable {
 		else
 			builder.loader(new FileTemplateLoader(templatePath != null ?
 					new File(templatePath) :
-					libraryManager == null ? null : libraryManager.getDataDirectory()));
+					libraryManager == null ? null : libraryManager.getDataDirectory().toFile()));
 		if (templateLoaders != null)
 			templateLoaders.forEach(loader -> builder.loader(loader.build()));
 		cfg.setTemplateLoader(builder.build());
