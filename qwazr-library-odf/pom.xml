@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>qwazr-library-odf</artifactId>
@@ -11,53 +12,12 @@
         <version>1.4.1-SNAPSHOT</version>
     </parent>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>commons-collections</groupId>
-                <artifactId>commons-collections</artifactId>
-                <version>3.2.2</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.jena</groupId>
-                <artifactId>jena-iri</artifactId>
-                <version>1.0.2</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <dependencies>
 
         <dependency>
             <groupId>org.apache.odftoolkit</groupId>
             <artifactId>simple-odf</artifactId>
             <version>0.8.2-incubating</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>slf4j-log4j12</artifactId>
-                    <groupId>org.slf4j</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>log4j</artifactId>
-                    <groupId>log4j</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>commons-logging</artifactId>
-                    <groupId>commons-logging</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>xercesImpl</artifactId>
-                    <groupId>xerces</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>xml-apis</artifactId>
-                    <groupId>xml-apis</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>slf4j-api</artifactId>
-                    <groupId>org.slf4j</groupId>
-                </exclusion>
-            </exclusions>
         </dependency>
 
         <dependency>
