@@ -42,7 +42,7 @@
         <dependency>
             <groupId>net.sourceforge.tess4j</groupId>
             <artifactId>tess4j</artifactId>
-            <version>3.4.7</version>
+            <version>3.4.9</version>
         </dependency>
 
         <dependency>
