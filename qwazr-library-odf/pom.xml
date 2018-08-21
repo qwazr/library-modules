@@ -18,6 +18,12 @@
             <groupId>org.apache.odftoolkit</groupId>
             <artifactId>simple-odf</artifactId>
             <version>0.8.2-incubating</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>tools</artifactId>
+                    <groupId>com.sun</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
