@@ -37,100 +37,100 @@ import java.util.logging.Logger;
 
 public class LdapIdentityManager implements IdentityManager {
 
-	private static final Logger LOGGER = LoggerUtils.getLogger(LdapIdentityManager.class);
+    private static final Logger LOGGER = LoggerUtils.getLogger(LdapIdentityManager.class);
 
-	private LdapConnector connector;
+    private LdapConnector connector;
 
-	public LdapIdentityManager(final LdapConnector connector) {
-		this.connector = connector;
-	}
+    public LdapIdentityManager(final LdapConnector connector) {
+        this.connector = connector;
+    }
 
-	@Override
-	public Account verify(final Account account) {
-		return account;
-	}
+    @Override
+    public Account verify(final Account account) {
+        return account;
+    }
 
-	@Override
-	public LdapAccount verify(final String id, final Credential credential) {
+    @Override
+    public LdapAccount verify(final String id, final Credential credential) {
 
-		// This realm only support one type of credential
-		if (!(credential instanceof PasswordCredential))
-			throw new RuntimeException("Unsupported credential type: " + credential.getClass().getName());
+        // This realm only support one type of credential
+        if (!(credential instanceof PasswordCredential))
+            throw new RuntimeException("Unsupported credential type: " + credential.getClass().getName());
 
-		final PasswordCredential passwordCredential = (PasswordCredential) credential;
+        final PasswordCredential passwordCredential = (PasswordCredential) credential;
 
-		try (LdapConnection connection = connector.getConnection(null, 60000L)) {
-			// We request the database
+        try (LdapConnection connection = connector.getConnection(null, 60000L)) {
+            // We request the database
 
-			final String userFilter = "(&(objectClass=inetOrgPerson)(uid=" + FilterEncoder.encodeFilterValue(id) + "))";
+            final String userFilter = "(&(objectClass=inetOrgPerson)(uid=" + FilterEncoder.encodeFilterValue(id) + "))";
 
-			final Entry entry = connector.auth(connection, userFilter, new String(passwordCredential.getPassword()));
-			if (entry == null)
-				return authenticationFailure("Authentication error: " + userFilter, null);
+            final Entry entry = connector.auth(connection, userFilter, new String(passwordCredential.getPassword()));
+            if (entry == null)
+                return authenticationFailure("Authentication error: " + userFilter, null);
 
-			final String roleFilter =
-					"(&(objectClass=groupOfNames)(member=" + FilterEncoder.encodeFilterValue(entry.getDn().toString()) +
-							"))";
+            final String roleFilter =
+                    "(&(objectClass=groupOfNames)(member=" + FilterEncoder.encodeFilterValue(entry.getDn().toString()) +
+                            "))";
 
-			final LinkedHashSet<String> roles = new LinkedHashSet<>();
-			final List<Entry> roleEntries = connector.search(connection, roleFilter, 0, 1000);
-			if (roleEntries != null) {
-				roleEntries.forEach(e -> {
-					try {
-						roles.add(e.get("cn").getString());
-					} catch (LdapInvalidAttributeValueException e1) {
-						authenticationFailure(e1.getMessage(), e1);
-					}
-				});
-			}
+            final LinkedHashSet<String> roles = new LinkedHashSet<>();
+            final List<Entry> roleEntries = connector.search(connection, roleFilter, 0, 1000);
+            if (roleEntries != null) {
+                roleEntries.forEach(e -> {
+                    try {
+                        roles.add(e.get("cn").getString());
+                    } catch (LdapInvalidAttributeValueException e1) {
+                        authenticationFailure(e1.getMessage(), e1);
+                    }
+                });
+            }
 
-			return new LdapAccount(id, roles);
-		} catch (IOException | LdapException | CursorException e) {
-			return authenticationFailure(e.getMessage(), e);
-		}
-	}
+            return new LdapAccount(id, roles);
+        } catch (IOException | LdapException | CursorException e) {
+            return authenticationFailure(e.getMessage(), e);
+        }
+    }
 
-	private LdapAccount authenticationFailure(final String msg, final Throwable cause) {
-		if (cause != null)
-			LOGGER.log(Level.WARNING, cause, cause::getMessage);
-		else
-			LOGGER.warning(msg);
-		try {
-			Thread.sleep(2000);
-		} catch (InterruptedException e) {
-			LOGGER.log(Level.WARNING, e, e::getMessage);
-		}
-		return null;
-	}
+    private LdapAccount authenticationFailure(final String msg, final Throwable cause) {
+        if (cause != null)
+            LOGGER.log(Level.WARNING, cause, cause::getMessage);
+        else
+            LOGGER.warning(msg);
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            LOGGER.log(Level.WARNING, e, e::getMessage);
+        }
+        return null;
+    }
 
-	@Override
-	public Account verify(final Credential credential) {
-		return null;
-	}
+    @Override
+    public Account verify(final Credential credential) {
+        return null;
+    }
 
-	public class LdapAccount implements Account, Principal {
+    public static class LdapAccount implements Account, Principal {
 
-		private final String name;
-		private final Set<String> roles;
+        private final String name;
+        private final Set<String> roles;
 
-		private LdapAccount(final String name, final Set<String> roles) {
-			this.name = name;
-			this.roles = roles;
-		}
+        private LdapAccount(final String name, final Set<String> roles) {
+            this.name = name;
+            this.roles = roles;
+        }
 
-		@Override
-		public Principal getPrincipal() {
-			return this;
-		}
+        @Override
+        public Principal getPrincipal() {
+            return this;
+        }
 
-		@Override
-		public Set<String> getRoles() {
-			return roles;
-		}
+        @Override
+        public Set<String> getRoles() {
+            return roles;
+        }
 
-		@Override
-		public String getName() {
-			return name;
-		}
-	}
+        @Override
+        public String getName() {
+            return name;
+        }
+    }
 }

@@ -30,104 +30,104 @@ import java.nio.file.Path;
 
 public class OdfParser extends ParserAbstract {
 
-	public static final String[] DEFAULT_MIMETYPES = { "application/vnd.oasis.opendocument.spreadsheet",
-			"application/vnd.oasis.opendocument.spreadsheet-template",
-			"application/vnd.oasis.opendocument.text",
-			"application/vnd.oasis.opendocument.text-master",
-			"application/vnd.oasis.opendocument.text-template",
-			"application/vnd.oasis.opendocument.presentation",
-			"application/vnd.oasis.opendocument.presentation-template" };
+    static final String[] DEFAULT_MIMETYPES = { "application/vnd.oasis.opendocument.spreadsheet",
+            "application/vnd.oasis.opendocument.spreadsheet-template",
+            "application/vnd.oasis.opendocument.text",
+            "application/vnd.oasis.opendocument.text-master",
+            "application/vnd.oasis.opendocument.text-template",
+            "application/vnd.oasis.opendocument.presentation",
+            "application/vnd.oasis.opendocument.presentation-template" };
 
-	public static final String[] DEFAULT_EXTENSIONS = { "ods", "ots", "odt", "odm", "ott", "odp", "otp" };
+    static final String[] DEFAULT_EXTENSIONS = { "ods", "ots", "odt", "odm", "ott", "odp", "otp" };
 
-	final protected static ParserField CREATOR = ParserField.newString("creator", "The name of the creator");
+    final static ParserField CREATOR = ParserField.newString("creator", "The name of the creator");
 
-	final protected static ParserField CREATION_DATE = ParserField.newDate("creation_date", "The date of creation");
+    final static ParserField CREATION_DATE = ParserField.newDate("creation_date", "The date of creation");
 
-	final protected static ParserField MODIFICATION_DATE =
-			ParserField.newDate("modification_date", "The date of last modification");
+    final static ParserField MODIFICATION_DATE =
+            ParserField.newDate("modification_date", "The date of last modification");
 
-	final protected static ParserField DESCRIPTION = ParserField.newString("description", null);
+    final static ParserField DESCRIPTION = ParserField.newString("description", null);
 
-	final protected static ParserField KEYWORDS = ParserField.newString("keywords", null);
+    final static ParserField KEYWORDS = ParserField.newString("keywords", null);
 
-	final protected static ParserField SUBJECT = ParserField.newString("subject", "The subject of the document");
-	
-	final protected static ParserField LANGUAGE = ParserField.newString("language", null);
+    final static ParserField SUBJECT = ParserField.newString("subject", "The subject of the document");
 
-	final protected static ParserField PRODUCER = ParserField.newString("producer", "The producer of the document");
+    final static ParserField LANGUAGE = ParserField.newString("language", null);
 
-	final protected static ParserField[] FIELDS = { TITLE,
-			CREATOR,
-			CREATION_DATE,
-			MODIFICATION_DATE,
-			DESCRIPTION,
-			KEYWORDS,
-			SUBJECT,
-			CONTENT,
-			LANGUAGE,
-			PRODUCER,
-			LANG_DETECTION };
+    final static ParserField PRODUCER = ParserField.newString("producer", "The producer of the document");
 
-	@Override
-	public ParserField[] getFields() {
-		return FIELDS;
-	}
+    final static ParserField[] FIELDS = { TITLE,
+            CREATOR,
+            CREATION_DATE,
+            MODIFICATION_DATE,
+            DESCRIPTION,
+            KEYWORDS,
+            SUBJECT,
+            CONTENT,
+            LANGUAGE,
+            PRODUCER,
+            LANG_DETECTION };
 
-	@Override
-	public String[] getDefaultExtensions() {
-		return DEFAULT_EXTENSIONS;
-	}
+    @Override
+    public ParserField[] getFields() {
+        return FIELDS;
+    }
 
-	@Override
-	public String[] getDefaultMimeTypes() {
-		return DEFAULT_MIMETYPES;
-	}
+    @Override
+    public String[] getDefaultExtensions() {
+        return DEFAULT_EXTENSIONS;
+    }
 
-	private void parseContent(final Document document, final ParserResultBuilder resultBuilder) throws Exception {
-		// Load file
-		try {
-			if (document == null)
-				return;
-			final Meta meta = document.getOfficeMetadata();
-			if (meta != null) {
-				final ParserFieldsBuilder metas = resultBuilder.metas();
-				metas.add(CREATION_DATE, meta.getCreationDate());
-				metas.add(MODIFICATION_DATE, meta.getDcdate());
-				metas.add(TITLE, meta.getTitle());
-				metas.add(SUBJECT, meta.getSubject());
-				metas.add(CREATOR, meta.getCreator());
-				metas.add(PRODUCER, meta.getGenerator());
-				metas.add(KEYWORDS, meta.getKeywords());
-				metas.add(LANGUAGE, meta.getLanguage());
-			}
+    @Override
+    public String[] getDefaultMimeTypes() {
+        return DEFAULT_MIMETYPES;
+    }
 
-			final OdfElement odfElement = document.getContentRoot();
-			if (odfElement != null) {
-				final ParserFieldsBuilder result = resultBuilder.newDocument();
-				String text = TextExtractor.newOdfTextExtractor(odfElement).getText();
-				if (text != null) {
-					result.add(CONTENT, text);
-					result.add(LANG_DETECTION, languageDetection(result, CONTENT, 10000));
-				}
-			}
-		} finally {
-			if (document != null)
-				document.close();
-		}
-	}
+    private void parseContent(final Document document, final ParserResultBuilder resultBuilder) throws Exception {
+        // Load file
+        try {
+            if (document == null)
+                return;
+            final Meta meta = document.getOfficeMetadata();
+            if (meta != null) {
+                final ParserFieldsBuilder metas = resultBuilder.metas();
+                metas.add(CREATION_DATE, meta.getCreationDate());
+                metas.add(MODIFICATION_DATE, meta.getDcdate());
+                metas.add(TITLE, meta.getTitle());
+                metas.add(SUBJECT, meta.getSubject());
+                metas.add(CREATOR, meta.getCreator());
+                metas.add(PRODUCER, meta.getGenerator());
+                metas.add(KEYWORDS, meta.getKeywords());
+                metas.add(LANGUAGE, meta.getLanguage());
+            }
 
-	@Override
-	public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-			String extension, final String mimeType, final ParserResultBuilder resultBuilder) throws Exception {
-		resultBuilder.metas().set(MIME_TYPE, findMimeType(extension, mimeType, this::findMimeTypeUsingDefault));
-		parseContent(Document.loadDocument(inputStream), resultBuilder);
-	}
+            final OdfElement odfElement = document.getContentRoot();
+            if (odfElement != null) {
+                final ParserFieldsBuilder result = resultBuilder.newDocument();
+                String text = TextExtractor.newOdfTextExtractor(odfElement).getText();
+                if (text != null) {
+                    result.add(CONTENT, text);
+                    result.add(LANG_DETECTION, languageDetection(result, CONTENT, 10000));
+                }
+            }
+        } finally {
+            if (document != null)
+                document.close();
+        }
+    }
 
-	@Override
-	public void parseContent(final MultivaluedMap<String, String> parameters, final Path filePath, String extension,
-			final String mimeType, final ParserResultBuilder resultBuilder) throws Exception {
-		resultBuilder.metas().set(MIME_TYPE, findMimeType(extension, mimeType, this::findMimeTypeUsingDefault));
-		parseContent(Document.loadDocument(filePath.toFile()), resultBuilder);
-	}
+    @Override
+    public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
+            String extension, final String mimeType, final ParserResultBuilder resultBuilder) throws Exception {
+        resultBuilder.metas().set(MIME_TYPE, findMimeType(extension, mimeType, this::findMimeTypeUsingDefault));
+        parseContent(Document.loadDocument(inputStream), resultBuilder);
+    }
+
+    @Override
+    public void parseContent(final MultivaluedMap<String, String> parameters, final Path filePath, String extension,
+            final String mimeType, final ParserResultBuilder resultBuilder) throws Exception {
+        resultBuilder.metas().set(MIME_TYPE, findMimeType(extension, mimeType, this::findMimeTypeUsingDefault));
+        parseContent(Document.loadDocument(filePath.toFile()), resultBuilder);
+    }
 }
