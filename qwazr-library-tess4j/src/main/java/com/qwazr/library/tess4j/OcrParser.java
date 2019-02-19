@@ -50,7 +50,7 @@ public class OcrParser extends ParserAbstract {
         MIMEMAP.put("application/pdf", "pdf");
     }
 
-    final private static ParserField[] FIELDS = {CONTENT, LANG_DETECTION};
+    final private static ParserField[] FIELDS = { CONTENT, LANG_DETECTION };
 
     final private static ParserField LANGUAGE = ParserField.newString("language",
             "The language code of the document if known: afr (Afrikaans) amh (Amharic) ara (Arabic) asm (Assamese) " +
@@ -77,7 +77,7 @@ public class OcrParser extends ParserAbstract {
                     "uig (Uighur; Uyghur) ukr (Ukrainian) urd (Urdu) uzb (Uzbek) uzb_cyrl (Uzbek - Cyrilic) " +
                     "vie (Vietnamese) yid (Yiddish)");
 
-    final private static ParserField[] PARAMETERS = {LANGUAGE};
+    final private static ParserField[] PARAMETERS = { LANGUAGE };
 
     @Override
     public ParserField[] getParameters() {
@@ -131,7 +131,7 @@ public class OcrParser extends ParserAbstract {
 
     @Override
     public void parseContent(final MultivaluedMap<String, String> parameters, final Path filePath,
-                             final String extension, String mimeType, final ParserResultBuilder resultBuilder)
+            final String extension, String mimeType, final ParserResultBuilder resultBuilder)
             throws TesseractException {
         final Tesseract1 tesseract = new Tesseract1();
         final String lang = this.getParameterValue(parameters, LANGUAGE, 0);
@@ -157,7 +157,7 @@ public class OcrParser extends ParserAbstract {
 
     @Override
     public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-                             String extension, final String mimeType, final ParserResultBuilder resultBuilder) throws Exception {
+            String extension, final String mimeType, final ParserResultBuilder resultBuilder) throws Exception {
         if (extension == null) {
             if (mimeType == null)
                 throw new BadRequestException("The file extension or the mime-type is required.");

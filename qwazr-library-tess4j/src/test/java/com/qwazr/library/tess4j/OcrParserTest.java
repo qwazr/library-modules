@@ -17,6 +17,9 @@ package com.qwazr.library.tess4j;
 
 import com.qwazr.extractor.ExtractorManager;
 import com.qwazr.extractor.ParserTest;
+import net.sourceforge.tess4j.Tesseract1;
+import org.junit.Assume;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.nio.file.Paths;
@@ -27,6 +30,21 @@ public class OcrParserTest extends ParserTest {
 
     static {
         System.setProperty("TESSDATA_PREFIX", Paths.get("src", "test").toString());
+    }
+
+    @BeforeClass
+    public static void setup() {
+        Assume.assumeTrue(checkTesseract());
+    }
+
+    private static boolean checkTesseract() {
+        try {
+            new Tesseract1();
+            return true;
+        } catch (UnsatisfiedLinkError e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public OcrParserTest() {
