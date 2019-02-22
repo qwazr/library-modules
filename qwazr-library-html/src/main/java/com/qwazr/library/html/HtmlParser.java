@@ -227,52 +227,49 @@ public class HtmlParser extends ParserAbstract {
 
     }
 
-    private int extractXPath(final MultivaluedMap<String, String> parameters, final XPathParser xPath,
-            final Node htmlDocument, final LinkedHashMap<String, Object> selectorsResult)
-            throws XPathExpressionException {
+    private Map<String, String> extractPrefixParameters(final MultivaluedMap<String, String> multivaluedMap,
+            final ParserField selectorPrefix, final ParserField namePrefix) {
+        final Map<String, String> parameters = new LinkedHashMap<>();
         int i = 0;
-        String xpath;
-        while ((xpath = getParameterValue(parameters, XPATH_PARAM, i)) != null) {
-            final String name = getParameterValue(parameters, XPATH_NAME_PARAM, i);
-            final ListConsumer results = new ListConsumer();
-            xPath.evaluate(htmlDocument, xpath, results);
-            selectorsResult.put(name == null ? Integer.toString(i) : name, results);
+        String value;
+        while ((value = getParameterValue(multivaluedMap, selectorPrefix, i)) != null) {
+            final String name = getParameterValue(multivaluedMap, namePrefix, i);
+            parameters.put(name == null ? Integer.toString(i) : name, value);
             i++;
         }
-        return i;
+        return parameters;
     }
 
-    private int extractCss(final MultivaluedMap<String, String> parameters, final Node htmlDocument,
+    private void extractXPath(final Map<String, String> parameters, final XPathParser xPath, final Node htmlDocument,
+            final LinkedHashMap<String, Object> selectorsResult) throws XPathExpressionException {
+        for (final Map.Entry<String, String> parameter : parameters.entrySet()) {
+            final ListConsumer results = new ListConsumer();
+            xPath.evaluate(htmlDocument, parameter.getValue(), results);
+            selectorsResult.put(parameter.getKey(), results);
+        }
+    }
+
+    private void extractCss(final Map<String, String> parameters, final Node htmlDocument,
             final LinkedHashMap<String, Object> selectorsResult) {
-        int i = 0;
-        String css;
         final Selectors<Node, W3CNode> selectors = new Selectors<>(new W3CNode(htmlDocument));
-        while ((css = getParameterValue(parameters, CSS_PARAM, i)) != null) {
-            final String name = getParameterValue(parameters, CSS_NAME_PARAM, i);
+        for (final Map.Entry<String, String> parameter : parameters.entrySet()) {
             final ListConsumer results = new ListConsumer();
-            selectors.querySelectorAll(css).forEach(results::accept);
-            selectorsResult.put(name == null ? Integer.toString(i) : name, results);
-            i++;
+            selectors.querySelectorAll(parameter.getValue()).forEach(results::accept);
+            selectorsResult.put(parameter.getKey(), results);
         }
-        return i;
     }
 
-    private int extractRegExp(final MultivaluedMap<String, String> parameters, final String htmlSource,
+    private void extractRegExp(final Map<String, String> parameters, final String htmlSource,
             final LinkedHashMap<String, Object> selectorsResult) {
-        int i = 0;
-        String regexp;
-        while ((regexp = getParameterValue(parameters, REGEXP_PARAM, i)) != null) {
-            final String name = getParameterValue(parameters, REGEXP_NAME_PARAM, i);
+        for (final Map.Entry<String, String> parameter : parameters.entrySet()) {
             final ListConsumer results = new ListConsumer();
-            final Matcher matcher = Pattern.compile(regexp, Pattern.DOTALL).matcher(htmlSource);
+            final Matcher matcher = Pattern.compile(parameter.getValue(), Pattern.DOTALL).matcher(htmlSource);
             final int groupCount = matcher.groupCount();
             while (matcher.find())
                 for (int j = 1; j <= groupCount; j++)
                     results.accept(matcher.group(j));
-            selectorsResult.put(name == null ? Integer.toString(i) : name, results);
-            i++;
+            selectorsResult.put(parameter.getKey(), results);
         }
-        return i;
     }
 
     private void addToMap(final Map<String, String> map, final String name, final String value) {
@@ -291,15 +288,15 @@ public class HtmlParser extends ParserAbstract {
 
         resultBuilder.metas().set(MIME_TYPE, DEFAULT_MIMETYPES[0]);
 
-        final boolean isXpathParam = parameters != null && parameters.containsKey(XPATH_PARAM.name);
-        final boolean isCssParam = parameters != null && parameters.containsKey(CSS_PARAM.name);
-        final boolean isRegExpParam = parameters != null && parameters.containsKey(REGEXP_PARAM.name);
-        final boolean isSelector = isXpathParam || isCssParam || isRegExpParam;
+        final Map<String, String> xPathParams = extractPrefixParameters(parameters, XPATH_PARAM, XPATH_NAME_PARAM);
+        final Map<String, String> cssParams = extractPrefixParameters(parameters, CSS_PARAM, CSS_NAME_PARAM);
+        final Map<String, String> regexpParams = extractPrefixParameters(parameters, REGEXP_PARAM, REGEXP_NAME_PARAM);
+        final boolean isSelector = !(xPathParams.isEmpty() && cssParams.isEmpty() && regexpParams.isEmpty());
 
         final DOMParser htmlParser = getThreadLocalDomParser();
 
         final String htmlSource;
-        if (isRegExpParam) {
+        if (!regexpParams.isEmpty()) {
             htmlSource = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
             htmlParser.parse(new InputSource(new StringReader(htmlSource)));
         } else {
@@ -312,14 +309,14 @@ public class HtmlParser extends ParserAbstract {
         final LinkedHashMap<String, Object> selectorsResult = new LinkedHashMap<>();
 
         final Document htmlDocument = htmlParser.getDocument();
-        final XPathParser xPath = isXpathParam || !isSelector ? new XPathParser() : null;
+        final XPathParser xPath = !xPathParams.isEmpty() || !isSelector ? new XPathParser() : null;
 
-        if (isXpathParam)
-            extractXPath(parameters, xPath, htmlDocument, selectorsResult);
-        if (isCssParam)
-            extractCss(parameters, htmlDocument, selectorsResult);
-        if (isRegExpParam)
-            extractRegExp(parameters, htmlSource, selectorsResult);
+        if (!xPathParams.isEmpty())
+            extractXPath(xPathParams, xPath, htmlDocument, selectorsResult);
+        if (!cssParams.isEmpty())
+            extractCss(cssParams, htmlDocument, selectorsResult);
+        if (!regexpParams.isEmpty())
+            extractRegExp(regexpParams, htmlSource, selectorsResult);
 
         final boolean selectorResultIsEmpty = selectorsResult.isEmpty();
         if (!selectorResultIsEmpty)
