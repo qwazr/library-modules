@@ -27,54 +27,54 @@ import java.util.UUID;
 
 public class CassandraConnector extends AbstractPasswordLibrary implements Closeable {
 
-	public final List<String> hosts = null;
+    public final List<String> hosts = null;
 
-	public final String login = null;
+    public final String login = null;
 
-	public final Integer timeout_connect_ms = null;
-	public final Integer timeout_read_ms = null;
+    public final Integer timeout_connect_ms = null;
+    public final Integer timeout_read_ms = null;
 
-	public final Integer timeout_pool_ms = null;
-	public final Integer pool_connections = null;
+    public final Integer timeout_pool_ms = null;
+    public final Integer pool_connections = null;
 
-	@JsonIgnore
-	private volatile CassandraCluster cluster = null;
+    @JsonIgnore
+    private volatile CassandraCluster cluster = null;
 
-	@JsonIgnore
-	private String keyspace = null;
+    @JsonIgnore
+    private final String keyspace = null;
 
-	@Override
-	public void load() {
-		cluster = new CassandraCluster(login, password, hosts, timeout_connect_ms, timeout_read_ms, timeout_pool_ms,
-				pool_connections);
-	}
+    @Override
+    public void load() {
+        cluster = new CassandraCluster(login, password, hosts, timeout_connect_ms, timeout_read_ms, timeout_pool_ms,
+                pool_connections);
+    }
 
-	@Override
-	public void close() {
-		if (cluster != null) {
-			IOUtils.closeQuietly(cluster);
-			cluster = null;
-		}
-	}
+    @Override
+    public void close() {
+        if (cluster != null) {
+            IOUtils.closeQuietly(cluster);
+            cluster = null;
+        }
+    }
 
-	public ResultSet executeWithFetchSize(final String csql, final int fetchSize, final Object... values) {
-		CassandraSession session = cluster.getSession(keyspace);
-		return session.executeWithFetchSize(csql, fetchSize, values);
-	}
+    public ResultSet executeWithFetchSize(final String csql, final int fetchSize, final Object... values) {
+        CassandraSession session = cluster.getSession(keyspace);
+        return session.executeWithFetchSize(csql, fetchSize, values);
+    }
 
-	public ResultSet execute(final String csql, final Object... values) {
-		CassandraSession session = cluster.getSession(keyspace);
-		return session.execute(csql, values);
-	}
+    public ResultSet execute(final String csql, final Object... values) {
+        CassandraSession session = cluster.getSession(keyspace);
+        return session.execute(csql, values);
+    }
 
-	@JsonIgnore
-	public UUID getTimeUUID() {
-		return UUIDs.timeBased();
-	}
+    @JsonIgnore
+    public UUID getTimeUUID() {
+        return UUIDs.timeBased();
+    }
 
-	@JsonIgnore
-	public long getTimeFromUUID(UUID uuid) {
-		return UUIDs.unixTimestamp(uuid);
-	}
+    @JsonIgnore
+    public long getTimeFromUUID(UUID uuid) {
+        return UUIDs.unixTimestamp(uuid);
+    }
 
 }

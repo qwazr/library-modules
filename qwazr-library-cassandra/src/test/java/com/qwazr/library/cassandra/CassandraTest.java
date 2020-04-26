@@ -21,7 +21,7 @@ import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.qwazr.library.annotations.Library;
 import com.qwazr.library.test.AbstractLibraryTest;
 import com.qwazr.utils.LoggerUtils;
-import com.qwazr.utils.concurrent.RunnablePool;
+import com.qwazr.utils.concurrent.TaskPool;
 import org.apache.commons.lang3.RandomUtils;
 import org.junit.Assert;
 import org.junit.Assume;
@@ -37,106 +37,106 @@ import java.util.logging.Logger;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class CassandraTest extends AbstractLibraryTest {
 
-	private final static Logger LOGGER = LoggerUtils.getLogger(CassandraTest.class);
+    private final static Logger LOGGER = LoggerUtils.getLogger(CassandraTest.class);
 
-	@Library("cassandra")
-	private CassandraConnector cassandra;
+    @Library("cassandra")
+    private CassandraConnector cassandra;
 
-	private final static String CREATE_SCHEMA = "CREATE KEYSPACE qwazr_connector_test WITH REPLICATION " +
-			"= { 'class' : 'SimpleStrategy', 'replication_factor' : 3 }";
+    private final static String CREATE_SCHEMA = "CREATE KEYSPACE qwazr_connector_test WITH REPLICATION " +
+            "= { 'class' : 'SimpleStrategy', 'replication_factor' : 3 }";
 
-	private final static String CREATE_TABLE = "CREATE TABLE qwazr_connector_test.test" +
-			"(item_id timeuuid, cat_id int, status text, PRIMARY KEY (item_id))";
+    private final static String CREATE_TABLE = "CREATE TABLE qwazr_connector_test.test" +
+            "(item_id timeuuid, cat_id int, status text, PRIMARY KEY (item_id))";
 
-	private final static String CREATE_INDEX = "CREATE INDEX ON qwazr_connector_test.test(cat_id)";
+    private final static String CREATE_INDEX = "CREATE INDEX ON qwazr_connector_test.test(cat_id)";
 
-	@Test
-	public void test_01_injected() {
-		Assert.assertNotNull(cassandra);
-	}
+    @Test
+    public void test_01_injected() {
+        Assert.assertNotNull(cassandra);
+    }
 
-	@Test
-	public void test_02_create() throws IOException {
-		try {
-			Assert.assertTrue(cassandra.execute(CREATE_SCHEMA).wasApplied());
-			Assert.assertTrue(cassandra.execute(CREATE_TABLE).wasApplied());
-			Assert.assertTrue(cassandra.execute(CREATE_INDEX).wasApplied());
-		} catch (NoHostAvailableException e) {
-			Assume.assumeNoException("Bypass (no cassandra host is running)", e);
-		}
-	}
+    @Test
+    public void test_02_create() throws IOException {
+        try {
+            Assert.assertTrue(cassandra.execute(CREATE_SCHEMA).wasApplied());
+            Assert.assertTrue(cassandra.execute(CREATE_TABLE).wasApplied());
+            Assert.assertTrue(cassandra.execute(CREATE_INDEX).wasApplied());
+        } catch (NoHostAvailableException e) {
+            Assume.assumeNoException("Bypass (no cassandra host is running)", e);
+        }
+    }
 
-	private static long finalTime = 0;
+    private static long finalTime = 0;
 
-	@Test
-	public void test_10_transaction() throws Exception {
-		try {
-			cassandra.execute("SELECT count(*) FROM qwazr_connector_test.test").all();
-			finalTime = System.currentTimeMillis() + 10000;
-			try (final RunnablePool<Integer> poll = new RunnablePool<>()) {
-				for (int i = 0; i < 50; i++) {
-					poll.submit(new InsertThread());
-					poll.submit(new SelectUpdateThread());
-				}
-			}
-		} catch (NoHostAvailableException e) {
-			Assume.assumeNoException("Bypass (no cassandra host is running)", e);
-		}
-	}
+    @Test
+    public void test_10_transaction() {
+        try {
+            cassandra.execute("SELECT count(*) FROM qwazr_connector_test.test").all();
+            finalTime = System.currentTimeMillis() + 10000;
+            try (final TaskPool poll = TaskPool.of(10)) {
+                for (int i = 0; i < 50; i++) {
+                    poll.submit(InsertThread::new);
+                    poll.submit(SelectUpdateThread::new);
+                }
+            }
+        } catch (NoHostAvailableException e) {
+            Assume.assumeNoException("Bypass (no cassandra host is running)", e);
+        }
+    }
 
-	private final static String DROP_TABLE = "DROP TABLE qwazr_connector_test.test";
-	private final static String DROP_SCHEMA = "DROP SCHEMA qwazr_connector_test";
+    private final static String DROP_TABLE = "DROP TABLE qwazr_connector_test.test";
+    private final static String DROP_SCHEMA = "DROP SCHEMA qwazr_connector_test";
 
-	@Test
-	public void test_98_drop() throws IOException {
-		try {
-			Assert.assertTrue(cassandra.execute(DROP_TABLE).wasApplied());
-			Assert.assertTrue(cassandra.execute(DROP_SCHEMA).wasApplied());
-		} catch (NoHostAvailableException e) {
-			Assume.assumeNoException("Bypass (no cassandra host is running)", e);
-		}
-	}
+    @Test
+    public void test_98_drop() throws IOException {
+        try {
+            Assert.assertTrue(cassandra.execute(DROP_TABLE).wasApplied());
+            Assert.assertTrue(cassandra.execute(DROP_SCHEMA).wasApplied());
+        } catch (NoHostAvailableException e) {
+            Assume.assumeNoException("Bypass (no cassandra host is running)", e);
+        }
+    }
 
-	private String INSERT = "INSERT INTO qwazr_connector_test.test " + "(item_id, cat_id) VALUES (now(), ?)";
+    private String INSERT = "INSERT INTO qwazr_connector_test.test " + "(item_id, cat_id) VALUES (now(), ?)";
 
-	private class InsertThread implements Callable<Integer> {
+    private class InsertThread implements Callable<Integer> {
 
-		@Override
-		public Integer call() throws Exception {
-			long id = Thread.currentThread().getId();
-			LOGGER.info(() -> "Starts - id: " + id);
-			int count = 0;
-			while (System.currentTimeMillis() < finalTime) {
-				Assert.assertTrue(cassandra.execute(INSERT, RandomUtils.nextInt(0, 10)).wasApplied());
-				count++;
-			}
-			LOGGER.info("Ends - id: " + id + " - count: " + count);
-			return count;
-		}
-	}
+        @Override
+        public Integer call() throws Exception {
+            long id = Thread.currentThread().getId();
+            LOGGER.info(() -> "Starts - id: " + id);
+            int count = 0;
+            while (System.currentTimeMillis() < finalTime) {
+                Assert.assertTrue(cassandra.execute(INSERT, RandomUtils.nextInt(0, 10)).wasApplied());
+                count++;
+            }
+            LOGGER.info("Ends - id: " + id + " - count: " + count);
+            return count;
+        }
+    }
 
-	private String SELECT = "SELECT * FROM qwazr_connector_test.test" + " WHERE cat_id=?";
+    private String SELECT = "SELECT * FROM qwazr_connector_test.test" + " WHERE cat_id=?";
 
-	private String UPDATE = "UPDATE qwazr_connector_test.test" + " SET status='ok' WHERE item_id=?";
+    private String UPDATE = "UPDATE qwazr_connector_test.test" + " SET status='ok' WHERE item_id=?";
 
-	private class SelectUpdateThread implements Callable<Integer> {
+    private class SelectUpdateThread implements Callable<Integer> {
 
-		@Override
-		public Integer call() throws Exception {
-			final long id = Thread.currentThread().getId();
-			LOGGER.info("Starts - id: " + id);
-			int count = 0;
-			while (System.currentTimeMillis() < finalTime) {
-				ResultSet result = cassandra.execute(SELECT, RandomUtils.nextInt(0, 10));
-				Iterator<Row> it = result.iterator();
-				while (it.hasNext()) {
-					Row row = it.next();
-					cassandra.execute(UPDATE, row.getUUID("item_id")).wasApplied();
-					count++;
-				}
-			}
-			LOGGER.info("Ends - id: " + id + " - count: " + count);
-			return count;
-		}
-	}
+        @Override
+        public Integer call() throws Exception {
+            final long id = Thread.currentThread().getId();
+            LOGGER.info("Starts - id: " + id);
+            int count = 0;
+            while (System.currentTimeMillis() < finalTime) {
+                ResultSet result = cassandra.execute(SELECT, RandomUtils.nextInt(0, 10));
+                Iterator<Row> it = result.iterator();
+                while (it.hasNext()) {
+                    Row row = it.next();
+                    cassandra.execute(UPDATE, row.getUUID("item_id")).wasApplied();
+                    count++;
+                }
+            }
+            LOGGER.info("Ends - id: " + id + " - count: " + count);
+            return count;
+        }
+    }
 }

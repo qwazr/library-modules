@@ -39,7 +39,7 @@ public class LdapIdentityManager implements IdentityManager {
 
     private static final Logger LOGGER = LoggerUtils.getLogger(LdapIdentityManager.class);
 
-    private LdapConnector connector;
+    private final LdapConnector connector;
 
     public LdapIdentityManager(final LdapConnector connector) {
         this.connector = connector;
