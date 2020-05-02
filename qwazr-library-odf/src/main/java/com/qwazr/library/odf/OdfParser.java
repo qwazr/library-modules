@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 Emmanuel Keller / QWAZR
+ * Copyright 2015-2020 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@ public class OdfParser extends ParserAbstract {
         return DEFAULT_MIMETYPES;
     }
 
-    private void parseContent(final Document document, final ParserResultBuilder resultBuilder) throws Exception {
+    private void parseContent(final Document document, final ParserResultBuilder resultBuilder) {
         // Load file
         try {
             if (document == null)
@@ -111,6 +111,8 @@ public class OdfParser extends ParserAbstract {
                     result.add(LANG_DETECTION, languageDetection(result, CONTENT, 10000));
                 }
             }
+        } catch (Exception e) {
+            throw convertException(e::getMessage, e);
         } finally {
             if (document != null)
                 document.close();
@@ -119,15 +121,23 @@ public class OdfParser extends ParserAbstract {
 
     @Override
     public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-            String extension, final String mimeType, final ParserResultBuilder resultBuilder) throws Exception {
+            String extension, final String mimeType, final ParserResultBuilder resultBuilder) {
         resultBuilder.metas().set(MIME_TYPE, findMimeType(extension, mimeType, this::findMimeTypeUsingDefault));
-        parseContent(Document.loadDocument(inputStream), resultBuilder);
+        try {
+            parseContent(Document.loadDocument(inputStream), resultBuilder);
+        } catch (Exception e) {
+            throw convertException(e::getMessage, e);
+        }
     }
 
     @Override
     public void parseContent(final MultivaluedMap<String, String> parameters, final Path filePath, String extension,
-            final String mimeType, final ParserResultBuilder resultBuilder) throws Exception {
+            final String mimeType, final ParserResultBuilder resultBuilder) {
         resultBuilder.metas().set(MIME_TYPE, findMimeType(extension, mimeType, this::findMimeTypeUsingDefault));
-        parseContent(Document.loadDocument(filePath.toFile()), resultBuilder);
+        try {
+            parseContent(Document.loadDocument(filePath.toFile()), resultBuilder);
+        } catch (Exception e) {
+            throw convertException(() -> "Error with " + filePath.toAbsolutePath() + ": " + e.getMessage(), e);
+        }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 Emmanuel Keller / QWAZR
+ * Copyright 2015-2020 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,66 +24,70 @@ import org.apache.poi.hssf.extractor.ExcelExtractor;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 
 import javax.ws.rs.core.MultivaluedMap;
+import java.io.IOException;
 import java.io.InputStream;
 
 public class XlsParser extends ParserAbstract {
 
-	private static final String[] DEFAULT_MIMETYPES = { "application/vnd.ms-excel" };
+    private static final String[] DEFAULT_MIMETYPES = { "application/vnd.ms-excel" };
 
-	private static final String[] DEFAULT_EXTENSIONS = { "xls" };
+    private static final String[] DEFAULT_EXTENSIONS = { "xls" };
 
-	final private static ParserField AUTHOR = ParserField.newString("author", "The name of the author");
+    final private static ParserField AUTHOR = ParserField.newString("author", "The name of the author");
 
-	final private static ParserField KEYWORDS = ParserField.newString("keywords", null);
+    final private static ParserField KEYWORDS = ParserField.newString("keywords", null);
 
-	final private static ParserField SUBJECT = ParserField.newString("subject", "The subject of the document");
+    final private static ParserField SUBJECT = ParserField.newString("subject", "The subject of the document");
 
-	final private static ParserField CREATION_DATE = ParserField.newDate("creation_date", null);
+    final private static ParserField CREATION_DATE = ParserField.newDate("creation_date", null);
 
-	final private static ParserField MODIFICATION_DATE = ParserField.newDate("modification_date", null);
+    final private static ParserField MODIFICATION_DATE = ParserField.newDate("modification_date", null);
 
-	final private static ParserField[] FIELDS =
-			{ TITLE, AUTHOR, KEYWORDS, SUBJECT, CREATION_DATE, MODIFICATION_DATE, CONTENT, LANG_DETECTION };
+    final private static ParserField[] FIELDS =
+            { TITLE, AUTHOR, KEYWORDS, SUBJECT, CREATION_DATE, MODIFICATION_DATE, CONTENT, LANG_DETECTION };
 
-	@Override
-	public ParserField[] getFields() {
-		return FIELDS;
-	}
+    @Override
+    public ParserField[] getFields() {
+        return FIELDS;
+    }
 
-	@Override
-	public String[] getDefaultExtensions() {
-		return DEFAULT_EXTENSIONS;
-	}
+    @Override
+    public String[] getDefaultExtensions() {
+        return DEFAULT_EXTENSIONS;
+    }
 
-	@Override
-	public String[] getDefaultMimeTypes() {
-		return DEFAULT_MIMETYPES;
-	}
+    @Override
+    public String[] getDefaultMimeTypes() {
+        return DEFAULT_MIMETYPES;
+    }
 
-	@Override
-	public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-			final String extension, final String mimeType, final ParserResultBuilder resultBuilder) throws Exception {
+    @Override
+    public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
+            final String extension, final String mimeType, final ParserResultBuilder resultBuilder) {
 
-		final HSSFWorkbook workbook = new HSSFWorkbook(inputStream);
+        try (final HSSFWorkbook workbook = new HSSFWorkbook(inputStream)) {
 
-		try (final ExcelExtractor excel = new ExcelExtractor(workbook)) {
+            try (final ExcelExtractor excel = new ExcelExtractor(workbook)) {
 
-			final ParserFieldsBuilder metas = resultBuilder.metas();
-			metas.set(MIME_TYPE, findMimeType(extension, mimeType, this::findMimeTypeUsingDefault));
+                final ParserFieldsBuilder metas = resultBuilder.metas();
+                metas.set(MIME_TYPE, findMimeType(extension, mimeType, this::findMimeTypeUsingDefault));
 
-			final SummaryInformation info = excel.getSummaryInformation();
-			if (info != null) {
-				metas.add(TITLE, info.getTitle());
-				metas.add(AUTHOR, info.getAuthor());
-				metas.add(SUBJECT, info.getSubject());
-				metas.add(CREATION_DATE, info.getCreateDateTime());
-				metas.add(MODIFICATION_DATE, info.getLastSaveDateTime());
-				metas.add(KEYWORDS, info.getKeywords());
-			}
+                final SummaryInformation info = excel.getSummaryInformation();
+                if (info != null) {
+                    metas.add(TITLE, info.getTitle());
+                    metas.add(AUTHOR, info.getAuthor());
+                    metas.add(SUBJECT, info.getSubject());
+                    metas.add(CREATION_DATE, info.getCreateDateTime());
+                    metas.add(MODIFICATION_DATE, info.getLastSaveDateTime());
+                    metas.add(KEYWORDS, info.getKeywords());
+                }
 
-			final ParserFieldsBuilder result = resultBuilder.newDocument();
-			result.add(CONTENT, excel.getText());
-			result.add(LANG_DETECTION, languageDetection(result, CONTENT, 10000));
-		}
-	}
+                final ParserFieldsBuilder result = resultBuilder.newDocument();
+                result.add(CONTENT, excel.getText());
+                result.add(LANG_DETECTION, languageDetection(result, CONTENT, 10000));
+            }
+        } catch (IOException e) {
+            throw convertIOException(e::getMessage, e);
+        }
+    }
 }

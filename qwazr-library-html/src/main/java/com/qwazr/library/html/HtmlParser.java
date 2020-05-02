@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 Emmanuel Keller / QWAZR
+ * Copyright 2015-2020 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,11 +32,14 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 import se.fishtank.css.selectors.Selectors;
 import se.fishtank.css.selectors.dom.W3CNode;
 
+import javax.ws.rs.NotAcceptableException;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.xml.xpath.XPathExpressionException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
@@ -284,56 +287,65 @@ public class HtmlParser extends ParserAbstract {
 
     @Override
     public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-            final String extension, final String mimeType, final ParserResultBuilder resultBuilder) throws Exception {
+            final String extension, final String mimeType, final ParserResultBuilder resultBuilder) {
 
-        resultBuilder.metas().set(MIME_TYPE, DEFAULT_MIMETYPES[0]);
+        try {
+            resultBuilder.metas().set(MIME_TYPE, DEFAULT_MIMETYPES[0]);
 
-        final Map<String, String> xPathParams = extractPrefixParameters(parameters, XPATH_PARAM, XPATH_NAME_PARAM);
-        final Map<String, String> cssParams = extractPrefixParameters(parameters, CSS_PARAM, CSS_NAME_PARAM);
-        final Map<String, String> regexpParams = extractPrefixParameters(parameters, REGEXP_PARAM, REGEXP_NAME_PARAM);
-        final boolean isSelector = !(xPathParams.isEmpty() && cssParams.isEmpty() && regexpParams.isEmpty());
+            final Map<String, String> xPathParams = extractPrefixParameters(parameters, XPATH_PARAM, XPATH_NAME_PARAM);
+            final Map<String, String> cssParams = extractPrefixParameters(parameters, CSS_PARAM, CSS_NAME_PARAM);
+            final Map<String, String> regexpParams =
+                    extractPrefixParameters(parameters, REGEXP_PARAM, REGEXP_NAME_PARAM);
+            final boolean isSelector = !(xPathParams.isEmpty() && cssParams.isEmpty() && regexpParams.isEmpty());
 
-        final DOMParser htmlParser = getThreadLocalDomParser();
+            final DOMParser htmlParser = getThreadLocalDomParser();
 
-        final String htmlSource;
-        if (!regexpParams.isEmpty()) {
-            htmlSource = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-            htmlParser.parse(new InputSource(new StringReader(htmlSource)));
-        } else {
-            htmlSource = null;
-            htmlParser.parse(new InputSource(new InputStreamReader(inputStream, StandardCharsets.UTF_8)));
+            final String htmlSource;
+            if (!regexpParams.isEmpty()) {
+                htmlSource = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
+                htmlParser.parse(new InputSource(new StringReader(htmlSource)));
+            } else {
+                htmlSource = null;
+                htmlParser.parse(new InputSource(new InputStreamReader(inputStream, StandardCharsets.UTF_8)));
+            }
+
+            final ParserFieldsBuilder parserDocument = resultBuilder.newDocument();
+
+            final LinkedHashMap<String, Object> selectorsResult = new LinkedHashMap<>();
+
+            final Document htmlDocument = htmlParser.getDocument();
+            final XPathParser xPath = !xPathParams.isEmpty() || !isSelector ? new XPathParser() : null;
+
+            if (!xPathParams.isEmpty())
+                extractXPath(xPathParams, xPath, htmlDocument, selectorsResult);
+            if (!cssParams.isEmpty())
+                extractCss(cssParams, htmlDocument, selectorsResult);
+            if (!regexpParams.isEmpty())
+                extractRegExp(regexpParams, htmlSource, selectorsResult);
+
+            final boolean selectorResultIsEmpty = selectorsResult.isEmpty();
+            if (!selectorResultIsEmpty)
+                parserDocument.set(SELECTORS, selectorsResult);
+
+            if (selectorResultIsEmpty || (parameters != null && parameters.containsKey(TITLE.name)))
+                extractTitle(xPath, htmlDocument, parserDocument);
+            if (selectorResultIsEmpty || (parameters != null && parameters.containsKey(HEADERS.name)))
+                extractHeaders(htmlDocument, parserDocument);
+            if (selectorResultIsEmpty || (parameters != null && parameters.containsKey(ANCHORS.name)))
+                extractAnchors(xPath, htmlDocument, parserDocument);
+            if (selectorResultIsEmpty || (parameters != null && parameters.containsKey(IMAGES.name)))
+                extractImgTags(htmlDocument, parserDocument);
+            if (selectorResultIsEmpty || (parameters != null && parameters.containsKey(CONTENT.name)))
+                extractTextContent(htmlDocument, parserDocument);
+            if (selectorResultIsEmpty || (parameters != null && parameters.containsKey(METAS.name)))
+                extractMeta(htmlDocument, parserDocument);
+        } catch (IOException e) {
+            throw convertIOException(e::getMessage, e);
+        } catch (SAXException e) {
+            throw convertException(e::getMessage, e);
+        } catch (XPathExpressionException e) {
+            throw new NotAcceptableException("Error in the XPATH expression: " + e.getMessage(), e);
         }
-
-        final ParserFieldsBuilder parserDocument = resultBuilder.newDocument();
-
-        final LinkedHashMap<String, Object> selectorsResult = new LinkedHashMap<>();
-
-        final Document htmlDocument = htmlParser.getDocument();
-        final XPathParser xPath = !xPathParams.isEmpty() || !isSelector ? new XPathParser() : null;
-
-        if (!xPathParams.isEmpty())
-            extractXPath(xPathParams, xPath, htmlDocument, selectorsResult);
-        if (!cssParams.isEmpty())
-            extractCss(cssParams, htmlDocument, selectorsResult);
-        if (!regexpParams.isEmpty())
-            extractRegExp(regexpParams, htmlSource, selectorsResult);
-
-        final boolean selectorResultIsEmpty = selectorsResult.isEmpty();
-        if (!selectorResultIsEmpty)
-            parserDocument.set(SELECTORS, selectorsResult);
-
-        if (selectorResultIsEmpty || (parameters != null && parameters.containsKey(TITLE.name)))
-            extractTitle(xPath, htmlDocument, parserDocument);
-        if (selectorResultIsEmpty || (parameters != null && parameters.containsKey(HEADERS.name)))
-            extractHeaders(htmlDocument, parserDocument);
-        if (selectorResultIsEmpty || (parameters != null && parameters.containsKey(ANCHORS.name)))
-            extractAnchors(xPath, htmlDocument, parserDocument);
-        if (selectorResultIsEmpty || (parameters != null && parameters.containsKey(IMAGES.name)))
-            extractImgTags(htmlDocument, parserDocument);
-        if (selectorResultIsEmpty || (parameters != null && parameters.containsKey(CONTENT.name)))
-            extractTextContent(htmlDocument, parserDocument);
-        if (selectorResultIsEmpty || (parameters != null && parameters.containsKey(METAS.name)))
-            extractMeta(htmlDocument, parserDocument);
     }
 
     @Override

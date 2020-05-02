@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 Emmanuel Keller / QWAZR
+ * Copyright 2016-2020 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,16 @@ import com.qwazr.extractor.ParserAbstract;
 import com.qwazr.extractor.ParserField;
 import com.qwazr.extractor.ParserFieldsBuilder;
 import com.qwazr.extractor.ParserResultBuilder;
+import com.qwazr.utils.AutoCloseWrapper;
 import com.qwazr.utils.LoggerUtils;
 import com.qwazr.utils.StringUtils;
 import net.sourceforge.tess4j.Tesseract1;
 import net.sourceforge.tess4j.TesseractException;
 
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.core.MultivaluedMap;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -131,15 +134,19 @@ public class OcrParser extends ParserAbstract {
 
     @Override
     public void parseContent(final MultivaluedMap<String, String> parameters, final Path filePath,
-            final String extension, String mimeType, final ParserResultBuilder resultBuilder)
-            throws TesseractException {
+            final String extension, String mimeType, final ParserResultBuilder resultBuilder) {
         final Tesseract1 tesseract = new Tesseract1();
         final String lang = this.getParameterValue(parameters, LANGUAGE, 0);
         if (lang != null)
             tesseract.setLanguage(lang);
         if (TESSDATA_PREFIX != null)
             tesseract.setDatapath(TESSDATA_PREFIX);
-        final String result = tesseract.doOCR(filePath.toFile());
+        final String result;
+        try {
+            result = tesseract.doOCR(filePath.toFile());
+        } catch (TesseractException e) {
+            throw new InternalServerErrorException("A Tesseract error occurred: " + e.getMessage(), e);
+        }
         if (StringUtils.isEmpty(result))
             return;
         if (StringUtils.isBlank(mimeType)) {
@@ -157,7 +164,7 @@ public class OcrParser extends ParserAbstract {
 
     @Override
     public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-            String extension, final String mimeType, final ParserResultBuilder resultBuilder) throws Exception {
+            String extension, final String mimeType, final ParserResultBuilder resultBuilder) {
         if (extension == null) {
             if (mimeType == null)
                 throw new BadRequestException("The file extension or the mime-type is required.");
@@ -165,12 +172,11 @@ public class OcrParser extends ParserAbstract {
             if (extension == null)
                 throw new BadRequestException("The mime-type is not supported: " + mimeType);
         }
-        final Path tempFile = ParserAbstract.createTempFile(inputStream, "." + extension);
-        try {
-            parseContent(parameters, tempFile, extension, mimeType, resultBuilder);
-        } finally {
-            if (tempFile != null)
-                Files.deleteIfExists(tempFile);
+        try (final AutoCloseWrapper<Path> a = AutoCloseWrapper.of(
+                ParserAbstract.createTempFile(inputStream, "." + extension), LOGGER, Files::deleteIfExists)) {
+            parseContent(parameters, a.get(), extension, mimeType, resultBuilder);
+        } catch (IOException e) {
+            throw convertIOException(e::getMessage, e);
         }
     }
 

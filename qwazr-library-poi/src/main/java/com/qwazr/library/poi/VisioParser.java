@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 Emmanuel Keller / QWAZR
+ * Copyright 2015-2020 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,69 +23,72 @@ import org.apache.poi.hdgf.extractor.VisioTextExtractor;
 import org.apache.poi.hpsf.SummaryInformation;
 
 import javax.ws.rs.core.MultivaluedMap;
+import java.io.IOException;
 import java.io.InputStream;
 
 public class VisioParser extends ParserAbstract {
 
-	private static final String[] DEFAULT_MIMETYPES = { "application/vnd.visio" };
+    private static final String[] DEFAULT_MIMETYPES = { "application/vnd.visio" };
 
-	private static final String[] DEFAULT_EXTENSIONS = { "vsd" };
-	
-	final private static ParserField AUTHOR = ParserField.newString("author", "The name of the author");
+    private static final String[] DEFAULT_EXTENSIONS = { "vsd" };
 
-	final private static ParserField CREATION_DATE = ParserField.newDate("creation_date", null);
+    final private static ParserField AUTHOR = ParserField.newString("author", "The name of the author");
 
-	final private static ParserField MODIFICATION_DATE = ParserField.newDate("modification_date", null);
+    final private static ParserField CREATION_DATE = ParserField.newDate("creation_date", null);
 
-	final private static ParserField KEYWORDS = ParserField.newString("keywords", null);
+    final private static ParserField MODIFICATION_DATE = ParserField.newDate("modification_date", null);
 
-	final private static ParserField SUBJECT = ParserField.newString("subject", "The subject of the document");
+    final private static ParserField KEYWORDS = ParserField.newString("keywords", null);
 
-	final private static ParserField COMMENTS = ParserField.newString("comments", null);
+    final private static ParserField SUBJECT = ParserField.newString("subject", "The subject of the document");
 
-	final private static ParserField[] FIELDS =
-			{ TITLE, AUTHOR, CREATION_DATE, MODIFICATION_DATE, KEYWORDS, SUBJECT, CONTENT, LANG_DETECTION };
+    final private static ParserField COMMENTS = ParserField.newString("comments", null);
 
-	@Override
-	public ParserField[] getFields() {
-		return FIELDS;
-	}
+    final private static ParserField[] FIELDS =
+            { TITLE, AUTHOR, CREATION_DATE, MODIFICATION_DATE, KEYWORDS, SUBJECT, CONTENT, LANG_DETECTION };
 
-	@Override
-	public String[] getDefaultExtensions() {
-		return DEFAULT_EXTENSIONS;
-	}
+    @Override
+    public ParserField[] getFields() {
+        return FIELDS;
+    }
 
-	@Override
-	public String[] getDefaultMimeTypes() {
-		return DEFAULT_MIMETYPES;
-	}
+    @Override
+    public String[] getDefaultExtensions() {
+        return DEFAULT_EXTENSIONS;
+    }
 
-	@Override
-	public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-			String extension, final String mimeType, final ParserResultBuilder resultBuilder) throws Exception {
+    @Override
+    public String[] getDefaultMimeTypes() {
+        return DEFAULT_MIMETYPES;
+    }
 
-		try (final VisioTextExtractor extractor = new VisioTextExtractor(inputStream)) {
+    @Override
+    public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
+            String extension, final String mimeType, final ParserResultBuilder resultBuilder) {
 
-			final SummaryInformation info = extractor.getSummaryInformation();
+        try (final VisioTextExtractor extractor = new VisioTextExtractor(inputStream)) {
 
-			if (info != null) {
-				final ParserFieldsBuilder metas = resultBuilder.metas();
-				metas.add(TITLE, info.getTitle());
-				metas.add(AUTHOR, info.getAuthor());
-				metas.add(SUBJECT, info.getSubject());
-				metas.add(CREATION_DATE, info.getCreateDateTime());
-				metas.add(MODIFICATION_DATE, info.getLastSaveDateTime());
-				metas.add(CONTENT, info.getKeywords());
-				metas.add(COMMENTS, info.getComments());
-			}
-			final String[] texts = extractor.getAllText();
-			if (texts == null)
-				return;
-			final ParserFieldsBuilder result = resultBuilder.newDocument();
-			for (String text : texts)
-				result.add(CONTENT, text);
-			result.add(LANG_DETECTION, languageDetection(result, CONTENT, 10000));
-		}
-	}
+            final SummaryInformation info = extractor.getSummaryInformation();
+
+            if (info != null) {
+                final ParserFieldsBuilder metas = resultBuilder.metas();
+                metas.add(TITLE, info.getTitle());
+                metas.add(AUTHOR, info.getAuthor());
+                metas.add(SUBJECT, info.getSubject());
+                metas.add(CREATION_DATE, info.getCreateDateTime());
+                metas.add(MODIFICATION_DATE, info.getLastSaveDateTime());
+                metas.add(CONTENT, info.getKeywords());
+                metas.add(COMMENTS, info.getComments());
+            }
+            final String[] texts = extractor.getAllText();
+            if (texts == null)
+                return;
+            final ParserFieldsBuilder result = resultBuilder.newDocument();
+            for (String text : texts)
+                result.add(CONTENT, text);
+            result.add(LANG_DETECTION, languageDetection(result, CONTENT, 10000));
+        } catch (IOException e) {
+            throw convertIOException(e::getMessage, e);
+        }
+    }
 }

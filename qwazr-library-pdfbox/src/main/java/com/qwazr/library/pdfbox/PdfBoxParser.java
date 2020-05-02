@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 Emmanuel Keller / QWAZR
+ * Copyright 2015-2020 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,13 @@ import com.qwazr.extractor.ParserAbstract;
 import com.qwazr.extractor.ParserField;
 import com.qwazr.extractor.ParserFieldsBuilder;
 import com.qwazr.extractor.ParserResultBuilder;
+import com.qwazr.utils.LoggerUtils;
 import com.qwazr.utils.StringUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDDocumentCatalog;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.encryption.InvalidPasswordException;
 import org.apache.pdfbox.text.PDFTextStripper;
 
 import javax.ws.rs.core.MultivaluedMap;
@@ -31,142 +33,165 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.nio.file.Path;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class PdfBoxParser extends ParserAbstract {
 
-	private static final String[] DEFAULT_MIMETYPES = { "application/pdf" };
+    private final static Logger LOGGER = LoggerUtils.getLogger(PdfBoxParser.class);
 
-	private static final String[] DEFAULT_EXTENSIONS = { "pdf" };
+    private static final String[] DEFAULT_MIMETYPES = { "application/pdf" };
 
-	final private static ParserField AUTHOR = ParserField.newString("author", "The name of the author");
+    private static final String[] DEFAULT_EXTENSIONS = { "pdf" };
 
-	final private static ParserField SUBJECT = ParserField.newString("subject", "The subject of the document");
+    final private static ParserField AUTHOR = ParserField.newString("author", "The name of the author");
 
-	final private static ParserField PRODUCER = ParserField.newString("producer", "The producer of the document");
+    final private static ParserField SUBJECT = ParserField.newString("subject", "The subject of the document");
 
-	final private static ParserField KEYWORDS = ParserField.newString("keywords", "The keywords of the document");
+    final private static ParserField PRODUCER = ParserField.newString("producer", "The producer of the document");
 
-	final private static ParserField CREATION_DATE = ParserField.newDate("creation_date", null);
+    final private static ParserField KEYWORDS = ParserField.newString("keywords", "The keywords of the document");
 
-	final private static ParserField MODIFICATION_DATE = ParserField.newDate("modification_date", null);
+    final private static ParserField CREATION_DATE = ParserField.newDate("creation_date", null);
 
-	final private static ParserField LANGUAGE = ParserField.newString("language", null);
+    final private static ParserField MODIFICATION_DATE = ParserField.newDate("modification_date", null);
 
-	final private static ParserField ROTATION = ParserField.newInteger("rotation", null);
+    final private static ParserField LANGUAGE = ParserField.newString("language", null);
 
-	final private static ParserField NUMBER_OF_PAGES = ParserField.newInteger("number_of_pages", null);
+    final private static ParserField ROTATION = ParserField.newInteger("rotation", null);
 
-	final private static ParserField CHARACTER_COUNT = ParserField.newInteger("character_count", null);
+    final private static ParserField NUMBER_OF_PAGES = ParserField.newInteger("number_of_pages", null);
 
-	final private static ParserField[] FIELDS = { TITLE,
-			AUTHOR,
-			SUBJECT,
-			CONTENT,
-			PRODUCER,
-			KEYWORDS,
-			CREATION_DATE,
-			MODIFICATION_DATE,
-			LANGUAGE,
-			ROTATION,
-			NUMBER_OF_PAGES,
-			LANG_DETECTION };
+    final private static ParserField CHARACTER_COUNT = ParserField.newInteger("character_count", null);
 
-	final private static ParserField PASSWORD = ParserField.newString("password", StringUtils.EMPTY);
+    final private static ParserField[] FIELDS = { TITLE,
+            AUTHOR,
+            SUBJECT,
+            CONTENT,
+            PRODUCER,
+            KEYWORDS,
+            CREATION_DATE,
+            MODIFICATION_DATE,
+            LANGUAGE,
+            ROTATION,
+            NUMBER_OF_PAGES,
+            LANG_DETECTION };
 
-	final private static ParserField[] PARAMETERS = { PASSWORD };
+    final private static ParserField PASSWORD = ParserField.newString("password", StringUtils.EMPTY);
 
-	private void extractMetaData(final PDDocument pdf, final ParserFieldsBuilder metas) {
-		metas.set(MIME_TYPE, DEFAULT_MIMETYPES[0]);
-		final PDDocumentInformation info = pdf.getDocumentInformation();
-		if (info != null) {
-			metas.add(TITLE, info.getTitle());
-			metas.add(SUBJECT, info.getSubject());
-			metas.add(AUTHOR, info.getAuthor());
-			metas.add(PRODUCER, info.getProducer());
-			metas.add(KEYWORDS, info.getKeywords());
-			metas.add(CREATION_DATE, info.getCreationDate());
-			metas.add(MODIFICATION_DATE, info.getModificationDate());
-		}
-		int pages = pdf.getNumberOfPages();
-		metas.add(NUMBER_OF_PAGES, pages);
-		PDDocumentCatalog catalog = pdf.getDocumentCatalog();
-		if (catalog != null)
-			metas.add(LANGUAGE, catalog.getLanguage());
-	}
+    final private static ParserField[] PARAMETERS = { PASSWORD };
 
-	/**
-	 * Extract text content using PDFBox
-	 *
-	 * @param pdf
-	 * @param resultBuilder
-	 * @throws Exception
-	 */
-	private void parseContent(final PDDocument pdf, final ParserResultBuilder resultBuilder) throws Exception {
-		try {
-			extractMetaData(pdf, resultBuilder.metas());
-			Stripper stripper = new Stripper(resultBuilder);
-			stripper.getText(pdf);
-		} finally {
-			if (pdf != null)
-				pdf.close();
-		}
-	}
+    private void extractMetaData(final PDDocument pdf, final ParserFieldsBuilder metas) {
+        metas.set(MIME_TYPE, DEFAULT_MIMETYPES[0]);
+        final PDDocumentInformation info = pdf.getDocumentInformation();
+        if (info != null) {
+            metas.add(TITLE, info.getTitle());
+            metas.add(SUBJECT, info.getSubject());
+            metas.add(AUTHOR, info.getAuthor());
+            metas.add(PRODUCER, info.getProducer());
+            metas.add(KEYWORDS, info.getKeywords());
+            metas.add(CREATION_DATE, info.getCreationDate());
+            metas.add(MODIFICATION_DATE, info.getModificationDate());
+        }
+        int pages = pdf.getNumberOfPages();
+        metas.add(NUMBER_OF_PAGES, pages);
+        PDDocumentCatalog catalog = pdf.getDocumentCatalog();
+        if (catalog != null)
+            metas.add(LANGUAGE, catalog.getLanguage());
+    }
 
-	private String getPassword(final MultivaluedMap<String, String> parameters) {
-		final String password = getParameterValue(parameters, PASSWORD, 0);
-		return password == null ? StringUtils.EMPTY : password;
-	}
+    /**
+     * Extract text content using PDFBox
+     *
+     * @param pdf
+     * @param resultBuilder
+     * @throws Exception
+     */
+    private void parseContent(final PDDocument pdf, final ParserResultBuilder resultBuilder) {
+        try {
+            extractMetaData(pdf, resultBuilder.metas());
+            Stripper stripper = new Stripper(resultBuilder);
+            stripper.getText(pdf);
+        } catch (IOException e) {
+            throw convertIOException(e::getMessage, e);
+        } finally {
+            if (pdf != null) {
+                try {
+                    pdf.close();
+                } catch (IOException e) {
+                    LOGGER.log(Level.WARNING, "Cannot close the PDDocument", e);
+                }
+            }
+        }
+    }
 
-	@Override
-	public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-			String extension, final String mimeType, final ParserResultBuilder resultBuilder) throws Exception {
-		parseContent(PDDocument.load(inputStream, getPassword(parameters)), resultBuilder);
-	}
+    private String getPassword(final MultivaluedMap<String, String> parameters) {
+        final String password = getParameterValue(parameters, PASSWORD, 0);
+        return password == null ? StringUtils.EMPTY : password;
+    }
 
-	@Override
-	public void parseContent(final MultivaluedMap<String, String> parameters, final Path filePath, String extension,
-			final String mimeType, final ParserResultBuilder resultBuilder) throws Exception {
-		parseContent(PDDocument.load(filePath.toFile(), getPassword(parameters)), resultBuilder);
-	}
+    @Override
+    public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
+            String extension, final String mimeType, final ParserResultBuilder resultBuilder) {
+        try {
+            parseContent(PDDocument.load(inputStream, getPassword(parameters)), resultBuilder);
+        } catch (InvalidPasswordException e) {
+            throw convertException(e::getMessage, e);
+        } catch (IOException e) {
+            throw convertIOException(e::getMessage, e);
+        }
+    }
 
-	@Override
-	public ParserField[] getParameters() {
-		return PARAMETERS;
-	}
+    @Override
+    public void parseContent(final MultivaluedMap<String, String> parameters, final Path filePath, String extension,
+            final String mimeType, final ParserResultBuilder resultBuilder) {
+        try {
+            parseContent(PDDocument.load(filePath.toFile(), getPassword(parameters)), resultBuilder);
+        } catch (InvalidPasswordException e) {
+            throw convertException(() -> "Error with " + filePath.toAbsolutePath() + ": " + e.getMessage(), e);
+        } catch (IOException e) {
+            throw convertIOException(() -> "Error with " + filePath.toAbsolutePath() + ": " + e.getMessage(), e);
+        }
+    }
 
-	@Override
-	public ParserField[] getFields() {
-		return FIELDS;
-	}
+    @Override
+    public ParserField[] getParameters() {
+        return PARAMETERS;
+    }
 
-	@Override
-	public String[] getDefaultExtensions() {
-		return DEFAULT_EXTENSIONS;
-	}
+    @Override
+    public ParserField[] getFields() {
+        return FIELDS;
+    }
 
-	@Override
-	public String[] getDefaultMimeTypes() {
-		return DEFAULT_MIMETYPES;
-	}
+    @Override
+    public String[] getDefaultExtensions() {
+        return DEFAULT_EXTENSIONS;
+    }
 
-	public class Stripper extends PDFTextStripper {
+    @Override
+    public String[] getDefaultMimeTypes() {
+        return DEFAULT_MIMETYPES;
+    }
 
-		private final ParserResultBuilder resultBuilder;
+    public class Stripper extends PDFTextStripper {
 
-		private Stripper(ParserResultBuilder resultBuilder) throws IOException {
-			this.resultBuilder = resultBuilder;
-		}
+        private final ParserResultBuilder resultBuilder;
 
-		@Override
-		protected void endPage(PDPage page) throws IOException {
-			super.endPage(page);
-			final ParserFieldsBuilder document = resultBuilder.newDocument();
-			final String text = output.toString();
-			document.add(CHARACTER_COUNT, text.length());
-			document.add(CONTENT, text);
-			document.add(LANG_DETECTION, languageDetection(document, CONTENT, 10000));
-			document.add(ROTATION, page.getRotation());
-			output = new StringWriter();
-		}
-	}
+        private Stripper(ParserResultBuilder resultBuilder) throws IOException {
+            this.resultBuilder = resultBuilder;
+        }
+
+        @Override
+        protected void endPage(PDPage page) throws IOException {
+            super.endPage(page);
+            final ParserFieldsBuilder document = resultBuilder.newDocument();
+            final String text = output.toString();
+            document.add(CHARACTER_COUNT, text.length());
+            document.add(CONTENT, text);
+            document.add(LANG_DETECTION, languageDetection(document, CONTENT, 10000));
+            document.add(ROTATION, page.getRotation());
+            output = new StringWriter();
+        }
+    }
 }

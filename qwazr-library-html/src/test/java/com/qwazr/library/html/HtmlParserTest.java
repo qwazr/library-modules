@@ -28,75 +28,75 @@ import java.util.Map;
 
 public class HtmlParserTest extends ParserTest {
 
-	public HtmlParserTest() {
-		super(new ExtractorManager());
-		manager.registerServices();
-	}
+    public HtmlParserTest() {
+        super(new ExtractorManager());
+        manager.registerServices();
+    }
 
-	@Test
-	public void testHtml() throws Exception {
-		final ParserResult result =
-				doTest(HtmlParser.class, "file.html", "text/html", "content", "search engine software");
-		Assert.assertEquals("OpenSearchServer | Open Source Search Engine and API",
-				result.getDocumentFieldValue(0, "title", 0).toString().trim());
-	}
+    @Test
+    public void testHtml() throws Exception {
+        final ParserResult result =
+                doTest(HtmlParser.class, "file.html", "text/html", "content", "search engine software");
+        Assert.assertEquals("OpenSearchServer | Open Source Search Engine and API",
+                result.getDocumentFieldValue(0, "title", 0).toString().trim());
+    }
 
-	private void testSelector(String[] names, String[] selectors, String param, String[] selectorResults) {
-		final MultivaluedMap map = new MultivaluedHashMap<>();
-		map.addAll(param, selectors);
-		if (names != null)
-			map.addAll(param + "_name", names);
+    private void testSelector(String[] names, String[] selectors, String param, String[] selectorResults) {
+        final MultivaluedMap<String, String> map = new MultivaluedHashMap<>();
+        map.addAll(param, selectors);
+        if (names != null)
+            map.addAll(param + "_name", names);
 
-		ParserResult parserResult = service.extract("html", map, null, getStream("file.html"));
-		Assert.assertNotNull(parserResult);
-		Map<String, List<String>> results =
-				(Map<String, List<String>>) parserResult.getDocumentFieldValue(0, "selectors", 0);
-		Assert.assertNotNull(results);
-		Assert.assertEquals(selectorResults.length, results.size());
-		int i = 0;
-		for (String selectorResult : selectorResults) {
-			String key = names == null ? Integer.toString(i) : names[i];
-			List<String> list = results.get(key);
-			Assert.assertNotNull(list);
-			Assert.assertTrue(list.size() > 0);
-			if (selectorResult == null)
-				continue;
-			String result = results.get(key).get(0);
-			Assert.assertNotNull(result);
-			Assert.assertEquals(selectorResult, result);
-			i++;
-		}
-	}
+        ParserResult parserResult = service.extract(HtmlParser.class, map, getStream("file.html"));
+        Assert.assertNotNull(parserResult);
+        Map<String, List<String>> results =
+                (Map<String, List<String>>) parserResult.getDocumentFieldValue(0, "selectors", 0);
+        Assert.assertNotNull(results);
+        Assert.assertEquals(selectorResults.length, results.size());
+        int i = 0;
+        for (String selectorResult : selectorResults) {
+            String key = names == null ? Integer.toString(i) : names[i];
+            List<String> list = results.get(key);
+            Assert.assertNotNull(list);
+            Assert.assertTrue(list.size() > 0);
+            if (selectorResult == null)
+                continue;
+            String result = results.get(key).get(0);
+            Assert.assertNotNull(result);
+            Assert.assertEquals(selectorResult, result);
+            i++;
+        }
+    }
 
-	private final static String[] XPATH_NAMES = { "xp1", "xp2" };
-	private final static String[] XPATH_SELECTORS =
-			{ "//*[@id=\"crawl\"]/ul/li[1]/strong", "//*[@id=\"download\"]/div/div[2]/div/h3" };
-	private final static String[] XPATH_RESULTS = { "web crawler", "Documentation" };
+    private final static String[] XPATH_NAMES = { "xp1", "xp2" };
+    private final static String[] XPATH_SELECTORS =
+            { "//*[@id=\"crawl\"]/ul/li[1]/strong", "//*[@id=\"download\"]/div/div[2]/div/h3" };
+    private final static String[] XPATH_RESULTS = { "web crawler", "Documentation" };
 
-	@Test
-	public void testHtmlXPath() {
-		testSelector(null, XPATH_SELECTORS, "xpath", XPATH_RESULTS);
-		testSelector(XPATH_NAMES, XPATH_SELECTORS, "xpath", XPATH_RESULTS);
-	}
+    @Test
+    public void testHtmlXPath() {
+        testSelector(null, XPATH_SELECTORS, "xpath", XPATH_RESULTS);
+        testSelector(XPATH_NAMES, XPATH_SELECTORS, "xpath", XPATH_RESULTS);
+    }
 
-	private final static String[] CSS_NAMES = { "css1", "css2" };
-	private final static String[] CSS_SELECTORS =
-			{ "#crawl > ul > li:nth-child(1) > strong", "#download > div > div:nth-child(2) > div > h3" };
-	private final static String[] CSS_RESULTS = { "web crawler", "Documentation" };
+    private final static String[] CSS_NAMES = { "css1", "css2" };
+    private final static String[] CSS_SELECTORS =
+            { "#crawl > ul > li:nth-child(1) > strong", "#download > div > div:nth-child(2) > div > h3" };
+    private final static String[] CSS_RESULTS = { "web crawler", "Documentation" };
 
-	@Test
-	public void testHtmlCSS() {
-		testSelector(null, CSS_SELECTORS, "css", CSS_RESULTS);
-		testSelector(CSS_NAMES, CSS_SELECTORS, "css", CSS_RESULTS);
-	}
+    @Test
+    public void testHtmlCSS() {
+        testSelector(null, CSS_SELECTORS, "css", CSS_RESULTS);
+        testSelector(CSS_NAMES, CSS_SELECTORS, "css", CSS_RESULTS);
+    }
 
-	private final static String[] REGEXP_NAMES = { "reg1", "reg2" };
-	private final static String[] REGEXP_SELECTORS = { "\"downloadUrl\" : \"(.*?)\"", "<script>(.*?)</script>" };
-	private final static String[] REGEXP_RESULTS = { "http://www.opensearchserver.com/#download", null };
+    private final static String[] REGEXP_NAMES = { "reg1", "reg2" };
+    private final static String[] REGEXP_SELECTORS = { "\"downloadUrl\" : \"(.*?)\"", "<script>(.*?)</script>" };
+    private final static String[] REGEXP_RESULTS = { "http://www.opensearchserver.com/#download", null };
 
-	@Test
-	public void testHtmlRegExp() {
-		testSelector(null, REGEXP_SELECTORS, "regexp", REGEXP_RESULTS);
-		testSelector(REGEXP_NAMES, REGEXP_SELECTORS, "regexp", REGEXP_RESULTS);
-	}
+    @Test
+    public void testHtmlRegExp() {
+        testSelector(null, REGEXP_SELECTORS, "regexp", REGEXP_RESULTS);
+        testSelector(REGEXP_NAMES, REGEXP_SELECTORS, "regexp", REGEXP_RESULTS);
+    }
 }

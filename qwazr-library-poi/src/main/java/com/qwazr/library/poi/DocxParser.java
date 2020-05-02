@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2017 Emmanuel Keller / QWAZR
+ * Copyright 2014-2020 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,73 +29,76 @@ import java.io.InputStream;
 
 public class DocxParser extends ParserAbstract {
 
-	private static final String[] DEFAULT_MIMETYPES = {
-			"application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-			"application/vnd.openxmlformats-officedocument.wordprocessingml.template" };
+    private static final String[] DEFAULT_MIMETYPES = {
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.template" };
 
-	private static final String[] DEFAULT_EXTENSIONS = { "docx", "dotx" };
+    private static final String[] DEFAULT_EXTENSIONS = { "docx", "dotx" };
 
-	final private static ParserField CREATOR = ParserField.newString("creator", "The name of the creator");
+    final private static ParserField CREATOR = ParserField.newString("creator", "The name of the creator");
 
-	final private static ParserField CREATION_DATE = ParserField.newDate("creation_date", null);
+    final private static ParserField CREATION_DATE = ParserField.newDate("creation_date", null);
 
-	final private static ParserField MODIFICATION_DATE = ParserField.newDate("modification_date", null);
+    final private static ParserField MODIFICATION_DATE = ParserField.newDate("modification_date", null);
 
-	final private static ParserField DESCRIPTION = ParserField.newString("description", null);
+    final private static ParserField DESCRIPTION = ParserField.newString("description", null);
 
-	final private static ParserField KEYWORDS = ParserField.newString("keywords", null);
+    final private static ParserField KEYWORDS = ParserField.newString("keywords", null);
 
-	final private static ParserField SUBJECT = ParserField.newString("subject", "The subject of the document");
+    final private static ParserField SUBJECT = ParserField.newString("subject", "The subject of the document");
 
-	final private static ParserField[] FIELDS = { TITLE,
-			CREATOR,
-			CREATION_DATE,
-			MODIFICATION_DATE,
-			DESCRIPTION,
-			KEYWORDS,
-			SUBJECT,
-			CONTENT,
-			LANG_DETECTION };
+    final private static ParserField[] FIELDS = { TITLE,
+            CREATOR,
+            CREATION_DATE,
+            MODIFICATION_DATE,
+            DESCRIPTION,
+            KEYWORDS,
+            SUBJECT,
+            CONTENT,
+            LANG_DETECTION };
 
-	@Override
-	public ParserField[] getFields() {
-		return FIELDS;
-	}
+    @Override
+    public ParserField[] getFields() {
+        return FIELDS;
+    }
 
-	@Override
-	public String[] getDefaultExtensions() {
-		return DEFAULT_EXTENSIONS;
-	}
+    @Override
+    public String[] getDefaultExtensions() {
+        return DEFAULT_EXTENSIONS;
+    }
 
-	@Override
-	public String[] getDefaultMimeTypes() {
-		return DEFAULT_MIMETYPES;
-	}
+    @Override
+    public String[] getDefaultMimeTypes() {
+        return DEFAULT_MIMETYPES;
+    }
 
-	@Override
-	public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-			final String extension, final String mimeType, final ParserResultBuilder resultBuilder) throws IOException {
+    @Override
+    public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
+            final String extension, final String mimeType, final ParserResultBuilder resultBuilder) {
 
-		final XWPFDocument document = new XWPFDocument(inputStream);
+        try (final XWPFDocument document = new XWPFDocument(inputStream)) {
 
-		try (XWPFWordExtractor word = new XWPFWordExtractor(document)) {
+            try (final XWPFWordExtractor word = new XWPFWordExtractor(document)) {
 
-			final ParserFieldsBuilder metas = resultBuilder.metas();
-			metas.set(MIME_TYPE, findMimeType(extension, mimeType, this::findMimeTypeUsingDefault));
+                final ParserFieldsBuilder metas = resultBuilder.metas();
+                metas.set(MIME_TYPE, findMimeType(extension, mimeType, this::findMimeTypeUsingDefault));
 
-			final CoreProperties info = word.getCoreProperties();
-			if (info != null) {
-				metas.add(TITLE, info.getTitle());
-				metas.add(CREATOR, info.getCreator());
-				metas.add(CREATION_DATE, info.getCreated());
-				metas.add(MODIFICATION_DATE, info.getModified());
-				metas.add(SUBJECT, info.getSubject());
-				metas.add(DESCRIPTION, info.getDescription());
-				metas.add(KEYWORDS, info.getKeywords());
-			}
-			final ParserFieldsBuilder parserDocument = resultBuilder.newDocument();
-			parserDocument.add(CONTENT, word.getText());
-			parserDocument.add(LANG_DETECTION, languageDetection(parserDocument, CONTENT, 10000));
-		}
-	}
+                final CoreProperties info = word.getCoreProperties();
+                if (info != null) {
+                    metas.add(TITLE, info.getTitle());
+                    metas.add(CREATOR, info.getCreator());
+                    metas.add(CREATION_DATE, info.getCreated());
+                    metas.add(MODIFICATION_DATE, info.getModified());
+                    metas.add(SUBJECT, info.getSubject());
+                    metas.add(DESCRIPTION, info.getDescription());
+                    metas.add(KEYWORDS, info.getKeywords());
+                }
+                final ParserFieldsBuilder parserDocument = resultBuilder.newDocument();
+                parserDocument.add(CONTENT, word.getText());
+                parserDocument.add(LANG_DETECTION, languageDetection(parserDocument, CONTENT, 10000));
+            }
+        } catch (IOException e) {
+            throw convertIOException(e::getMessage, e);
+        }
+    }
 }

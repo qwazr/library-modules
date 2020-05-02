@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 Emmanuel Keller / QWAZR
+ * Copyright 2015-2020 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.commonmark.renderer.NodeRenderer;
 import org.commonmark.renderer.text.TextContentRenderer;
 
 import javax.ws.rs.core.MultivaluedMap;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -77,16 +78,17 @@ public class MarkdownParser extends ParserAbstract {
 
     @Override
     final public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-            final String extension, final String mimeType, final ParserResultBuilder resultBuilder) throws Exception {
+            final String extension, final String mimeType, final ParserResultBuilder resultBuilder) {
 
         resultBuilder.metas().set(MIME_TYPE, DEFAULT_MIMETYPES[0]);
         final ParserFieldsBuilder result = resultBuilder.newDocument();
         final Parser parser = Parser.builder().build();
 
         final Node documentNode;
-
         try (final InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
             documentNode = parser.parseReader(reader);
+        } catch (IOException e) {
+            throw convertIOException(e::getMessage, e);
         }
 
         // First pass we extract the meta data fields
