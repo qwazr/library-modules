@@ -19,7 +19,6 @@ import com.qwazr.extractor.ParserAbstract;
 import com.qwazr.extractor.ParserField;
 import com.qwazr.extractor.ParserFieldsBuilder;
 import com.qwazr.extractor.ParserResultBuilder;
-import org.apache.poi.hpsf.SummaryInformation;
 import org.apache.poi.hssf.extractor.ExcelExtractor;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 
@@ -27,24 +26,14 @@ import javax.ws.rs.core.MultivaluedMap;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class XlsParser extends ParserAbstract {
+public class XlsParser extends ParserAbstract implements PoiExtractor {
 
-    private static final String[] DEFAULT_MIMETYPES = { "application/vnd.ms-excel" };
+    private static final String[] DEFAULT_MIMETYPES = {"application/vnd.ms-excel"};
 
-    private static final String[] DEFAULT_EXTENSIONS = { "xls" };
-
-    final private static ParserField AUTHOR = ParserField.newString("author", "The name of the author");
-
-    final private static ParserField KEYWORDS = ParserField.newString("keywords", null);
-
-    final private static ParserField SUBJECT = ParserField.newString("subject", "The subject of the document");
-
-    final private static ParserField CREATION_DATE = ParserField.newDate("creation_date", null);
-
-    final private static ParserField MODIFICATION_DATE = ParserField.newDate("modification_date", null);
+    private static final String[] DEFAULT_EXTENSIONS = {"xls"};
 
     final private static ParserField[] FIELDS =
-            { TITLE, AUTHOR, KEYWORDS, SUBJECT, CREATION_DATE, MODIFICATION_DATE, CONTENT, LANG_DETECTION };
+            {TITLE, AUTHOR, KEYWORDS, SUBJECT, CREATION_DATE, MODIFICATION_DATE, CONTENT, LANG_DETECTION};
 
     @Override
     public ParserField[] getFields() {
@@ -63,7 +52,7 @@ public class XlsParser extends ParserAbstract {
 
     @Override
     public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-            final String extension, final String mimeType, final ParserResultBuilder resultBuilder) {
+                             final String extension, final String mimeType, final ParserResultBuilder resultBuilder) {
 
         try (final HSSFWorkbook workbook = new HSSFWorkbook(inputStream)) {
 
@@ -71,22 +60,14 @@ public class XlsParser extends ParserAbstract {
 
                 final ParserFieldsBuilder metas = resultBuilder.metas();
                 metas.set(MIME_TYPE, findMimeType(extension, mimeType, this::findMimeTypeUsingDefault));
-
-                final SummaryInformation info = excel.getSummaryInformation();
-                if (info != null) {
-                    metas.add(TITLE, info.getTitle());
-                    metas.add(AUTHOR, info.getAuthor());
-                    metas.add(SUBJECT, info.getSubject());
-                    metas.add(CREATION_DATE, info.getCreateDateTime());
-                    metas.add(MODIFICATION_DATE, info.getLastSaveDateTime());
-                    metas.add(KEYWORDS, info.getKeywords());
-                }
+                PoiExtractor.extractMetas(excel.getSummaryInformation(), metas);
 
                 final ParserFieldsBuilder result = resultBuilder.newDocument();
                 result.add(CONTENT, excel.getText());
                 result.add(LANG_DETECTION, languageDetection(result, CONTENT, 10000));
             }
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             throw convertIOException(e::getMessage, e);
         }
     }

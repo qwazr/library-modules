@@ -19,7 +19,6 @@ import com.qwazr.extractor.ParserAbstract;
 import com.qwazr.extractor.ParserField;
 import com.qwazr.extractor.ParserFieldsBuilder;
 import com.qwazr.extractor.ParserResultBuilder;
-import org.apache.poi.POIXMLProperties.CoreProperties;
 import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 
@@ -27,27 +26,15 @@ import javax.ws.rs.core.MultivaluedMap;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class DocxParser extends ParserAbstract {
+public class DocxParser extends ParserAbstract implements PoiExtractor {
 
     private static final String[] DEFAULT_MIMETYPES = {
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.template" };
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.template"};
 
-    private static final String[] DEFAULT_EXTENSIONS = { "docx", "dotx" };
+    private static final String[] DEFAULT_EXTENSIONS = {"docx", "dotx"};
 
-    final private static ParserField CREATOR = ParserField.newString("creator", "The name of the creator");
-
-    final private static ParserField CREATION_DATE = ParserField.newDate("creation_date", null);
-
-    final private static ParserField MODIFICATION_DATE = ParserField.newDate("modification_date", null);
-
-    final private static ParserField DESCRIPTION = ParserField.newString("description", null);
-
-    final private static ParserField KEYWORDS = ParserField.newString("keywords", null);
-
-    final private static ParserField SUBJECT = ParserField.newString("subject", "The subject of the document");
-
-    final private static ParserField[] FIELDS = { TITLE,
+    final private static ParserField[] FIELDS = {TITLE,
             CREATOR,
             CREATION_DATE,
             MODIFICATION_DATE,
@@ -55,7 +42,7 @@ public class DocxParser extends ParserAbstract {
             KEYWORDS,
             SUBJECT,
             CONTENT,
-            LANG_DETECTION };
+            LANG_DETECTION};
 
     @Override
     public ParserField[] getFields() {
@@ -72,9 +59,13 @@ public class DocxParser extends ParserAbstract {
         return DEFAULT_MIMETYPES;
     }
 
+    static void extract(final XWPFWordExtractor word, final ParserFieldsBuilder result) {
+        result.add(CONTENT, word.getText());
+    }
+
     @Override
     public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-            final String extension, final String mimeType, final ParserResultBuilder resultBuilder) {
+                             final String extension, final String mimeType, final ParserResultBuilder resultBuilder) {
 
         try (final XWPFDocument document = new XWPFDocument(inputStream)) {
 
@@ -82,22 +73,13 @@ public class DocxParser extends ParserAbstract {
 
                 final ParserFieldsBuilder metas = resultBuilder.metas();
                 metas.set(MIME_TYPE, findMimeType(extension, mimeType, this::findMimeTypeUsingDefault));
-
-                final CoreProperties info = word.getCoreProperties();
-                if (info != null) {
-                    metas.add(TITLE, info.getTitle());
-                    metas.add(CREATOR, info.getCreator());
-                    metas.add(CREATION_DATE, info.getCreated());
-                    metas.add(MODIFICATION_DATE, info.getModified());
-                    metas.add(SUBJECT, info.getSubject());
-                    metas.add(DESCRIPTION, info.getDescription());
-                    metas.add(KEYWORDS, info.getKeywords());
-                }
+                PoiExtractor.extractMetas(word.getCoreProperties(), metas);
                 final ParserFieldsBuilder parserDocument = resultBuilder.newDocument();
-                parserDocument.add(CONTENT, word.getText());
+                extract(word, parserDocument);
                 parserDocument.add(LANG_DETECTION, languageDetection(parserDocument, CONTENT, 10000));
             }
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             throw convertIOException(e::getMessage, e);
         }
     }

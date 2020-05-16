@@ -29,24 +29,14 @@ import javax.ws.rs.core.MultivaluedMap;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class DocParser extends ParserAbstract {
+public class DocParser extends ParserAbstract implements PoiExtractor {
 
-    private static final String[] DEFAULT_MIMETYPES = { "application/msword" };
+    private static final String[] DEFAULT_MIMETYPES = {"application/msword"};
 
-    private static final String[] DEFAULT_EXTENSIONS = { "doc", "dot" };
-
-    final private static ParserField AUTHOR = ParserField.newString("author", "The name of the author");
-
-    final private static ParserField CREATION_DATE = ParserField.newDate("creation_date", null);
-
-    final private static ParserField MODIFICATION_DATE = ParserField.newDate("modification_date", null);
-
-    final private static ParserField SUBJECT = ParserField.newString("subject", "The subject of the document");
-
-    final private static ParserField KEYWORDS = ParserField.newString("keywords", null);
+    private static final String[] DEFAULT_EXTENSIONS = {"doc", "dot"};
 
     final private static ParserField[] FIELDS =
-            { TITLE, AUTHOR, CREATION_DATE, MODIFICATION_DATE, SUBJECT, KEYWORDS, CONTENT, LANG_DETECTION };
+            {TITLE, AUTHOR, CREATION_DATE, MODIFICATION_DATE, SUBJECT, KEYWORDS, CONTENT, LANG_DETECTION};
 
     @Override
     public ParserField[] getFields() {
@@ -68,17 +58,9 @@ public class DocParser extends ParserAbstract {
 
         try (final WordExtractor word = new WordExtractor(inputStream)) {
 
-            final SummaryInformation info = word.getSummaryInformation();
-            if (info != null) {
-                final ParserFieldsBuilder metas = resultBuilder.metas();
-                metas.set(MIME_TYPE, DEFAULT_MIMETYPES[0]);
-                metas.add(TITLE, info.getTitle());
-                metas.add(AUTHOR, info.getAuthor());
-                metas.add(SUBJECT, info.getSubject());
-                metas.add(CREATION_DATE, info.getCreateDateTime());
-                metas.add(MODIFICATION_DATE, info.getLastSaveDateTime());
-                metas.add(KEYWORDS, info.getKeywords());
-            }
+            final ParserFieldsBuilder metas = resultBuilder.metas();
+            metas.set(MIME_TYPE, DEFAULT_MIMETYPES[0]);
+            PoiExtractor.extractMetas(word.getSummaryInformation(), metas);
 
             final ParserFieldsBuilder document = resultBuilder.newDocument();
             final String[] paragraphes = word.getParagraphText();
@@ -111,21 +93,24 @@ public class DocParser extends ParserAbstract {
                 for (String paragraph : paragraphes)
                     document.add(CONTENT, paragraph);
             document.add(LANG_DETECTION, languageDetection(document, CONTENT, 10000));
-        } finally {
+        }
+        finally {
             IOUtils.closeQuietly(word6);
         }
     }
 
     @Override
     public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-            final String extension, final String mimeType, final ParserResultBuilder resultBuilder) {
+                             final String extension, final String mimeType, final ParserResultBuilder resultBuilder) {
         try {
             try {
                 currentWordExtraction(inputStream, resultBuilder);
-            } catch (OldWordFileFormatException e) {
+            }
+            catch (OldWordFileFormatException e) {
                 oldWordExtraction(inputStream, resultBuilder);
             }
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             throw convertIOException(e::getMessage, e);
         }
     }
