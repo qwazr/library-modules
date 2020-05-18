@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 Emmanuel Keller / QWAZR
+ * Copyright 2015-2020 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 import org.apache.ibatis.session.TransactionIsolationLevel;
 
+import javax.ws.rs.InternalServerErrorException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
@@ -60,49 +61,54 @@ public class MybatisConnector extends AbstractPasswordLibrary {
     private final static String default_configuration = "com/qwazr/library/mybatis/default-config.xml";
 
     @Override
-    public void load() throws IOException {
-        final File configurationFile;
-        if (configuration_file != null) {
-            configurationFile = new File(SubstitutedVariables.propertyAndEnvironmentSubstitute(configuration_file));
-            if (!configurationFile.exists())
-                throw new RuntimeException("The configuration file " + configurationFile.getPath() + " does not exist");
-        } else
-            configurationFile = null;
-        Properties props = null;
-        if (!StringUtils.isEmpty(properties_file)) {
-            File propFile = new File(SubstitutedVariables.propertyAndEnvironmentSubstitute(properties_file));
-            if (propFile.exists() && propFile.isFile()) {
-                props = new Properties();
-                try (FileReader reader = new FileReader(propFile)) {
-                    props.load(reader);
+    public void load() {
+        try {
+            final File configurationFile;
+            if (configuration_file != null) {
+                configurationFile = new File(SubstitutedVariables.propertyAndEnvironmentSubstitute(configuration_file));
+                if (!configurationFile.exists())
+                    throw new RuntimeException("The configuration file " + configurationFile.getPath() + " does not exist");
+            } else
+                configurationFile = null;
+            Properties props = null;
+            if (!StringUtils.isEmpty(properties_file)) {
+                File propFile = new File(SubstitutedVariables.propertyAndEnvironmentSubstitute(properties_file));
+                if (propFile.exists() && propFile.isFile()) {
+                    props = new Properties();
+                    try (FileReader reader = new FileReader(propFile)) {
+                        props.load(reader);
+                    }
+                } else {
+                    LOGGER.warning(() -> "The property file does not exit: " + properties_file);
                 }
-            } else {
-                LOGGER.warning(() -> "The property file does not exit: " + properties_file);
+            }
+            if (properties != null) {
+                if (props == null)
+                    props = new Properties();
+                props.putAll(properties);
+            } else
+                props = null;
+
+            final SqlSessionFactoryBuilder builder = new SqlSessionFactoryBuilder();
+            try (final InputStream inputStream = configurationFile != null ?
+                    new FileInputStream(configurationFile) :
+                    Resources.getResourceAsStream(
+                            configuration_resource != null ? configuration_resource : default_configuration)) {
+                if (environment != null) {
+                    if (props != null)
+                        sqlSessionFactory = builder.build(inputStream, environment, props);
+                    else
+                        sqlSessionFactory = builder.build(inputStream, environment);
+                } else {
+                    if (props != null)
+                        sqlSessionFactory = builder.build(inputStream, props);
+                    else
+                        sqlSessionFactory = builder.build(inputStream);
+                }
             }
         }
-        if (properties != null) {
-            if (props == null)
-                props = new Properties();
-            props.putAll(properties);
-        } else
-            props = null;
-
-        final SqlSessionFactoryBuilder builder = new SqlSessionFactoryBuilder();
-        try (final InputStream inputStream = configurationFile != null ?
-                new FileInputStream(configurationFile) :
-                Resources.getResourceAsStream(
-                        configuration_resource != null ? configuration_resource : default_configuration)) {
-            if (environment != null) {
-                if (props != null)
-                    sqlSessionFactory = builder.build(inputStream, environment, props);
-                else
-                    sqlSessionFactory = builder.build(inputStream, environment);
-            } else {
-                if (props != null)
-                    sqlSessionFactory = builder.build(inputStream, props);
-                else
-                    sqlSessionFactory = builder.build(inputStream);
-            }
+        catch (IOException e) {
+            throw new InternalServerErrorException("Initialization error", e);
         }
     }
 

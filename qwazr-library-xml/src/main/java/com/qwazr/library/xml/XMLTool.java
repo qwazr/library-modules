@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 Emmanuel Keller / QWAZR
+ * Copyright 2015-2020 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,154 +39,151 @@ import java.io.Writer;
 
 public class XMLTool extends AbstractXmlFactoryTool {
 
-	@JsonIgnore
-	private final SAXParserFactory saxParserFactory;
+    @JsonIgnore
+    private final SAXParserFactory saxParserFactory;
 
-	public XMLTool() {
-		saxParserFactory = SAXParserFactory.newInstance();
-		if (namespace_aware != null)
-			saxParserFactory.setNamespaceAware(namespace_aware);
-		if (x_include_aware != null)
-			saxParserFactory.setXIncludeAware(x_include_aware);
-	}
+    public XMLTool() {
+        saxParserFactory = SAXParserFactory.newInstance();
+        if (namespace_aware != null)
+            saxParserFactory.setNamespaceAware(namespace_aware);
+        if (x_include_aware != null)
+            saxParserFactory.setXIncludeAware(x_include_aware);
+    }
 
-	/**
-	 * @param root the name of the root element
-	 * @return an new XML builder instance
-	 * {@link XMLBuilder2}
-	 */
-	public XMLBuilder2 create(String root) {
-		return XMLBuilder2.create(root);
-	}
+    /**
+     * @param root the name of the root element
+     * @return an new XML builder instance
+     * {@link XMLBuilder2}
+     */
+    public XMLBuilder2 create(String root) {
+        return XMLBuilder2.create(root);
+    }
 
-	/**
-	 * Save the XML to the file described by the given path
-	 *
-	 * @param builder an XML builder
-	 * @param path    the destination path
-	 * @throws IOException if any I/O error occurs
-	 */
-	public void saveTo(XMLBuilder2 builder, String path) throws IOException {
-		FileWriter writer = new FileWriter(path);
-		try {
-			builder.toWriter(true, writer, null);
-		} finally {
-			writer.close();
-		}
-	}
+    /**
+     * Save the XML to the file described by the given path
+     *
+     * @param builder an XML builder
+     * @param path    the destination path
+     * @throws IOException if any I/O error occurs
+     */
+    public void saveTo(XMLBuilder2 builder, String path) throws IOException {
+        try (FileWriter writer = new FileWriter(path);) {
+            builder.toWriter(true, writer, null);
+        }
+    }
 
-	/**
-	 * Parse an XML stream and call the JS functions
-	 *
-	 * @param jsObject any Javascript receiving the events
-	 * @param input    the stream
-	 * @throws ParserConfigurationException if any XML error occurs
-	 * @throws SAXException                 if any XML error occurs
-	 * @throws IOException                  if any I/O error occurs
-	 */
-	public void parseStream(ScriptObjectMirror jsObject, InputStream input)
-			throws ParserConfigurationException, SAXException, IOException {
-		DefaultHandler defaultHandler = (DefaultHandler) ScriptUtils.convert(jsObject, DefaultHandler.class);
-		SAXParser saxParser = saxParserFactory.newSAXParser();
-		saxParser.parse(input, defaultHandler);
-	}
+    /**
+     * Parse an XML stream and call the JS functions
+     *
+     * @param jsObject any Javascript receiving the events
+     * @param input    the stream
+     * @throws ParserConfigurationException if any XML error occurs
+     * @throws SAXException                 if any XML error occurs
+     * @throws IOException                  if any I/O error occurs
+     */
+    public void parseStream(ScriptObjectMirror jsObject, InputStream input)
+            throws ParserConfigurationException, SAXException, IOException {
+        DefaultHandler defaultHandler = (DefaultHandler) ScriptUtils.convert(jsObject, DefaultHandler.class);
+        SAXParser saxParser = saxParserFactory.newSAXParser();
+        saxParser.parse(input, defaultHandler);
+    }
 
-	/**
-	 * Parse an XML file
-	 *
-	 * @param jsObject the Javascript object receiving the events
-	 * @param path     the path to the XML file to read
-	 * @throws IOException                  if any I/O error occurs
-	 * @throws SAXException                 if any XML error occurs
-	 * @throws ParserConfigurationException if any XML error occurs
-	 */
-	public void parseFile(ScriptObjectMirror jsObject, String path)
-			throws IOException, SAXException, ParserConfigurationException {
-		try (final InputStream in = new BufferedInputStream(new FileInputStream(path))) {
-			parseStream(jsObject, in);
-		}
-	}
+    /**
+     * Parse an XML file
+     *
+     * @param jsObject the Javascript object receiving the events
+     * @param path     the path to the XML file to read
+     * @throws IOException                  if any I/O error occurs
+     * @throws SAXException                 if any XML error occurs
+     * @throws ParserConfigurationException if any XML error occurs
+     */
+    public void parseFile(ScriptObjectMirror jsObject, String path)
+            throws IOException, SAXException, ParserConfigurationException {
+        try (final InputStream in = new BufferedInputStream(new FileInputStream(path))) {
+            parseStream(jsObject, in);
+        }
+    }
 
-	/**
-	 * Parse an XML string and build a DOM object
-	 *
-	 * @param xmlString the XML as String
-	 * @return a DOM document
-	 * @throws IOException                  if any I/O error occurs
-	 * @throws SAXException                 if any XML error occurs
-	 * @throws ParserConfigurationException if any XML error occurs
-	 */
-	public Document domParseString(String xmlString) throws IOException, SAXException, ParserConfigurationException {
-		final InputSource input = new InputSource();
-		input.setCharacterStream(new StringReader(xmlString));
-		return getNewDocumentBuilder().parse(input);
-	}
+    /**
+     * Parse an XML string and build a DOM object
+     *
+     * @param xmlString the XML as String
+     * @return a DOM document
+     * @throws IOException                  if any I/O error occurs
+     * @throws SAXException                 if any XML error occurs
+     * @throws ParserConfigurationException if any XML error occurs
+     */
+    public Document domParseString(String xmlString) throws IOException, SAXException, ParserConfigurationException {
+        final InputSource input = new InputSource();
+        input.setCharacterStream(new StringReader(xmlString));
+        return getNewDocumentBuilder().parse(input);
+    }
 
-	/**
-	 * Parse an XML file and build a DOM object
-	 *
-	 * @param file the file to read
-	 * @return a new DOM document
-	 * @throws ParserConfigurationException if any XML error occurs
-	 * @throws IOException                  if any I/O error occurs
-	 * @throws SAXException                 if any XML error occurs
-	 */
-	public Document domParseFile(String file) throws ParserConfigurationException, IOException, SAXException {
-		return getNewDocumentBuilder().parse(file);
-	}
+    /**
+     * Parse an XML file and build a DOM object
+     *
+     * @param file the file to read
+     * @return a new DOM document
+     * @throws ParserConfigurationException if any XML error occurs
+     * @throws IOException                  if any I/O error occurs
+     * @throws SAXException                 if any XML error occurs
+     */
+    public Document domParseFile(String file) throws ParserConfigurationException, IOException, SAXException {
+        return getNewDocumentBuilder().parse(file);
+    }
 
-	/**
-	 * Parse an XML stream and build a DOM object
-	 *
-	 * @param input the stream to read
-	 * @return a new DOM document
-	 * @throws ParserConfigurationException if any XML error occurs
-	 * @throws IOException                  if any I/O error occurs
-	 * @throws SAXException                 if any XML error occurs
-	 */
-	public Document domParseStream(InputStream input) throws ParserConfigurationException, IOException, SAXException {
-		return getNewDocumentBuilder().parse(input);
-	}
+    /**
+     * Parse an XML stream and build a DOM object
+     *
+     * @param input the stream to read
+     * @return a new DOM document
+     * @throws ParserConfigurationException if any XML error occurs
+     * @throws IOException                  if any I/O error occurs
+     * @throws SAXException                 if any XML error occurs
+     */
+    public Document domParseStream(InputStream input) throws ParserConfigurationException, IOException, SAXException {
+        return getNewDocumentBuilder().parse(input);
+    }
 
-	/**
-	 * Parse an XML document using its URL and build a DOM object
-	 *
-	 * @param url
-	 * @return
-	 * @throws IOException
-	 * @throws SAXException
-	 * @throws ParserConfigurationException
-	 */
-	public Document domParseURL(String url) throws IOException, SAXException, ParserConfigurationException {
-		return getNewDocumentBuilder().parse(url);
-	}
+    /**
+     * Parse an XML document using its URL and build a DOM object
+     *
+     * @param url
+     * @return
+     * @throws IOException
+     * @throws SAXException
+     * @throws ParserConfigurationException
+     */
+    public Document domParseURL(String url) throws IOException, SAXException, ParserConfigurationException {
+        return getNewDocumentBuilder().parse(url);
+    }
 
-	/**
-	 * Generate an XML string from an Object using JAXB
-	 *
-	 * @param object the object to serialize
-	 * @return an XML string which represent the object
-	 * @throws IOException if any serialisation error occurs
-	 */
-	public String printXML(Object object) throws IOException {
-		StringWriter sw = new StringWriter();
-		toXML(object, sw);
-		return sw.toString();
-	}
+    /**
+     * Generate an XML string from an Object using JAXB
+     *
+     * @param object the object to serialize
+     * @return an XML string which represent the object
+     * @throws IOException if any serialisation error occurs
+     */
+    public String printXML(Object object) throws IOException {
+        StringWriter sw = new StringWriter();
+        toXML(object, sw);
+        return sw.toString();
+    }
 
-	/**
-	 * Write an XML representation of an object
-	 *
-	 * @param object the object to serialize
-	 * @param writer the destination writer
-	 * @throws IOException if any serialisation error occurs
-	 */
-	public void toXML(Object object, Writer writer) throws IOException {
-		//JAXBContext jaxbContext = JAXBContext.newInstance(object.getClass());
-		//Marshaller marshaller = jaxbContext.createMarshaller();
-		//StringWriter sw = new StringWriter();
-		//marshaller.marshal(object, writer);
-		ObjectMappers.XML.writeValue(writer, object);
-	}
+    /**
+     * Write an XML representation of an object
+     *
+     * @param object the object to serialize
+     * @param writer the destination writer
+     * @throws IOException if any serialisation error occurs
+     */
+    public void toXML(Object object, Writer writer) throws IOException {
+        //JAXBContext jaxbContext = JAXBContext.newInstance(object.getClass());
+        //Marshaller marshaller = jaxbContext.createMarshaller();
+        //StringWriter sw = new StringWriter();
+        //marshaller.marshal(object, writer);
+        ObjectMappers.XML.writeValue(writer, object);
+    }
 
 }

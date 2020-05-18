@@ -29,45 +29,45 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 public abstract class AbstractLibraryTest {
 
-	private static LibraryManager libraryManager;
+    private static LibraryManager libraryManager;
 
-	private static TableSingleton tableSingleton;
+    private static TableSingleton tableSingleton;
 
-	@BeforeClass
-	public static void init() throws IOException {
-		if (libraryManager != null)
-			return;
-		final Path dataDirectory = Files.createTempDirectory("library-test");
-		final Collection<Path> etcFiles = Arrays.asList(Paths.get("src/test/resources/etc/library.json"));
-		final TableSingleton tableSingleton = new TableSingleton(dataDirectory, null);
-		final InstancesSupplier instancesSupplier = InstancesSupplier.withConcurrentMap();
-		instancesSupplier.registerInstance(TableServiceInterface.class, tableSingleton.getTableManager().getService());
-		libraryManager = new LibraryManager(dataDirectory, etcFiles, instancesSupplier);
-		final File resourcesDirectory = new File("src/test/resources");
-		if (resourcesDirectory.exists())
-			FileUtils.copyDirectory(resourcesDirectory, dataDirectory.toFile());
-	}
+    @BeforeClass
+    public static void init() throws IOException {
+        if (libraryManager != null)
+            return;
+        final Path dataDirectory = Files.createTempDirectory("library-test");
+        final Collection<Path> etcFiles = List.of(Paths.get("src/test/resources/etc/library.json"));
+        final TableSingleton tableSingleton = new TableSingleton(dataDirectory, null);
+        final InstancesSupplier instancesSupplier = InstancesSupplier.withConcurrentMap();
+        instancesSupplier.registerInstance(TableServiceInterface.class, tableSingleton.getTableManager().getService());
+        libraryManager = new LibraryManager(dataDirectory, etcFiles, instancesSupplier);
+        final File resourcesDirectory = new File("src/test/resources");
+        if (resourcesDirectory.exists())
+            FileUtils.copyDirectory(resourcesDirectory, dataDirectory.toFile());
+    }
 
-	@AfterClass
-	public static void cleanup() {
-		if (tableSingleton != null) {
-			tableSingleton.close();
-			tableSingleton = null;
-		}
-		if (libraryManager != null) {
-			libraryManager.close();
-			libraryManager = null;
-		}
-	}
+    @AfterClass
+    public static void cleanup() {
+        if (tableSingleton != null) {
+            tableSingleton.close();
+            tableSingleton = null;
+        }
+        if (libraryManager != null) {
+            libraryManager.close();
+            libraryManager = null;
+        }
+    }
 
-	@Before
-	public void inject() {
-		libraryManager.getService().inject(this);
-	}
+    @Before
+    public void inject() {
+        libraryManager.getService().inject(this);
+    }
 
 }

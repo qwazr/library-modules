@@ -1,5 +1,5 @@
-/**
- * Copyright 2015-2017 Emmanuel Keller / QWAZR
+/*
+ * Copyright 2015-2020 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- **/
+ */
 package com.qwazr.library.markdown;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -23,6 +23,7 @@ import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.AttributeProvider;
 import org.commonmark.renderer.html.HtmlRenderer;
 
+import javax.ws.rs.InternalServerErrorException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -64,35 +65,40 @@ public class MarkdownTool extends AbstractLibrary {
     }
 
     @Override
-    public void load() throws ClassNotFoundException {
+    public void load() {
+        try {
+            final List<Extension> extensionsList = new ArrayList<>(extensions == null ? 0 : extensions.size());
+            if (extensions != null)
+                for (MarkdownExtensionEnum extensionEnum : extensions)
+                    extensionsList.add(extensionEnum.extension);
+            final HtmlRenderer.Builder rendererBuilder = HtmlRenderer.builder();
+            final Parser.Builder parserBuilder = Parser.builder();
+            if (!extensionsList.isEmpty()) {
+                rendererBuilder.extensions(extensionsList);
+                parserBuilder.extensions(extensionsList);
+            }
+            if (attribute_provider_class != null || attributeProviderClass != null) {
+                final Class<? extends AttributeProvider> attrProvClass;
+                if (attributeProviderClass != null)
+                    attrProvClass = attributeProviderClass;
+                else
+                    attrProvClass = ClassLoaderUtils.findClass(attribute_provider_class);
+                rendererBuilder.attributeProviderFactory(context -> {
+                    try {
+                        return attrProvClass.getDeclaredConstructor().newInstance();
+                    }
+                    catch (ReflectiveOperationException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+            }
 
-        final List<Extension> extensionsList = new ArrayList<>(extensions == null ? 0 : extensions.size());
-        if (extensions != null)
-            for (MarkdownExtensionEnum extensionEnum : extensions)
-                extensionsList.add(extensionEnum.extension);
-        final HtmlRenderer.Builder rendererBuilder = HtmlRenderer.builder();
-        final Parser.Builder parserBuilder = Parser.builder();
-        if (!extensionsList.isEmpty()) {
-            rendererBuilder.extensions(extensionsList);
-            parserBuilder.extensions(extensionsList);
+            parser = parserBuilder.build();
+            renderer = rendererBuilder.build();
         }
-        if (attribute_provider_class != null || attributeProviderClass != null) {
-            final Class<? extends AttributeProvider> attrProvClass;
-            if (attributeProviderClass != null)
-                attrProvClass = attributeProviderClass;
-            else
-                attrProvClass = ClassLoaderUtils.findClass(attribute_provider_class);
-            rendererBuilder.attributeProviderFactory(context -> {
-                try {
-                    return attrProvClass.newInstance();
-                } catch (ReflectiveOperationException e) {
-                    throw new RuntimeException(e);
-                }
-            });
+        catch (ClassNotFoundException e) {
+            throw new InternalServerErrorException("Initialization error", e);
         }
-
-        parser = parserBuilder.build();
-        renderer = rendererBuilder.build();
     }
 
     public String toHtml(final String input) {

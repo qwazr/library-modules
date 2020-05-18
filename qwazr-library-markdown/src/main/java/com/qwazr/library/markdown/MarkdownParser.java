@@ -39,9 +39,9 @@ import java.util.Set;
 
 public class MarkdownParser extends ParserAbstract {
 
-    final static String[] DEFAULT_MIMETYPES = { "text/markdown" };
+    final static String[] DEFAULT_MIMETYPES = {"text/markdown"};
 
-    final static String[] DEFAULT_EXTENSIONS = { "md", "markdown" };
+    final static String[] DEFAULT_EXTENSIONS = {"md", "markdown"};
 
     final static ParserField H1 = ParserField.newString("h1", "h1 headers");
 
@@ -59,7 +59,7 @@ public class MarkdownParser extends ParserAbstract {
 
     final static ParserField URL_TITLE = ParserField.newString("title", "URL title");
 
-    final static ParserField[] FIELDS = { H1, H2, H3, H4, H5, H6, CONTENT, URL, URL_TITLE, LANG_DETECTION };
+    final static ParserField[] FIELDS = {H1, H2, H3, H4, H5, H6, CONTENT, URL, URL_TITLE, LANG_DETECTION};
 
     @Override
     public ParserField[] getFields() {
@@ -78,7 +78,7 @@ public class MarkdownParser extends ParserAbstract {
 
     @Override
     final public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-            final String extension, final String mimeType, final ParserResultBuilder resultBuilder) {
+                                   final String extension, final String mimeType, final ParserResultBuilder resultBuilder) {
 
         resultBuilder.metas().set(MIME_TYPE, DEFAULT_MIMETYPES[0]);
         final ParserFieldsBuilder result = resultBuilder.newDocument();
@@ -87,7 +87,8 @@ public class MarkdownParser extends ParserAbstract {
         final Node documentNode;
         try (final InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
             documentNode = parser.parseReader(reader);
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             throw convertIOException(e::getMessage, e);
         }
 
@@ -136,27 +137,27 @@ public class MarkdownParser extends ParserAbstract {
             } else if (node instanceof Text) {
                 final Text text = (Text) node;
                 final Node parent = node.getParent();
-                if (parent != null && parent instanceof Heading) {
+                if (parent instanceof Heading) {
                     final Heading heading = (Heading) parent;
                     switch (heading.getLevel()) {
-                    case 1:
-                        result.add(H1, text.getLiteral());
-                        break;
-                    case 2:
-                        result.add(H2, text.getLiteral());
-                        break;
-                    case 3:
-                        result.add(H3, text.getLiteral());
-                        break;
-                    case 4:
-                        result.add(H4, text.getLiteral());
-                        break;
-                    case 5:
-                        result.add(H5, text.getLiteral());
-                        break;
-                    case 6:
-                        result.add(H6, text.getLiteral());
-                        break;
+                        case 1:
+                            result.add(H1, text.getLiteral());
+                            break;
+                        case 2:
+                            result.add(H2, text.getLiteral());
+                            break;
+                        case 3:
+                            result.add(H3, text.getLiteral());
+                            break;
+                        case 4:
+                            result.add(H4, text.getLiteral());
+                            break;
+                        case 5:
+                            result.add(H5, text.getLiteral());
+                            break;
+                        case 6:
+                            result.add(H6, text.getLiteral());
+                            break;
                     }
                 }
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 Emmanuel Keller / QWAZR
+ * Copyright 2015-2020 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public class CassandraCluster implements Closeable {
     private final Integer poolConnections;
 
     public CassandraCluster(String login, String password, List<String> hosts, Integer connectTimeoutMs,
-            Integer readTimeoutMs, Integer poolTimeoutMs, Integer poolConnections) {
+                            Integer readTimeoutMs, Integer poolTimeoutMs, Integer poolConnections) {
         cluster = null;
         this.login = login;
         this.password = password == null ? login : password;
@@ -150,12 +150,12 @@ public class CassandraCluster implements Closeable {
                     .filter(entry -> entry.getValue().isClosed())
                     .map(Map.Entry::getKey)
                     .collect(Collectors.toList());
-            keys.forEach(key -> sessions.remove(key));
+            keys.forEach(sessions::remove);
         });
     }
 
     public int getSessionCount() {
-        return rwl.read(() -> sessions.size());
+        return rwl.read(sessions::size);
     }
 
 }

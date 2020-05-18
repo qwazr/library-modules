@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 Emmanuel Keller / QWAZR
+ * Copyright 2015-2020 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,7 +105,7 @@ public class FreeMarkerTool extends AbstractLibrary implements Closeable {
 
 		@Override
 		public boolean equals(Object o) {
-			if (o == null || !(o instanceof Loader))
+			if (!(o instanceof Loader))
 				return false;
 			final Loader l = (Loader) o;
 			return Objects.equals(l.path, path) && type == l.type;

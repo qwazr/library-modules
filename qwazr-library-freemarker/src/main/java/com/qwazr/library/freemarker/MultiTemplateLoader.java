@@ -31,7 +31,7 @@ public class MultiTemplateLoader implements TemplateLoader {
     MultiTemplateLoader(Builder builder) {
         Objects.requireNonNull(builder, "The builder is null");
         Objects.requireNonNull(builder.templateLoaders, "The templateLoaders is null");
-        loaders = builder.templateLoaders.toArray(new TemplateLoader[builder.templateLoaders.size()]);
+        loaders = builder.templateLoaders.toArray(new TemplateLoader[0]);
     }
 
     @Override

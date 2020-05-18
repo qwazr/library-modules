@@ -73,15 +73,15 @@ public class HtmlParser extends ParserAbstract {
     }
 
     private final static ThreadLocal<DOMParser> DOM_PARSER_THREAD_LOCAL =
-            ThreadLocal.withInitial(() -> getNewDomParser());
+            ThreadLocal.withInitial(HtmlParser::getNewDomParser);
 
     static public DOMParser getThreadLocalDomParser() {
         return DOM_PARSER_THREAD_LOCAL.get();
     }
 
-    final private static String[] DEFAULT_MIMETYPES = { "text/html" };
+    final private static String[] DEFAULT_MIMETYPES = {"text/html"};
 
-    final private static String[] DEFAULT_EXTENSIONS = { "htm", "html" };
+    final private static String[] DEFAULT_EXTENSIONS = {"htm", "html"};
     final private static ParserField HEADERS =
             ParserField.newString("headers", "Extract headers (h1, h2, h3, h4, h5, h6)");
 
@@ -106,7 +106,7 @@ public class HtmlParser extends ParserAbstract {
     final private static ParserField SELECTORS = ParserField.newMap("selectors", "Selector results");
 
     final private static ParserField[] FIELDS =
-            { TITLE, CONTENT, H1, H2, H3, H4, H5, H6, ANCHORS, IMAGES, METAS, LANG_DETECTION, SELECTORS };
+            {TITLE, CONTENT, H1, H2, H3, H4, H5, H6, ANCHORS, IMAGES, METAS, LANG_DETECTION, SELECTORS};
 
     final private static ParserField XPATH_PARAM = ParserField.newString("xpath", "Any XPATH selector");
 
@@ -122,7 +122,7 @@ public class HtmlParser extends ParserAbstract {
     final private static ParserField REGEXP_NAME_PARAM =
             ParserField.newString("regexp_name", "The name of the regular expression");
 
-    final private static ParserField[] PARAMETERS = { TITLE,
+    final private static ParserField[] PARAMETERS = {TITLE,
             CONTENT,
             HEADERS,
             ANCHORS,
@@ -133,7 +133,7 @@ public class HtmlParser extends ParserAbstract {
             CSS_PARAM,
             CSS_NAME_PARAM,
             REGEXP_PARAM,
-            REGEXP_NAME_PARAM };
+            REGEXP_NAME_PARAM};
 
     @Override
     public ParserField[] getParameters() {
@@ -146,7 +146,7 @@ public class HtmlParser extends ParserAbstract {
     }
 
     private void extractTitle(final XPathParser xpath, final Document documentElement,
-            final ParserFieldsBuilder document) throws XPathExpressionException {
+                              final ParserFieldsBuilder document) throws XPathExpressionException {
         final String title = xpath.evaluateString(documentElement, "/html/head/title//text()");
         if (title != null)
             document.set(TITLE, title);
@@ -162,7 +162,7 @@ public class HtmlParser extends ParserAbstract {
     }
 
     private void extractAnchors(final XPathParser xpath, final Document documentElement,
-            final ParserFieldsBuilder document) throws XPathExpressionException {
+                                final ParserFieldsBuilder document) throws XPathExpressionException {
         DomUtils.forEach(xpath.evaluateNodes(documentElement, "//a/@href"),
                 node -> document.add(ANCHORS, DomUtils.getAttributeString(node, "href")));
     }
@@ -231,7 +231,7 @@ public class HtmlParser extends ParserAbstract {
     }
 
     private Map<String, String> extractPrefixParameters(final MultivaluedMap<String, String> multivaluedMap,
-            final ParserField selectorPrefix, final ParserField namePrefix) {
+                                                        final ParserField selectorPrefix, final ParserField namePrefix) {
         final Map<String, String> parameters = new LinkedHashMap<>();
         int i = 0;
         String value;
@@ -244,7 +244,7 @@ public class HtmlParser extends ParserAbstract {
     }
 
     private void extractXPath(final Map<String, String> parameters, final XPathParser xPath, final Node htmlDocument,
-            final LinkedHashMap<String, Object> selectorsResult) throws XPathExpressionException {
+                              final LinkedHashMap<String, Object> selectorsResult) throws XPathExpressionException {
         for (final Map.Entry<String, String> parameter : parameters.entrySet()) {
             final ListConsumer results = new ListConsumer();
             xPath.evaluate(htmlDocument, parameter.getValue(), results);
@@ -253,7 +253,7 @@ public class HtmlParser extends ParserAbstract {
     }
 
     private void extractCss(final Map<String, String> parameters, final Node htmlDocument,
-            final LinkedHashMap<String, Object> selectorsResult) {
+                            final LinkedHashMap<String, Object> selectorsResult) {
         final Selectors<Node, W3CNode> selectors = new Selectors<>(new W3CNode(htmlDocument));
         for (final Map.Entry<String, String> parameter : parameters.entrySet()) {
             final ListConsumer results = new ListConsumer();
@@ -263,7 +263,7 @@ public class HtmlParser extends ParserAbstract {
     }
 
     private void extractRegExp(final Map<String, String> parameters, final String htmlSource,
-            final LinkedHashMap<String, Object> selectorsResult) {
+                               final LinkedHashMap<String, Object> selectorsResult) {
         for (final Map.Entry<String, String> parameter : parameters.entrySet()) {
             final ListConsumer results = new ListConsumer();
             final Matcher matcher = Pattern.compile(parameter.getValue(), Pattern.DOTALL).matcher(htmlSource);
@@ -281,13 +281,13 @@ public class HtmlParser extends ParserAbstract {
     }
 
     private void addToField(final ParserFieldsBuilder document, final ParserField parserField,
-            final NodeList elements) {
+                            final NodeList elements) {
         DomUtils.forEach(elements, node -> document.add(parserField, node.getTextContent()));
     }
 
     @Override
     public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-            final String extension, final String mimeType, final ParserResultBuilder resultBuilder) {
+                             final String extension, final String mimeType, final ParserResultBuilder resultBuilder) {
 
         try {
             resultBuilder.metas().set(MIME_TYPE, DEFAULT_MIMETYPES[0]);
@@ -339,11 +339,14 @@ public class HtmlParser extends ParserAbstract {
                 extractTextContent(htmlDocument, parserDocument);
             if (selectorResultIsEmpty || (parameters != null && parameters.containsKey(METAS.name)))
                 extractMeta(htmlDocument, parserDocument);
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             throw convertIOException(e::getMessage, e);
-        } catch (SAXException e) {
+        }
+        catch (SAXException e) {
             throw convertException(e::getMessage, e);
-        } catch (XPathExpressionException e) {
+        }
+        catch (XPathExpressionException e) {
             throw new NotAcceptableException("Error in the XPATH expression: " + e.getMessage(), e);
         }
     }

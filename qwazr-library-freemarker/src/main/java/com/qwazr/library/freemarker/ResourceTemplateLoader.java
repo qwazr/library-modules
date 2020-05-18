@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 Emmanuel Keller / QWAZR
+ * Copyright 2015-2020 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,37 +27,37 @@ import java.util.function.Function;
 
 public class ResourceTemplateLoader implements TemplateLoader {
 
-	private final ClassLoader classLoader;
-	private final Function<String, String> pathModifier;
+    private final ClassLoader classLoader;
+    private final Function<String, String> pathModifier;
 
-	public ResourceTemplateLoader(ClassLoader classLoader, Function<String, String> pathModifier) {
-		this.classLoader = classLoader == null ? Thread.currentThread().getContextClassLoader() : classLoader;
-		this.pathModifier = pathModifier;
-	}
+    public ResourceTemplateLoader(ClassLoader classLoader, Function<String, String> pathModifier) {
+        this.classLoader = classLoader == null ? Thread.currentThread().getContextClassLoader() : classLoader;
+        this.pathModifier = pathModifier;
+    }
 
-	@Override
-	public Object findTemplateSource(String path) throws IOException {
-		if (pathModifier != null && path != null)
-			path = pathModifier.apply(path);
-		return path == null ? null : classLoader.getResourceAsStream(path);
-	}
+    @Override
+    public Object findTemplateSource(String path) throws IOException {
+        if (pathModifier != null && path != null)
+            path = pathModifier.apply(path);
+        return path == null ? null : classLoader.getResourceAsStream(path);
+    }
 
-	@Override
-	@JsonIgnore
-	public long getLastModified(final Object templateSource) {
-		return classLoader.hashCode();
-	}
+    @Override
+    @JsonIgnore
+    public long getLastModified(final Object templateSource) {
+        return classLoader.hashCode();
+    }
 
-	@Override
-	@JsonIgnore
-	public Reader getReader(final Object templateSource, final String encoding) throws IOException {
-		return new InputStreamReader((InputStream) templateSource);
-	}
+    @Override
+    @JsonIgnore
+    public Reader getReader(final Object templateSource, final String encoding) throws IOException {
+        return new InputStreamReader((InputStream) templateSource);
+    }
 
-	@Override
-	public void closeTemplateSource(final Object templateSource) {
-		if (templateSource != null && templateSource instanceof AutoCloseable)
-			IOUtils.closeQuietly((AutoCloseable) templateSource);
-	}
+    @Override
+    public void closeTemplateSource(final Object templateSource) {
+        if (templateSource instanceof AutoCloseable)
+            IOUtils.closeQuietly((AutoCloseable) templateSource);
+    }
 
 }
