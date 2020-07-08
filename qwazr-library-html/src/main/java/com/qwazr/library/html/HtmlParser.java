@@ -16,15 +16,34 @@
 package com.qwazr.library.html;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.qwazr.extractor.ParserAbstract;
+import com.qwazr.extractor.ParserFactory;
 import com.qwazr.extractor.ParserField;
-import com.qwazr.extractor.ParserResult.FieldsBuilder;
-import com.qwazr.extractor.ParserResult.Builder;
+import com.qwazr.extractor.ParserInterface;
+import com.qwazr.extractor.ParserResult;
+import com.qwazr.extractor.ParserUtils;
 import com.qwazr.utils.DomUtils;
 import com.qwazr.utils.HtmlUtils;
 import com.qwazr.utils.IOUtils;
 import com.qwazr.utils.StringUtils;
 import com.qwazr.utils.XPathParser;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.ws.rs.InternalServerErrorException;
+import javax.ws.rs.NotAcceptableException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.xml.xpath.XPathExpressionException;
 import org.apache.xerces.parsers.DOMParser;
 import org.cyberneko.html.HTMLConfiguration;
 import org.w3c.dom.Document;
@@ -35,20 +54,6 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import se.fishtank.css.selectors.Selectors;
 import se.fishtank.css.selectors.dom.W3CNode;
-
-import javax.ws.rs.NotAcceptableException;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.xml.xpath.XPathExpressionException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class HtmlParser implements ParserFactory, ParserInterface {
 
@@ -68,6 +73,8 @@ public class HtmlParser implements ParserFactory, ParserInterface {
         return config;
     }
 
+    private final static String NAME = "html";
+
     static public DOMParser getNewDomParser() {
         return new DOMParser(getNewHtmlConfiguration());
     }
@@ -79,9 +86,12 @@ public class HtmlParser implements ParserFactory, ParserInterface {
         return DOM_PARSER_THREAD_LOCAL.get();
     }
 
-    final private static Collection<String> DEFAULT_MIMETYPES = {"text/html"};
+    final private static MediaType DEFAULT_MIMETYPE = MediaType.valueOf("text/html");
 
-    final private static Collection<String> DEFAULT_EXTENSIONS = {"htm", "html"};
+    final private static Collection<MediaType> DEFAULT_MIMETYPES = List.of(DEFAULT_MIMETYPE);
+
+    final private static Collection<String> DEFAULT_EXTENSIONS = List.of("htm", "html");
+
     final private static ParserField HEADERS =
             ParserField.newString("headers", "Extract headers (h1, h2, h3, h4, h5, h6)");
 
@@ -105,8 +115,9 @@ public class HtmlParser implements ParserFactory, ParserInterface {
 
     final private static ParserField SELECTORS = ParserField.newMap("selectors", "Selector results");
 
-    final private static Collection<ParserField> FIELDS =
-            {TITLE, CONTENT, H1, H2, H3, H4, H5, H6, ANCHORS, IMAGES, METAS, LANG_DETECTION, SELECTORS};
+    final private static Collection<ParserField> FIELDS = List.of(
+            TITLE, CONTENT, H1, H2, H3, H4, H5, H6, ANCHORS, IMAGES, METAS, LANG_DETECTION, SELECTORS
+    );
 
     final private static ParserField XPATH_PARAM = ParserField.newString("xpath", "Any XPATH selector");
 
@@ -122,7 +133,8 @@ public class HtmlParser implements ParserFactory, ParserInterface {
     final private static ParserField REGEXP_NAME_PARAM =
             ParserField.newString("regexp_name", "The name of the regular expression");
 
-    final private static ParserField[] PARAMETERS = {TITLE,
+    final private static List<ParserField> PARAMETERS = List.of(
+            TITLE,
             CONTENT,
             HEADERS,
             ANCHORS,
@@ -133,7 +145,8 @@ public class HtmlParser implements ParserFactory, ParserInterface {
             CSS_PARAM,
             CSS_NAME_PARAM,
             REGEXP_PARAM,
-            REGEXP_NAME_PARAM};
+            REGEXP_NAME_PARAM
+    );
 
     @Override
     public Collection<ParserField> getParameters() {
@@ -180,7 +193,7 @@ public class HtmlParser implements ParserFactory, ParserInterface {
     private void extractTextContent(final Document documentElement, final ParserResult.FieldsBuilder document) {
         HtmlUtils.domTextExtractor(documentElement, line -> document.add(CONTENT, line));
         // Lang detection
-        document.add(LANG_DETECTION, languageDetection(document, CONTENT, 10000));
+        document.add(LANG_DETECTION, ParserUtils.languageDetection(document, CONTENT, 10000));
     }
 
     private void extractMeta(final Document documentElement, final ParserResult.FieldsBuilder document) {
@@ -235,8 +248,8 @@ public class HtmlParser implements ParserFactory, ParserInterface {
         final Map<String, String> parameters = new LinkedHashMap<>();
         int i = 0;
         String value;
-        while ((value = getParameterValue(multivaluedMap, selectorPrefix, i)) != null) {
-            final String name = getParameterValue(multivaluedMap, namePrefix, i);
+        while ((value = ParserUtils.getParameterValue(multivaluedMap, selectorPrefix, i)) != null) {
+            final String name = ParserUtils.getParameterValue(multivaluedMap, namePrefix, i);
             parameters.put(name == null ? Integer.toString(i) : name, value);
             i++;
         }
@@ -286,11 +299,14 @@ public class HtmlParser implements ParserFactory, ParserInterface {
     }
 
     @Override
-    public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-                             final String extension, final String mimeType, final ParserResult.Builder resultBuilder) {
+    public ParserResult extract(final MultivaluedMap<String, String> parameters,
+                                final InputStream inputStream,
+                                final MediaType mediaType) throws IOException {
 
+        final ParserResult.Builder resultBuilder = ParserResult.of(NAME);
         try {
-            resultBuilder.metas().set(MIME_TYPE, DEFAULT_MIMETYPES[0]);
+            if (mediaType != null)
+                resultBuilder.metas().set(MIME_TYPE, mediaType.toString());
 
             final Map<String, String> xPathParams = extractPrefixParameters(parameters, XPATH_PARAM, XPATH_NAME_PARAM);
             final Map<String, String> cssParams = extractPrefixParameters(parameters, CSS_PARAM, CSS_NAME_PARAM);
@@ -339,16 +355,28 @@ public class HtmlParser implements ParserFactory, ParserInterface {
                 extractTextContent(htmlDocument, parserDocument);
             if (selectorResultIsEmpty || (parameters != null && parameters.containsKey(METAS.name)))
                 extractMeta(htmlDocument, parserDocument);
-        }
-        catch (IOException e) {
-            throw convertIOException(e::getMessage, e);
-        }
-        catch (SAXException e) {
-            throw convertException(e::getMessage, e);
-        }
-        catch (XPathExpressionException e) {
+        } catch (SAXException e) {
+            throw new InternalServerErrorException(e);
+        } catch (XPathExpressionException e) {
             throw new NotAcceptableException("Error in the XPATH expression: " + e.getMessage(), e);
         }
+        return resultBuilder.build();
+    }
+
+    @Override
+    public ParserResult extract(final MultivaluedMap<String, String> parameters,
+                                final Path filePath) throws IOException {
+        return ParserUtils.toBufferedStream(filePath, in -> extract(parameters, in, DEFAULT_MIMETYPE));
+    }
+
+    @Override
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public ParserInterface createParser() {
+        return this;
     }
 
     @Override
@@ -357,7 +385,7 @@ public class HtmlParser implements ParserFactory, ParserInterface {
     }
 
     @Override
-    public Collection<MediaType> getSupportedMimeTypes {
+    public Collection<MediaType> getSupportedMimeTypes() {
         return DEFAULT_MIMETYPES;
     }
 

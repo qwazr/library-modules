@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 Emmanuel Keller / QWAZR
+ * Copyright 2015-2020 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.qwazr.library.html;
 import com.qwazr.extractor.ExtractorManager;
 import com.qwazr.extractor.ParserResult;
 import com.qwazr.extractor.ParserTest;
+import java.io.IOException;
+import javax.ws.rs.core.MediaType;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -36,18 +38,19 @@ public class HtmlParserTest extends ParserTest {
     @Test
     public void testHtml() throws Exception {
         final ParserResult result =
-                doTest(HtmlParser.class, "file.html", "text/html", "content", "search engine software");
+                doTest(HtmlParser.class, "file.html",
+                        MediaType.valueOf("text/html"), "content", "search engine software");
         Assert.assertEquals("OpenSearchServer | Open Source Search Engine and API",
                 result.getDocumentFieldValue(0, "title", 0).toString().trim());
     }
 
-    private void testSelector(String[] names, String[] selectors, String param, String[] selectorResults) {
+    private void testSelector(String[] names, String[] selectors, String param, String[] selectorResults) throws IOException {
         final MultivaluedMap<String, String> map = new MultivaluedHashMap<>();
         map.addAll(param, selectors);
         if (names != null)
             map.addAll(param + "_name", names);
 
-        ParserResult parserResult = service.extract(HtmlParser.class, map, getStream("file.html"));
+        ParserResult parserResult = service.extract(map, getStream("file.html"), MediaType.TEXT_HTML_TYPE);
         Assert.assertNotNull(parserResult);
         Map<String, List<String>> results =
                 (Map<String, List<String>>) parserResult.getDocumentFieldValue(0, "selectors", 0);
@@ -68,34 +71,34 @@ public class HtmlParserTest extends ParserTest {
         }
     }
 
-    private final static String[] XPATH_NAMES = { "xp1", "xp2" };
+    private final static String[] XPATH_NAMES = {"xp1", "xp2"};
     private final static String[] XPATH_SELECTORS =
-            { "//*[@id=\"crawl\"]/ul/li[1]/strong", "//*[@id=\"download\"]/div/div[2]/div/h3" };
-    private final static String[] XPATH_RESULTS = { "web crawler", "Documentation" };
+            {"//*[@id=\"crawl\"]/ul/li[1]/strong", "//*[@id=\"download\"]/div/div[2]/div/h3"};
+    private final static String[] XPATH_RESULTS = {"web crawler", "Documentation"};
 
     @Test
-    public void testHtmlXPath() {
+    public void testHtmlXPath() throws IOException {
         testSelector(null, XPATH_SELECTORS, "xpath", XPATH_RESULTS);
         testSelector(XPATH_NAMES, XPATH_SELECTORS, "xpath", XPATH_RESULTS);
     }
 
-    private final static String[] CSS_NAMES = { "css1", "css2" };
+    private final static String[] CSS_NAMES = {"css1", "css2"};
     private final static String[] CSS_SELECTORS =
-            { "#crawl > ul > li:nth-child(1) > strong", "#download > div > div:nth-child(2) > div > h3" };
-    private final static String[] CSS_RESULTS = { "web crawler", "Documentation" };
+            {"#crawl > ul > li:nth-child(1) > strong", "#download > div > div:nth-child(2) > div > h3"};
+    private final static String[] CSS_RESULTS = {"web crawler", "Documentation"};
 
     @Test
-    public void testHtmlCSS() {
+    public void testHtmlCSS() throws IOException {
         testSelector(null, CSS_SELECTORS, "css", CSS_RESULTS);
         testSelector(CSS_NAMES, CSS_SELECTORS, "css", CSS_RESULTS);
     }
 
-    private final static String[] REGEXP_NAMES = { "reg1", "reg2" };
-    private final static String[] REGEXP_SELECTORS = { "\"downloadUrl\" : \"(.*?)\"", "<script>(.*?)</script>" };
-    private final static String[] REGEXP_RESULTS = { "http://www.opensearchserver.com/#download", null };
+    private final static String[] REGEXP_NAMES = {"reg1", "reg2"};
+    private final static String[] REGEXP_SELECTORS = {"\"downloadUrl\" : \"(.*?)\"", "<script>(.*?)</script>"};
+    private final static String[] REGEXP_RESULTS = {"http://www.opensearchserver.com/#download", null};
 
     @Test
-    public void testHtmlRegExp() {
+    public void testHtmlRegExp() throws IOException {
         testSelector(null, REGEXP_SELECTORS, "regexp", REGEXP_RESULTS);
         testSelector(REGEXP_NAMES, REGEXP_SELECTORS, "regexp", REGEXP_RESULTS);
     }
