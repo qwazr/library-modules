@@ -17,8 +17,8 @@ package com.qwazr.library.poi;
 
 import com.qwazr.extractor.ParserAbstract;
 import com.qwazr.extractor.ParserField;
-import com.qwazr.extractor.ParserFieldsBuilder;
-import com.qwazr.extractor.ParserResultBuilder;
+import com.qwazr.extractor.ParserResult.FieldsBuilder;
+import com.qwazr.extractor.ParserResult.Builder;
 import org.apache.poi.hssf.extractor.ExcelExtractor;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 
@@ -26,43 +26,43 @@ import javax.ws.rs.core.MultivaluedMap;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class XlsParser extends ParserAbstract implements PoiExtractor {
+public class XlsParser implements ParserFactory, ParserInterface implements PoiExtractor {
 
-    private static final String[] DEFAULT_MIMETYPES = {"application/vnd.ms-excel"};
+    private static final Collection<String> DEFAULT_MIMETYPES = {"application/vnd.ms-excel"};
 
-    private static final String[] DEFAULT_EXTENSIONS = {"xls"};
+    private static final Collection<String> DEFAULT_EXTENSIONS = {"xls"};
 
-    final private static ParserField[] FIELDS =
+    final private static Collection<ParserField> FIELDS =
             {TITLE, AUTHOR, KEYWORDS, SUBJECT, CREATION_DATE, MODIFICATION_DATE, CONTENT, LANG_DETECTION};
 
     @Override
-    public ParserField[] getFields() {
+    public Collection<ParserField> getFields() {
         return FIELDS;
     }
 
     @Override
-    public String[] getDefaultExtensions() {
+    public Collection<String> getSupportedFileExtensions() {
         return DEFAULT_EXTENSIONS;
     }
 
     @Override
-    public String[] getDefaultMimeTypes() {
+    public Collection<MediaType> getSupportedMimeTypes {
         return DEFAULT_MIMETYPES;
     }
 
     @Override
     public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-                             final String extension, final String mimeType, final ParserResultBuilder resultBuilder) {
+                             final String extension, final String mimeType, final ParserResult.Builder resultBuilder) {
 
         try (final HSSFWorkbook workbook = new HSSFWorkbook(inputStream)) {
 
             try (final ExcelExtractor excel = new ExcelExtractor(workbook)) {
 
-                final ParserFieldsBuilder metas = resultBuilder.metas();
+                final ParserResult.FieldsBuilder metas = resultBuilder.metas();
                 metas.set(MIME_TYPE, findMimeType(extension, mimeType, this::findMimeTypeUsingDefault));
                 PoiExtractor.extractMetas(excel.getSummaryInformation(), metas);
 
-                final ParserFieldsBuilder result = resultBuilder.newDocument();
+                final ParserResult.FieldsBuilder result = resultBuilder.newDocument();
                 result.add(CONTENT, excel.getText());
                 result.add(LANG_DETECTION, languageDetection(result, CONTENT, 10000));
             }

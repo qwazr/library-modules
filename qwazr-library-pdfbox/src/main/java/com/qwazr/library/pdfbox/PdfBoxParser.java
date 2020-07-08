@@ -17,8 +17,8 @@ package com.qwazr.library.pdfbox;
 
 import com.qwazr.extractor.ParserAbstract;
 import com.qwazr.extractor.ParserField;
-import com.qwazr.extractor.ParserFieldsBuilder;
-import com.qwazr.extractor.ParserResultBuilder;
+import com.qwazr.extractor.ParserResult.FieldsBuilder;
+import com.qwazr.extractor.ParserResult.Builder;
 import com.qwazr.utils.LoggerUtils;
 import com.qwazr.utils.StringUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -36,13 +36,13 @@ import java.nio.file.Path;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class PdfBoxParser extends ParserAbstract {
+public class PdfBoxParser implements ParserFactory, ParserInterface {
 
     private final static Logger LOGGER = LoggerUtils.getLogger(PdfBoxParser.class);
 
-    private static final String[] DEFAULT_MIMETYPES = { "application/pdf" };
+    private static final Collection<String> DEFAULT_MIMETYPES = { "application/pdf" };
 
-    private static final String[] DEFAULT_EXTENSIONS = { "pdf" };
+    private static final Collection<String> DEFAULT_EXTENSIONS = { "pdf" };
 
     final private static ParserField AUTHOR = ParserField.newString("author", "The name of the author");
 
@@ -64,7 +64,7 @@ public class PdfBoxParser extends ParserAbstract {
 
     final private static ParserField CHARACTER_COUNT = ParserField.newInteger("character_count", null);
 
-    final private static ParserField[] FIELDS = { TITLE,
+    final private static Collection<ParserField> FIELDS = { TITLE,
             AUTHOR,
             SUBJECT,
             CONTENT,
@@ -81,7 +81,7 @@ public class PdfBoxParser extends ParserAbstract {
 
     final private static ParserField[] PARAMETERS = { PASSWORD };
 
-    private void extractMetaData(final PDDocument pdf, final ParserFieldsBuilder metas) {
+    private void extractMetaData(final PDDocument pdf, final ParserResult.FieldsBuilder metas) {
         metas.set(MIME_TYPE, DEFAULT_MIMETYPES[0]);
         final PDDocumentInformation info = pdf.getDocumentInformation();
         if (info != null) {
@@ -107,7 +107,7 @@ public class PdfBoxParser extends ParserAbstract {
      * @param resultBuilder
      * @throws Exception
      */
-    private void parseContent(final PDDocument pdf, final ParserResultBuilder resultBuilder) {
+    private void parseContent(final PDDocument pdf, final ParserResult.Builder resultBuilder) {
         try {
             extractMetaData(pdf, resultBuilder.metas());
             Stripper stripper = new Stripper(resultBuilder);
@@ -132,7 +132,7 @@ public class PdfBoxParser extends ParserAbstract {
 
     @Override
     public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-            String extension, final String mimeType, final ParserResultBuilder resultBuilder) {
+            String extension, final String mimeType, final ParserResult.Builder resultBuilder) {
         try {
             parseContent(PDDocument.load(inputStream, getPassword(parameters)), resultBuilder);
         } catch (InvalidPasswordException e) {
@@ -144,7 +144,7 @@ public class PdfBoxParser extends ParserAbstract {
 
     @Override
     public void parseContent(final MultivaluedMap<String, String> parameters, final Path filePath, String extension,
-            final String mimeType, final ParserResultBuilder resultBuilder) {
+            final String mimeType, final ParserResult.Builder resultBuilder) {
         try {
             parseContent(PDDocument.load(filePath.toFile(), getPassword(parameters)), resultBuilder);
         } catch (InvalidPasswordException e) {
@@ -155,37 +155,37 @@ public class PdfBoxParser extends ParserAbstract {
     }
 
     @Override
-    public ParserField[] getParameters() {
+    public Collection<ParserField> getParameters() {
         return PARAMETERS;
     }
 
     @Override
-    public ParserField[] getFields() {
+    public Collection<ParserField> getFields() {
         return FIELDS;
     }
 
     @Override
-    public String[] getDefaultExtensions() {
+    public Collection<String> getSupportedFileExtensions() {
         return DEFAULT_EXTENSIONS;
     }
 
     @Override
-    public String[] getDefaultMimeTypes() {
+    public Collection<MediaType> getSupportedMimeTypes {
         return DEFAULT_MIMETYPES;
     }
 
     public class Stripper extends PDFTextStripper {
 
-        private final ParserResultBuilder resultBuilder;
+        private final ParserResult.Builder resultBuilder;
 
-        private Stripper(ParserResultBuilder resultBuilder) throws IOException {
+        private Stripper(ParserResult.Builder resultBuilder) throws IOException {
             this.resultBuilder = resultBuilder;
         }
 
         @Override
         protected void endPage(PDPage page) throws IOException {
             super.endPage(page);
-            final ParserFieldsBuilder document = resultBuilder.newDocument();
+            final ParserResult.FieldsBuilder document = resultBuilder.newDocument();
             final String text = output.toString();
             document.add(CHARACTER_COUNT, text.length());
             document.add(CONTENT, text);

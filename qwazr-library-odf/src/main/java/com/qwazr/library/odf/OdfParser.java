@@ -17,8 +17,8 @@ package com.qwazr.library.odf;
 
 import com.qwazr.extractor.ParserAbstract;
 import com.qwazr.extractor.ParserField;
-import com.qwazr.extractor.ParserFieldsBuilder;
-import com.qwazr.extractor.ParserResultBuilder;
+import com.qwazr.extractor.ParserResult.FieldsBuilder;
+import com.qwazr.extractor.ParserResult.Builder;
 import org.odftoolkit.odfdom.pkg.OdfElement;
 import org.odftoolkit.simple.Document;
 import org.odftoolkit.simple.common.TextExtractor;
@@ -28,9 +28,9 @@ import javax.ws.rs.core.MultivaluedMap;
 import java.io.InputStream;
 import java.nio.file.Path;
 
-public class OdfParser extends ParserAbstract {
+public class OdfParser implements ParserFactory, ParserInterface {
 
-    static final String[] DEFAULT_MIMETYPES = { "application/vnd.oasis.opendocument.spreadsheet",
+    static final Collection<String> DEFAULT_MIMETYPES = { "application/vnd.oasis.opendocument.spreadsheet",
             "application/vnd.oasis.opendocument.spreadsheet-template",
             "application/vnd.oasis.opendocument.text",
             "application/vnd.oasis.opendocument.text-master",
@@ -38,7 +38,7 @@ public class OdfParser extends ParserAbstract {
             "application/vnd.oasis.opendocument.presentation",
             "application/vnd.oasis.opendocument.presentation-template" };
 
-    static final String[] DEFAULT_EXTENSIONS = { "ods", "ots", "odt", "odm", "ott", "odp", "otp" };
+    static final Collection<String> DEFAULT_EXTENSIONS = { "ods", "ots", "odt", "odm", "ott", "odp", "otp" };
 
     final static ParserField CREATOR = ParserField.newString("creator", "The name of the creator");
 
@@ -70,28 +70,28 @@ public class OdfParser extends ParserAbstract {
             LANG_DETECTION };
 
     @Override
-    public ParserField[] getFields() {
+    public Collection<ParserField> getFields() {
         return FIELDS;
     }
 
     @Override
-    public String[] getDefaultExtensions() {
+    public Collection<String> getSupportedFileExtensions() {
         return DEFAULT_EXTENSIONS;
     }
 
     @Override
-    public String[] getDefaultMimeTypes() {
+    public Collection<MediaType> getSupportedMimeTypes {
         return DEFAULT_MIMETYPES;
     }
 
-    private void parseContent(final Document document, final ParserResultBuilder resultBuilder) {
+    private void parseContent(final Document document, final ParserResult.Builder resultBuilder) {
         // Load file
         try {
             if (document == null)
                 return;
             final Meta meta = document.getOfficeMetadata();
             if (meta != null) {
-                final ParserFieldsBuilder metas = resultBuilder.metas();
+                final ParserResult.FieldsBuilder metas = resultBuilder.metas();
                 metas.add(CREATION_DATE, meta.getCreationDate());
                 metas.add(MODIFICATION_DATE, meta.getDcdate());
                 metas.add(TITLE, meta.getTitle());
@@ -104,7 +104,7 @@ public class OdfParser extends ParserAbstract {
 
             final OdfElement odfElement = document.getContentRoot();
             if (odfElement != null) {
-                final ParserFieldsBuilder result = resultBuilder.newDocument();
+                final ParserResult.FieldsBuilder result = resultBuilder.newDocument();
                 String text = TextExtractor.newOdfTextExtractor(odfElement).getText();
                 if (text != null) {
                     result.add(CONTENT, text);
@@ -121,7 +121,7 @@ public class OdfParser extends ParserAbstract {
 
     @Override
     public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-            String extension, final String mimeType, final ParserResultBuilder resultBuilder) {
+            String extension, final String mimeType, final ParserResult.Builder resultBuilder) {
         resultBuilder.metas().set(MIME_TYPE, findMimeType(extension, mimeType, this::findMimeTypeUsingDefault));
         try {
             parseContent(Document.loadDocument(inputStream), resultBuilder);
@@ -132,7 +132,7 @@ public class OdfParser extends ParserAbstract {
 
     @Override
     public void parseContent(final MultivaluedMap<String, String> parameters, final Path filePath, String extension,
-            final String mimeType, final ParserResultBuilder resultBuilder) {
+            final String mimeType, final ParserResult.Builder resultBuilder) {
         resultBuilder.metas().set(MIME_TYPE, findMimeType(extension, mimeType, this::findMimeTypeUsingDefault));
         try {
             parseContent(Document.loadDocument(filePath.toFile()), resultBuilder);

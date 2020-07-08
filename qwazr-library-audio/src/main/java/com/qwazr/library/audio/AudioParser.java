@@ -17,8 +17,8 @@ package com.qwazr.library.audio;
 
 import com.qwazr.extractor.ParserAbstract;
 import com.qwazr.extractor.ParserField;
-import com.qwazr.extractor.ParserFieldsBuilder;
-import com.qwazr.extractor.ParserResultBuilder;
+import com.qwazr.extractor.ParserResult.FieldsBuilder;
+import com.qwazr.extractor.ParserResult.Builder;
 import com.qwazr.utils.AutoCloseWrapper;
 import com.qwazr.utils.LoggerUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -42,15 +42,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-final public class AudioParser extends ParserAbstract {
+final public class AudioParser implements ParserFactory, ParserInterface {
 
     private final static Logger LOGGER = LoggerUtils.getLogger(AudioParser.class);
 
     private static final HashMap<String, String> MIMEMAP;
     private static final HashMap<String, String> EXTENSIONMAP;
 
-    private static final String[] DEFAULT_EXTENSIONS;
-    private static final String[] DEFAULT_MIMETYPES;
+    private static final Collection<String> DEFAULT_EXTENSIONS;
+    private static final Collection<String> DEFAULT_MIMETYPES;
 
     static {
         MIMEMAP = new HashMap<>();
@@ -105,31 +105,31 @@ final public class AudioParser extends ParserAbstract {
     private final static ParserField[] PARAMETERS = { FORMAT };
 
     @Override
-    public ParserField[] getParameters() {
+    public Collection<ParserField> getParameters() {
         return PARAMETERS;
     }
 
     @Override
-    public ParserField[] getFields() {
+    public Collection<ParserField> getFields() {
         return FIELDS;
     }
 
     @Override
-    public String[] getDefaultExtensions() {
+    public Collection<String> getSupportedFileExtensions() {
         return DEFAULT_EXTENSIONS;
     }
 
     @Override
-    public String[] getDefaultMimeTypes() {
+    public Collection<MediaType> getSupportedMimeTypes {
         return DEFAULT_MIMETYPES;
     }
 
     @Override
     public void parseContent(final MultivaluedMap<String, String> parameters, final Path filePath, String extension,
-            final String mimeType, final ParserResultBuilder resultBuilder) {
+            final String mimeType, final ParserResult.Builder resultBuilder) {
         try {
             final AudioFile f = AudioFileIO.read(filePath.toFile());
-            final ParserFieldsBuilder metas = resultBuilder.metas();
+            final ParserResult.FieldsBuilder metas = resultBuilder.metas();
             metas.set(MIME_TYPE, findMimeType(extension, mimeType, EXTENSIONMAP::get));
             final Tag tag = f.getTag();
             if (tag == null)
@@ -153,7 +153,7 @@ final public class AudioParser extends ParserAbstract {
 
     @Override
     public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-            final String extension, final String mimeType, final ParserResultBuilder resultBuilder) {
+            final String extension, final String mimeType, final ParserResult.Builder resultBuilder) {
         String format = getParameterValue(parameters, FORMAT, 0);
         if (StringUtils.isEmpty(format))
             format = extension;

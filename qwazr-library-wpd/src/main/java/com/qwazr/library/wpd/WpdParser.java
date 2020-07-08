@@ -17,8 +17,8 @@ package com.qwazr.library.wpd;
 
 import com.qwazr.extractor.ParserAbstract;
 import com.qwazr.extractor.ParserField;
-import com.qwazr.extractor.ParserFieldsBuilder;
-import com.qwazr.extractor.ParserResultBuilder;
+import com.qwazr.extractor.ParserResult.FieldsBuilder;
+import com.qwazr.extractor.ParserResult.Builder;
 import com.qwazr.library.html.HtmlParser;
 import com.qwazr.utils.AutoCloseWrapper;
 import com.qwazr.utils.HtmlUtils;
@@ -37,37 +37,37 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.logging.Logger;
 
-public class WpdParser extends ParserAbstract {
+public class WpdParser implements ParserFactory, ParserInterface {
 
     private final static Logger LOGGER = LoggerUtils.getLogger(WpdParser.class);
 
     private final static String CMD_NAME = "wpd2html";
 
-    private static final String[] DEFAULT_MIMETYPES =
+    private static final Collection<String> DEFAULT_MIMETYPES =
             { "application/wordperfect", "application/wordperfect6.0", "application/wordperfect6.1" };
 
-    private static final String[] DEFAULT_EXTENSIONS = { "wpd", "w60", "w61", "wp", "wp5", "wp6" };
+    private static final Collection<String> DEFAULT_EXTENSIONS = { "wpd", "w60", "w61", "wp", "wp5", "wp6" };
 
-    final private static ParserField[] FIELDS = { TITLE, CONTENT, LANG_DETECTION };
+    final private static Collection<ParserField> FIELDS = { TITLE, CONTENT, LANG_DETECTION };
 
     @Override
-    public ParserField[] getFields() {
+    public Collection<ParserField> getFields() {
         return FIELDS;
     }
 
     @Override
-    public String[] getDefaultExtensions() {
+    public Collection<String> getSupportedFileExtensions() {
         return DEFAULT_EXTENSIONS;
     }
 
     @Override
-    public String[] getDefaultMimeTypes() {
+    public Collection<MediaType> getSupportedMimeTypes {
         return DEFAULT_MIMETYPES;
     }
 
     @Override
     public void parseContent(MultivaluedMap<String, String> parameters, Path path, String extension, String mimeType,
-            ParserResultBuilder resultBuilder) {
+            ParserResult.Builder resultBuilder) {
         try (final AutoCloseWrapper<Path> a = AutoCloseWrapper.of(Files.createTempFile("wpdparser", ".html"), LOGGER,
                 Files::deleteIfExists)) {
             final Path htmlFile = a.get();
@@ -80,10 +80,10 @@ public class WpdParser extends ParserAbstract {
             if (resultCode != 0)
                 throw new IOException("The command " + CMD_NAME + " failed with error code: " + resultCode);
 
-            final ParserFieldsBuilder metas = resultBuilder.metas();
+            final ParserResult.FieldsBuilder metas = resultBuilder.metas();
             metas.set(MIME_TYPE, DEFAULT_MIMETYPES[0]);
 
-            final ParserFieldsBuilder parserDocument = resultBuilder.newDocument();
+            final ParserResult.FieldsBuilder parserDocument = resultBuilder.newDocument();
 
             final DOMParser htmlParser = HtmlParser.getThreadLocalDomParser();
             try (final BufferedReader reader = Files.newBufferedReader(htmlFile, StandardCharsets.UTF_8)) {
@@ -98,7 +98,7 @@ public class WpdParser extends ParserAbstract {
 
     @Override
     public void parseContent(MultivaluedMap<String, String> parameters, InputStream inputStream, String extension,
-            String mimeType, ParserResultBuilder resultBuilder) {
+            String mimeType, ParserResult.Builder resultBuilder) {
         try (final AutoCloseWrapper<Path> a = AutoCloseWrapper.of(Files.createTempFile("wpdparser", ".wpd"), LOGGER,
                 Files::deleteIfExists)) {
             final Path tmpFile = a.get();

@@ -18,8 +18,8 @@ package com.qwazr.library.html;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.qwazr.extractor.ParserAbstract;
 import com.qwazr.extractor.ParserField;
-import com.qwazr.extractor.ParserFieldsBuilder;
-import com.qwazr.extractor.ParserResultBuilder;
+import com.qwazr.extractor.ParserResult.FieldsBuilder;
+import com.qwazr.extractor.ParserResult.Builder;
 import com.qwazr.utils.DomUtils;
 import com.qwazr.utils.HtmlUtils;
 import com.qwazr.utils.IOUtils;
@@ -50,7 +50,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class HtmlParser extends ParserAbstract {
+public class HtmlParser implements ParserFactory, ParserInterface {
 
     /**
      * Create a new NekoHTML configuration
@@ -79,9 +79,9 @@ public class HtmlParser extends ParserAbstract {
         return DOM_PARSER_THREAD_LOCAL.get();
     }
 
-    final private static String[] DEFAULT_MIMETYPES = {"text/html"};
+    final private static Collection<String> DEFAULT_MIMETYPES = {"text/html"};
 
-    final private static String[] DEFAULT_EXTENSIONS = {"htm", "html"};
+    final private static Collection<String> DEFAULT_EXTENSIONS = {"htm", "html"};
     final private static ParserField HEADERS =
             ParserField.newString("headers", "Extract headers (h1, h2, h3, h4, h5, h6)");
 
@@ -105,7 +105,7 @@ public class HtmlParser extends ParserAbstract {
 
     final private static ParserField SELECTORS = ParserField.newMap("selectors", "Selector results");
 
-    final private static ParserField[] FIELDS =
+    final private static Collection<ParserField> FIELDS =
             {TITLE, CONTENT, H1, H2, H3, H4, H5, H6, ANCHORS, IMAGES, METAS, LANG_DETECTION, SELECTORS};
 
     final private static ParserField XPATH_PARAM = ParserField.newString("xpath", "Any XPATH selector");
@@ -136,23 +136,23 @@ public class HtmlParser extends ParserAbstract {
             REGEXP_NAME_PARAM};
 
     @Override
-    public ParserField[] getParameters() {
+    public Collection<ParserField> getParameters() {
         return PARAMETERS;
     }
 
     @Override
-    public ParserField[] getFields() {
+    public Collection<ParserField> getFields() {
         return FIELDS;
     }
 
     private void extractTitle(final XPathParser xpath, final Document documentElement,
-                              final ParserFieldsBuilder document) throws XPathExpressionException {
+                              final ParserResult.FieldsBuilder document) throws XPathExpressionException {
         final String title = xpath.evaluateString(documentElement, "/html/head/title//text()");
         if (title != null)
             document.set(TITLE, title);
     }
 
-    private void extractHeaders(final Document documentElement, final ParserFieldsBuilder document) {
+    private void extractHeaders(final Document documentElement, final ParserResult.FieldsBuilder document) {
         addToField(document, H1, documentElement.getElementsByTagName("h1"));
         addToField(document, H2, documentElement.getElementsByTagName("h2"));
         addToField(document, H3, documentElement.getElementsByTagName("h3"));
@@ -162,12 +162,12 @@ public class HtmlParser extends ParserAbstract {
     }
 
     private void extractAnchors(final XPathParser xpath, final Document documentElement,
-                                final ParserFieldsBuilder document) throws XPathExpressionException {
+                                final ParserResult.FieldsBuilder document) throws XPathExpressionException {
         DomUtils.forEach(xpath.evaluateNodes(documentElement, "//a/@href"),
                 node -> document.add(ANCHORS, DomUtils.getAttributeString(node, "href")));
     }
 
-    private void extractImgTags(final Document documentElement, final ParserFieldsBuilder document) {
+    private void extractImgTags(final Document documentElement, final ParserResult.FieldsBuilder document) {
         DomUtils.forEach(documentElement.getElementsByTagName("img"), node -> {
             final Map<String, String> map = new LinkedHashMap<>();
             addToMap(map, "src", DomUtils.getAttributeString(node, "src"));
@@ -177,13 +177,13 @@ public class HtmlParser extends ParserAbstract {
         });
     }
 
-    private void extractTextContent(final Document documentElement, final ParserFieldsBuilder document) {
+    private void extractTextContent(final Document documentElement, final ParserResult.FieldsBuilder document) {
         HtmlUtils.domTextExtractor(documentElement, line -> document.add(CONTENT, line));
         // Lang detection
         document.add(LANG_DETECTION, languageDetection(document, CONTENT, 10000));
     }
 
-    private void extractMeta(final Document documentElement, final ParserFieldsBuilder document) {
+    private void extractMeta(final Document documentElement, final ParserResult.FieldsBuilder document) {
         NodeList nodeList = documentElement.getElementsByTagName("head");
         if (nodeList == null || nodeList.getLength() == 0)
             return;
@@ -280,14 +280,14 @@ public class HtmlParser extends ParserAbstract {
             map.put(name, value);
     }
 
-    private void addToField(final ParserFieldsBuilder document, final ParserField parserField,
+    private void addToField(final ParserResult.FieldsBuilder document, final ParserField parserField,
                             final NodeList elements) {
         DomUtils.forEach(elements, node -> document.add(parserField, node.getTextContent()));
     }
 
     @Override
     public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-                             final String extension, final String mimeType, final ParserResultBuilder resultBuilder) {
+                             final String extension, final String mimeType, final ParserResult.Builder resultBuilder) {
 
         try {
             resultBuilder.metas().set(MIME_TYPE, DEFAULT_MIMETYPES[0]);
@@ -309,7 +309,7 @@ public class HtmlParser extends ParserAbstract {
                 htmlParser.parse(new InputSource(new InputStreamReader(inputStream, StandardCharsets.UTF_8)));
             }
 
-            final ParserFieldsBuilder parserDocument = resultBuilder.newDocument();
+            final ParserResult.FieldsBuilder parserDocument = resultBuilder.newDocument();
 
             final LinkedHashMap<String, Object> selectorsResult = new LinkedHashMap<>();
 
@@ -352,12 +352,12 @@ public class HtmlParser extends ParserAbstract {
     }
 
     @Override
-    public String[] getDefaultExtensions() {
+    public Collection<String> getSupportedFileExtensions() {
         return DEFAULT_EXTENSIONS;
     }
 
     @Override
-    public String[] getDefaultMimeTypes() {
+    public Collection<MediaType> getSupportedMimeTypes {
         return DEFAULT_MIMETYPES;
     }
 

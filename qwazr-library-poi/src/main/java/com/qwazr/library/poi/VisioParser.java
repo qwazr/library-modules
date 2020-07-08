@@ -17,8 +17,8 @@ package com.qwazr.library.poi;
 
 import com.qwazr.extractor.ParserAbstract;
 import com.qwazr.extractor.ParserField;
-import com.qwazr.extractor.ParserFieldsBuilder;
-import com.qwazr.extractor.ParserResultBuilder;
+import com.qwazr.extractor.ParserResult.FieldsBuilder;
+import com.qwazr.extractor.ParserResult.Builder;
 import org.apache.poi.hdgf.extractor.VisioTextExtractor;
 import org.apache.poi.hpsf.SummaryInformation;
 
@@ -26,11 +26,11 @@ import javax.ws.rs.core.MultivaluedMap;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class VisioParser extends ParserAbstract {
+public class VisioParser implements ParserFactory, ParserInterface {
 
-    private static final String[] DEFAULT_MIMETYPES = { "application/vnd.visio" };
+    private static final Collection<String> DEFAULT_MIMETYPES = { "application/vnd.visio" };
 
-    private static final String[] DEFAULT_EXTENSIONS = { "vsd" };
+    private static final Collection<String> DEFAULT_EXTENSIONS = { "vsd" };
 
     final private static ParserField AUTHOR = ParserField.newString("author", "The name of the author");
 
@@ -44,34 +44,34 @@ public class VisioParser extends ParserAbstract {
 
     final private static ParserField COMMENTS = ParserField.newString("comments", null);
 
-    final private static ParserField[] FIELDS =
+    final private static Collection<ParserField> FIELDS =
             { TITLE, AUTHOR, CREATION_DATE, MODIFICATION_DATE, KEYWORDS, SUBJECT, CONTENT, LANG_DETECTION };
 
     @Override
-    public ParserField[] getFields() {
+    public Collection<ParserField> getFields() {
         return FIELDS;
     }
 
     @Override
-    public String[] getDefaultExtensions() {
+    public Collection<String> getSupportedFileExtensions() {
         return DEFAULT_EXTENSIONS;
     }
 
     @Override
-    public String[] getDefaultMimeTypes() {
+    public Collection<MediaType> getSupportedMimeTypes {
         return DEFAULT_MIMETYPES;
     }
 
     @Override
     public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-            String extension, final String mimeType, final ParserResultBuilder resultBuilder) {
+            String extension, final String mimeType, final ParserResult.Builder resultBuilder) {
 
         try (final VisioTextExtractor extractor = new VisioTextExtractor(inputStream)) {
 
             final SummaryInformation info = extractor.getSummaryInformation();
 
             if (info != null) {
-                final ParserFieldsBuilder metas = resultBuilder.metas();
+                final ParserResult.FieldsBuilder metas = resultBuilder.metas();
                 metas.add(TITLE, info.getTitle());
                 metas.add(AUTHOR, info.getAuthor());
                 metas.add(SUBJECT, info.getSubject());
@@ -83,7 +83,7 @@ public class VisioParser extends ParserAbstract {
             final String[] texts = extractor.getAllText();
             if (texts == null)
                 return;
-            final ParserFieldsBuilder result = resultBuilder.newDocument();
+            final ParserResult.FieldsBuilder result = resultBuilder.newDocument();
             for (String text : texts)
                 result.add(CONTENT, text);
             result.add(LANG_DETECTION, languageDetection(result, CONTENT, 10000));

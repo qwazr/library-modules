@@ -17,8 +17,8 @@ package com.qwazr.library.poi;
 
 import com.qwazr.extractor.ParserAbstract;
 import com.qwazr.extractor.ParserField;
-import com.qwazr.extractor.ParserFieldsBuilder;
-import com.qwazr.extractor.ParserResultBuilder;
+import com.qwazr.extractor.ParserResult.FieldsBuilder;
+import com.qwazr.extractor.ParserResult.Builder;
 import org.apache.poi.hssf.extractor.ExcelExtractor;
 import org.apache.poi.xssf.extractor.XSSFExcelExtractor;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -27,14 +27,14 @@ import javax.ws.rs.core.MultivaluedMap;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class XlsxParser extends ParserAbstract implements PoiExtractor {
+public class XlsxParser implements ParserFactory, ParserInterface implements PoiExtractor {
 
-    private static final String[] DEFAULT_MIMETYPES =
+    private static final Collection<String> DEFAULT_MIMETYPES =
             {"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"};
 
-    private static final String[] DEFAULT_EXTENSIONS = {"xlsx"};
+    private static final Collection<String> DEFAULT_EXTENSIONS = {"xlsx"};
 
-    final private static ParserField[] FIELDS = {TITLE,
+    final private static Collection<ParserField> FIELDS = {TITLE,
             CREATOR,
             CREATION_DATE,
             MODIFICATION_DATE,
@@ -45,28 +45,28 @@ public class XlsxParser extends ParserAbstract implements PoiExtractor {
             LANG_DETECTION};
 
     @Override
-    public ParserField[] getFields() {
+    public Collection<ParserField> getFields() {
         return FIELDS;
     }
 
     @Override
-    public String[] getDefaultExtensions() {
+    public Collection<String> getSupportedFileExtensions() {
         return DEFAULT_EXTENSIONS;
     }
 
     @Override
-    public String[] getDefaultMimeTypes() {
+    public Collection<MediaType> getSupportedMimeTypes {
         return DEFAULT_MIMETYPES;
     }
 
-    static void extract(final ExcelExtractor excelExtractor, final ParserFieldsBuilder result) {
+    static void extract(final ExcelExtractor excelExtractor, final ParserResult.FieldsBuilder result) {
         excelExtractor.setIncludeCellComments(true);
         excelExtractor.setIncludeHeadersFooters(true);
         excelExtractor.setIncludeSheetNames(true);
         result.add(CONTENT, excelExtractor.getText());
     }
 
-    static void extract(final XSSFExcelExtractor excelExtractor, final ParserFieldsBuilder result) {
+    static void extract(final XSSFExcelExtractor excelExtractor, final ParserResult.FieldsBuilder result) {
         excelExtractor.setIncludeCellComments(true);
         excelExtractor.setIncludeHeadersFooters(true);
         excelExtractor.setIncludeSheetNames(true);
@@ -75,17 +75,17 @@ public class XlsxParser extends ParserAbstract implements PoiExtractor {
 
     @Override
     public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-                             String extension, final String mimeType, final ParserResultBuilder resultBuilder) {
+                             String extension, final String mimeType, final ParserResult.Builder resultBuilder) {
 
         try (final XSSFWorkbook workbook = new XSSFWorkbook(inputStream)) {
 
             try (final XSSFExcelExtractor excelExtractor = new XSSFExcelExtractor(workbook)) {
 
-                final ParserFieldsBuilder metas = resultBuilder.metas();
+                final ParserResult.FieldsBuilder metas = resultBuilder.metas();
                 metas.set(MIME_TYPE, findMimeType(extension, mimeType, this::findMimeTypeUsingDefault));
                 PoiExtractor.extractMetas(excelExtractor.getCoreProperties(), metas);
 
-                final ParserFieldsBuilder result = resultBuilder.newDocument();
+                final ParserResult.FieldsBuilder result = resultBuilder.newDocument();
                 extract(excelExtractor, result);
                 result.add(LANG_DETECTION, languageDetection(result, CONTENT, 10000));
 

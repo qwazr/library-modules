@@ -17,8 +17,8 @@ package com.qwazr.library.email;
 
 import com.qwazr.extractor.ParserAbstract;
 import com.qwazr.extractor.ParserField;
-import com.qwazr.extractor.ParserFieldsBuilder;
-import com.qwazr.extractor.ParserResultBuilder;
+import com.qwazr.extractor.ParserResult.FieldsBuilder;
+import com.qwazr.extractor.ParserResult.Builder;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.mail.util.MimeMessageParser;
 
@@ -30,11 +30,11 @@ import javax.ws.rs.core.MultivaluedMap;
 import java.io.InputStream;
 import java.util.Properties;
 
-public class EmlParser extends ParserAbstract {
+public class EmlParser implements ParserFactory, ParserInterface {
 
-    private static final String[] DEFAULT_MIMETYPES = { "message/rfc822" };
+    private static final Collection<String> DEFAULT_MIMETYPES = { "message/rfc822" };
 
-    private static final String[] DEFAULT_EXTENSIONS = { "eml" };
+    private static final Collection<String> DEFAULT_EXTENSIONS = { "eml" };
 
     private final static ParserField SUBJECT = ParserField.newString("subject", "The subject of the email");
 
@@ -78,17 +78,17 @@ public class EmlParser extends ParserAbstract {
             LANG_DETECTION };
 
     @Override
-    public ParserField[] getFields() {
+    public Collection<ParserField> getFields() {
         return FIELDS;
     }
 
     @Override
-    public String[] getDefaultExtensions() {
+    public Collection<String> getSupportedFileExtensions() {
         return DEFAULT_EXTENSIONS;
     }
 
     @Override
-    public String[] getDefaultMimeTypes() {
+    public Collection<MediaType> getSupportedMimeTypes {
         return DEFAULT_MIMETYPES;
     }
 
@@ -101,7 +101,7 @@ public class EmlParser extends ParserAbstract {
 
     @Override
     public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-            final String extension, final String mimeType, final ParserResultBuilder resultBuilder) {
+            final String extension, final String mimeType, final ParserResult.Builder resultBuilder) {
         try {
             final Session session = Session.getDefaultInstance(JAVAMAIL_PROPS);
 
@@ -110,7 +110,7 @@ public class EmlParser extends ParserAbstract {
             final MimeMessage mimeMessage = new MimeMessage(session, inputStream);
             final MimeMessageParser mimeMessageParser = new MimeMessageParser(mimeMessage).parse();
 
-            ParserFieldsBuilder document = resultBuilder.newDocument();
+            ParserResult.FieldsBuilder document = resultBuilder.newDocument();
             final String from = mimeMessageParser.getFrom();
             if (from != null)
                 document.add(FROM, from);

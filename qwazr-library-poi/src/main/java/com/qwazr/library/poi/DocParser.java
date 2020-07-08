@@ -17,8 +17,8 @@ package com.qwazr.library.poi;
 
 import com.qwazr.extractor.ParserAbstract;
 import com.qwazr.extractor.ParserField;
-import com.qwazr.extractor.ParserFieldsBuilder;
-import com.qwazr.extractor.ParserResultBuilder;
+import com.qwazr.extractor.ParserResult.FieldsBuilder;
+import com.qwazr.extractor.ParserResult.Builder;
 import com.qwazr.utils.IOUtils;
 import org.apache.poi.hpsf.SummaryInformation;
 import org.apache.poi.hwpf.OldWordFileFormatException;
@@ -29,40 +29,40 @@ import javax.ws.rs.core.MultivaluedMap;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class DocParser extends ParserAbstract implements PoiExtractor {
+public class DocParser implements ParserFactory, ParserInterface implements PoiExtractor {
 
-    private static final String[] DEFAULT_MIMETYPES = {"application/msword"};
+    private static final Collection<String> DEFAULT_MIMETYPES = {"application/msword"};
 
-    private static final String[] DEFAULT_EXTENSIONS = {"doc", "dot"};
+    private static final Collection<String> DEFAULT_EXTENSIONS = {"doc", "dot"};
 
-    final private static ParserField[] FIELDS =
+    final private static Collection<ParserField> FIELDS =
             {TITLE, AUTHOR, CREATION_DATE, MODIFICATION_DATE, SUBJECT, KEYWORDS, CONTENT, LANG_DETECTION};
 
     @Override
-    public ParserField[] getFields() {
+    public Collection<ParserField> getFields() {
         return FIELDS;
     }
 
     @Override
-    public String[] getDefaultExtensions() {
+    public Collection<String> getSupportedFileExtensions() {
         return DEFAULT_EXTENSIONS;
     }
 
     @Override
-    public String[] getDefaultMimeTypes() {
+    public Collection<MediaType> getSupportedMimeTypes {
         return DEFAULT_MIMETYPES;
     }
 
-    private void currentWordExtraction(final InputStream inputStream, final ParserResultBuilder resultBuilder)
+    private void currentWordExtraction(final InputStream inputStream, final ParserResult.Builder resultBuilder)
             throws IOException {
 
         try (final WordExtractor word = new WordExtractor(inputStream)) {
 
-            final ParserFieldsBuilder metas = resultBuilder.metas();
+            final ParserResult.FieldsBuilder metas = resultBuilder.metas();
             metas.set(MIME_TYPE, DEFAULT_MIMETYPES[0]);
             PoiExtractor.extractMetas(word.getSummaryInformation(), metas);
 
-            final ParserFieldsBuilder document = resultBuilder.newDocument();
+            final ParserResult.FieldsBuilder document = resultBuilder.newDocument();
             final String[] paragraphes = word.getParagraphText();
             if (paragraphes != null)
                 for (String paragraph : paragraphes)
@@ -71,13 +71,13 @@ public class DocParser extends ParserAbstract implements PoiExtractor {
         }
     }
 
-    private void oldWordExtraction(final InputStream inputStream, final ParserResultBuilder resultBuilder)
+    private void oldWordExtraction(final InputStream inputStream, final ParserResult.Builder resultBuilder)
             throws IOException {
         Word6Extractor word6 = null;
         try {
             word6 = new Word6Extractor(inputStream);
 
-            final ParserFieldsBuilder metas = resultBuilder.metas();
+            final ParserResult.FieldsBuilder metas = resultBuilder.metas();
             metas.set(MIME_TYPE, DEFAULT_MIMETYPES[0]);
 
             SummaryInformation si = word6.getSummaryInformation();
@@ -87,7 +87,7 @@ public class DocParser extends ParserAbstract implements PoiExtractor {
                 metas.add(SUBJECT, si.getSubject());
             }
 
-            final ParserFieldsBuilder document = resultBuilder.newDocument();
+            final ParserResult.FieldsBuilder document = resultBuilder.newDocument();
             @SuppressWarnings("deprecation") String[] paragraphes = word6.getParagraphText();
             if (paragraphes != null)
                 for (String paragraph : paragraphes)
@@ -101,7 +101,7 @@ public class DocParser extends ParserAbstract implements PoiExtractor {
 
     @Override
     public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-                             final String extension, final String mimeType, final ParserResultBuilder resultBuilder) {
+                             final String extension, final String mimeType, final ParserResult.Builder resultBuilder) {
         try {
             try {
                 currentWordExtraction(inputStream, resultBuilder);

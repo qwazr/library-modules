@@ -17,8 +17,8 @@ package com.qwazr.library.poi;
 
 import com.qwazr.extractor.ParserAbstract;
 import com.qwazr.extractor.ParserField;
-import com.qwazr.extractor.ParserFieldsBuilder;
-import com.qwazr.extractor.ParserResultBuilder;
+import com.qwazr.extractor.ParserResult.FieldsBuilder;
+import com.qwazr.extractor.ParserResult.Builder;
 import com.qwazr.utils.LoggerUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ooxml.extractor.POIXMLTextExtractor;
@@ -31,16 +31,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.logging.Logger;
 
-public class PptxParser extends ParserAbstract implements PoiExtractor {
+public class PptxParser implements ParserFactory, ParserInterface implements PoiExtractor {
 
     private static final Logger LOGGER = LoggerUtils.getLogger(PptxParser.class);
 
-    private static final String[] DEFAULT_MIMETYPES =
+    private static final Collection<String> DEFAULT_MIMETYPES =
             {"application/vnd.openxmlformats-officedocument.presentationml.presentation"};
 
-    private static final String[] DEFAULT_EXTENSIONS = {"pptx"};
+    private static final Collection<String> DEFAULT_EXTENSIONS = {"pptx"};
 
-    final private static ParserField[] FIELDS = {TITLE,
+    final private static Collection<ParserField> FIELDS = {TITLE,
             CONTENT,
             CREATOR,
             DESCRIPTION,
@@ -51,21 +51,21 @@ public class PptxParser extends ParserAbstract implements PoiExtractor {
             LANG_DETECTION};
 
     @Override
-    public ParserField[] getFields() {
+    public Collection<ParserField> getFields() {
         return FIELDS;
     }
 
     @Override
-    public String[] getDefaultExtensions() {
+    public Collection<String> getSupportedFileExtensions() {
         return DEFAULT_EXTENSIONS;
     }
 
     @Override
-    public String[] getDefaultMimeTypes() {
+    public Collection<MediaType> getSupportedMimeTypes {
         return DEFAULT_MIMETYPES;
     }
 
-    static void extract(final SlideShow<?, ?> slideShow, final ParserFieldsBuilder result) throws IOException {
+    static void extract(final SlideShow<?, ?> slideShow, final ParserResult.FieldsBuilder result) throws IOException {
         try (final SlideShowExtractor<?, ?> extractor = new SlideShowExtractor<>(slideShow)) {
             extractor.setCommentsByDefault(true);
             extractor.setNotesByDefault(true);
@@ -78,17 +78,17 @@ public class PptxParser extends ParserAbstract implements PoiExtractor {
 
     @Override
     public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-                             final String extension, final String mimeType, final ParserResultBuilder resultBuilder) {
+                             final String extension, final String mimeType, final ParserResult.Builder resultBuilder) {
 
         try (final XMLSlideShow slideshow = new XMLSlideShow(inputStream)) {
 
             try (final POIXMLTextExtractor textExtractor = slideshow.getMetadataTextExtractor()) {
-                final ParserFieldsBuilder metas = resultBuilder.metas();
+                final ParserResult.FieldsBuilder metas = resultBuilder.metas();
                 metas.set(MIME_TYPE, findMimeType(extension, mimeType, this::findMimeTypeUsingDefault));
                 PoiExtractor.extractMetas(textExtractor.getCoreProperties(), metas);
             }
 
-            final ParserFieldsBuilder result = resultBuilder.newDocument();
+            final ParserResult.FieldsBuilder result = resultBuilder.newDocument();
             extract(slideshow, result);
             result.add(LANG_DETECTION, languageDetection(result, CONTENT, 10000));
 

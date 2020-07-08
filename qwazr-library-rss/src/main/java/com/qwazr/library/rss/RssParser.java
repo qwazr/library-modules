@@ -15,10 +15,12 @@
  */
 package com.qwazr.library.rss;
 
-import com.qwazr.extractor.ParserAbstract;
+import com.qwazr.extractor.ParserFactory;
 import com.qwazr.extractor.ParserField;
-import com.qwazr.extractor.ParserFieldsBuilder;
-import com.qwazr.extractor.ParserResultBuilder;
+import com.qwazr.extractor.ParserInterface;
+import com.qwazr.extractor.ParserResult;
+import com.qwazr.extractor.ParserUtils;
+import static com.qwazr.extractor.ParserUtils.languageDetection;
 import com.rometools.rome.feed.synd.SyndCategory;
 import com.rometools.rome.feed.synd.SyndContent;
 import com.rometools.rome.feed.synd.SyndEntry;
@@ -28,17 +30,25 @@ import com.rometools.rome.feed.synd.SyndPerson;
 import com.rometools.rome.io.FeedException;
 import com.rometools.rome.io.SyndFeedInput;
 import com.rometools.rome.io.XmlReader;
-
-import javax.ws.rs.core.MultivaluedMap;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import javax.ws.rs.InternalServerErrorException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 
-public class RssParser extends ParserAbstract {
+public class RssParser implements ParserFactory, ParserInterface {
 
-    private static final String[] DEFAULT_MIMETYPES = { "application/rss+xml" };
+    private static final String NAME = "rss";
 
-    private static final String[] DEFAULT_EXTENSIONS = { "rss" };
+    private static final MediaType DEFAULT_MIMETYPE = MediaType.valueOf("application/rss+xml");
+
+    private static final Collection<MediaType> DEFAULT_MIMETYPES = List.of(DEFAULT_MIMETYPE);
+
+    private static final Collection<String> DEFAULT_EXTENSIONS = List.of("rss");
 
     final private static ParserField CHANNEL_TITLE = ParserField.newString("channel_title", "The title of the channel");
 
@@ -91,7 +101,7 @@ public class RssParser extends ParserAbstract {
 
     final private static ParserField ATOM_UPDATED_DATE = ParserField.newString("atom_updated_date", "The updated date");
 
-    final private static ParserField[] FIELDS = { CHANNEL_TITLE,
+    final private static Collection<ParserField> FIELDS = Arrays.asList(CHANNEL_TITLE,
             CHANNEL_LINK,
             CHANNEL_DESCRIPTION,
             CHANNEL_CATEGORY,
@@ -109,25 +119,35 @@ public class RssParser extends ParserAbstract {
             ATOM_CONTRIBUTOR_EMAIL,
             ATOM_PUBLISHED_DATE,
             ATOM_UPDATED_DATE,
-            LANG_DETECTION };
+            LANG_DETECTION);
 
     @Override
-    public ParserField[] getFields() {
+    public Collection<ParserField> getFields() {
         return FIELDS;
     }
 
     @Override
-    public String[] getDefaultExtensions() {
+    public Collection<String> getSupportedFileExtensions() {
         return DEFAULT_EXTENSIONS;
     }
 
     @Override
-    public String[] getDefaultMimeTypes() {
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public ParserInterface createParser() {
+        return this;
+    }
+
+    @Override
+    public Collection<MediaType> getSupportedMimeTypes() {
         return DEFAULT_MIMETYPES;
     }
 
     private void addPersons(ParserField nameField, ParserField emailField, List<SyndPerson> persons,
-            ParserFieldsBuilder parserDocument) {
+                            ParserResult.FieldsBuilder parserDocument) {
         if (persons == null)
             return;
         for (SyndPerson person : persons) {
@@ -137,7 +157,7 @@ public class RssParser extends ParserAbstract {
     }
 
     private void addLinks(final ParserField linkField, final List<SyndLink> links,
-            final ParserFieldsBuilder parserDocument) {
+                          final ParserResult.FieldsBuilder parserDocument) {
         if (links == null)
             return;
         for (SyndLink link : links)
@@ -145,15 +165,16 @@ public class RssParser extends ParserAbstract {
     }
 
     private void addCategories(final ParserField categoryField, final List<SyndCategory> categories,
-            final ParserFieldsBuilder parserDocument) {
+                               final ParserResult.FieldsBuilder parserDocument) {
         if (categories == null)
             return;
         for (SyndCategory category : categories)
             parserDocument.add(categoryField, category.getName());
     }
 
-    private void addContent(final ParserField atomDescription, final SyndContent content,
-            final ParserFieldsBuilder result) {
+    private void addContent(final ParserField atomDescription,
+                            final SyndContent content,
+                            final ParserResult.FieldsBuilder result) {
         if (content == null)
             return;
         final String value = content.getValue();
@@ -163,17 +184,19 @@ public class RssParser extends ParserAbstract {
     }
 
     @Override
-    public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-            String extension, final String mimeType, final ParserResultBuilder resultBuilder) {
+    public ParserResult extract(final MultivaluedMap<String, String> parameters,
+                                final InputStream inputStream,
+                                final MediaType mediaType) throws IOException {
 
+        final ParserResult.Builder builder = ParserResult.of(NAME);
         final SyndFeedInput input = new SyndFeedInput();
         try (final XmlReader reader = new XmlReader(inputStream)) {
             SyndFeed feed = input.build(reader);
             if (feed == null)
-                return;
+                return builder.build();
 
-            final ParserFieldsBuilder metas = resultBuilder.metas();
-            metas.set(MIME_TYPE, DEFAULT_MIMETYPES[0]);
+            final ParserResult.FieldsBuilder metas = builder.metas();
+            metas.set(MIME_TYPE, mediaType.toString());
             metas.add(CHANNEL_TITLE, feed.getTitle());
             metas.add(CHANNEL_DESCRIPTION, feed.getDescription());
 
@@ -186,11 +209,11 @@ public class RssParser extends ParserAbstract {
 
             List<SyndEntry> entries = feed.getEntries();
             if (entries == null)
-                return;
+                return builder.build();
 
             for (SyndEntry entry : entries) {
 
-                final ParserFieldsBuilder result = resultBuilder.newDocument();
+                final ParserResult.FieldsBuilder result = builder.newDocument();
 
                 result.add(ATOM_TITLE, entry.getTitle());
                 addContent(ATOM_DESCRIPTION, entry.getDescription(), result);
@@ -204,11 +227,16 @@ public class RssParser extends ParserAbstract {
                 // Apply the language detection
                 result.add(LANG_DETECTION, languageDetection(result, ATOM_DESCRIPTION, 10000));
             }
-        } catch (IOException e) {
-            throw convertIOException(e::getMessage, e);
         } catch (FeedException e) {
-            throw convertException(e::getMessage, e);
+            throw new InternalServerErrorException(e);
         }
+        return builder.build();
+    }
+
+    @Override
+    public ParserResult extract(final MultivaluedMap<String, String> parameters,
+                                final Path filePath) throws IOException {
+        return ParserUtils.toBufferedStream(filePath, in -> extract(parameters, in, DEFAULT_MIMETYPE));
     }
 
 }

@@ -17,8 +17,8 @@ package com.qwazr.library.poi;
 
 import com.qwazr.extractor.ParserAbstract;
 import com.qwazr.extractor.ParserField;
-import com.qwazr.extractor.ParserFieldsBuilder;
-import com.qwazr.extractor.ParserResultBuilder;
+import com.qwazr.extractor.ParserResult.FieldsBuilder;
+import com.qwazr.extractor.ParserResult.Builder;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.hsmf.MAPIMessage;
 import org.apache.poi.hsmf.exceptions.ChunkNotFoundException;
@@ -27,11 +27,11 @@ import javax.ws.rs.core.MultivaluedMap;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class MapiMsgParser extends ParserAbstract {
+public class MapiMsgParser implements ParserFactory, ParserInterface {
 
-    private static final String[] DEFAULT_MIMETYPES = { "application/vnd.ms-outlook" };
+    private static final Collection<String> DEFAULT_MIMETYPES = { "application/vnd.ms-outlook" };
 
-    private static final String[] DEFAULT_EXTENSIONS = { "msg" };
+    private static final Collection<String> DEFAULT_EXTENSIONS = { "msg" };
 
     final private static ParserField SUBJECT = ParserField.newString("subject", "The subject of the email");
 
@@ -61,7 +61,7 @@ public class MapiMsgParser extends ParserAbstract {
 
     final private static ParserField HTML_CONTENT = ParserField.newString("html_content", "The html text body content");
 
-    final private static ParserField[] FIELDS = { SUBJECT,
+    final private static Collection<ParserField> FIELDS = { SUBJECT,
             FROM,
             RECIPIENT_TO,
             RECIPIENT_CC,
@@ -76,31 +76,31 @@ public class MapiMsgParser extends ParserAbstract {
             LANG_DETECTION };
 
     @Override
-    public ParserField[] getFields() {
+    public Collection<ParserField> getFields() {
         return FIELDS;
     }
 
     @Override
-    public String[] getDefaultExtensions() {
+    public Collection<String> getSupportedFileExtensions() {
         return DEFAULT_EXTENSIONS;
     }
 
     @Override
-    public String[] getDefaultMimeTypes() {
+    public Collection<MediaType> getSupportedMimeTypes {
         return DEFAULT_MIMETYPES;
     }
 
     @Override
     public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-            final String extension, final String mimeType, final ParserResultBuilder resultBuilder) {
+            final String extension, final String mimeType, final ParserResult.Builder resultBuilder) {
 
         try (final MAPIMessage msg = new MAPIMessage(inputStream)) {
             msg.setReturnNullOnMissingChunk(true);
 
-            final ParserFieldsBuilder metas = resultBuilder.metas();
+            final ParserResult.FieldsBuilder metas = resultBuilder.metas();
             metas.set(MIME_TYPE, DEFAULT_MIMETYPES[0]);
 
-            final ParserFieldsBuilder document = resultBuilder.newDocument();
+            final ParserResult.FieldsBuilder document = resultBuilder.newDocument();
 
             document.add(FROM, msg.getDisplayFrom());
             document.add(RECIPIENT_TO, msg.getDisplayTo());

@@ -17,18 +17,19 @@ package com.qwazr.library.rss;
 
 import com.qwazr.extractor.ExtractorManager;
 import com.qwazr.extractor.ParserTest;
+import javax.ws.rs.core.MediaType;
 import org.junit.Test;
 
 public class RssParserTest extends ParserTest {
 
-	public RssParserTest() {
-		super(new ExtractorManager());
-		manager.registerServices();
-	}
+    public RssParserTest() {
+        super(new ExtractorManager());
+        manager.registerServices();
+    }
 
-	@Test
-	public void testRss() throws Exception {
-		doTest(RssParser.class, "file.rss", "application/rss+xml", "atom_title", "oss-text-extractor");
-	}
+    @Test
+    public void testRss() throws Exception {
+        doTest(RssParser.class, "file.rss", MediaType.valueOf("application/rss+xml"), "atom_title", "oss-text-extractor");
+    }
 
 }

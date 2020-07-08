@@ -17,8 +17,8 @@ package com.qwazr.library.poi;
 
 import com.qwazr.extractor.ParserAbstract;
 import com.qwazr.extractor.ParserField;
-import com.qwazr.extractor.ParserFieldsBuilder;
-import com.qwazr.extractor.ParserResultBuilder;
+import com.qwazr.extractor.ParserResult.FieldsBuilder;
+import com.qwazr.extractor.ParserResult.Builder;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.hpbf.extractor.PublisherTextExtractor;
 
@@ -26,42 +26,42 @@ import javax.ws.rs.core.MultivaluedMap;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class PublisherParser extends ParserAbstract implements PoiExtractor {
+public class PublisherParser implements ParserFactory, ParserInterface implements PoiExtractor {
 
-    private static final String[] DEFAULT_MIMETYPES = {"application/x-mspublisher"};
+    private static final Collection<String> DEFAULT_MIMETYPES = {"application/x-mspublisher"};
 
-    private static final String[] DEFAULT_EXTENSIONS = {"pub"};
+    private static final Collection<String> DEFAULT_EXTENSIONS = {"pub"};
 
-    final private static ParserField[] FIELDS =
+    final private static Collection<ParserField> FIELDS =
             {TITLE, AUTHOR, CREATION_DATE, MODIFICATION_DATE, KEYWORDS, SUBJECT, CONTENT, LANG_DETECTION};
 
     @Override
-    public ParserField[] getFields() {
+    public Collection<ParserField> getFields() {
         return FIELDS;
     }
 
     @Override
-    public String[] getDefaultExtensions() {
+    public Collection<String> getSupportedFileExtensions() {
         return DEFAULT_EXTENSIONS;
     }
 
     @Override
-    public String[] getDefaultMimeTypes() {
+    public Collection<MediaType> getSupportedMimeTypes {
         return DEFAULT_MIMETYPES;
     }
 
     @Override
     public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-                             final String extension, final String mimeType, final ParserResultBuilder resultBuilder) {
+                             final String extension, final String mimeType, final ParserResult.Builder resultBuilder) {
 
         try (final PublisherTextExtractor extractor = new PublisherTextExtractor(inputStream)) {
 
-            final ParserFieldsBuilder metas = resultBuilder.metas();
+            final ParserResult.FieldsBuilder metas = resultBuilder.metas();
             metas.set(MIME_TYPE, findMimeType(extension, mimeType, this::findMimeTypeUsingDefault));
             PoiExtractor.extractMetas(extractor.getSummaryInformation(), metas);
             final String text = extractor.getText();
             if (!StringUtils.isEmpty(text)) {
-                final ParserFieldsBuilder result = resultBuilder.newDocument();
+                final ParserResult.FieldsBuilder result = resultBuilder.newDocument();
                 result.add(CONTENT, text);
                 result.add(LANG_DETECTION, languageDetection(result, CONTENT, 10000));
             }

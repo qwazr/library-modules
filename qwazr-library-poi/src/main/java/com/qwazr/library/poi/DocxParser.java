@@ -17,8 +17,8 @@ package com.qwazr.library.poi;
 
 import com.qwazr.extractor.ParserAbstract;
 import com.qwazr.extractor.ParserField;
-import com.qwazr.extractor.ParserFieldsBuilder;
-import com.qwazr.extractor.ParserResultBuilder;
+import com.qwazr.extractor.ParserResult.FieldsBuilder;
+import com.qwazr.extractor.ParserResult.Builder;
 import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 
@@ -26,15 +26,15 @@ import javax.ws.rs.core.MultivaluedMap;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class DocxParser extends ParserAbstract implements PoiExtractor {
+public class DocxParser implements ParserFactory, ParserInterface implements PoiExtractor {
 
-    private static final String[] DEFAULT_MIMETYPES = {
+    private static final Collection<String> DEFAULT_MIMETYPES = {
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             "application/vnd.openxmlformats-officedocument.wordprocessingml.template"};
 
-    private static final String[] DEFAULT_EXTENSIONS = {"docx", "dotx"};
+    private static final Collection<String> DEFAULT_EXTENSIONS = {"docx", "dotx"};
 
-    final private static ParserField[] FIELDS = {TITLE,
+    final private static Collection<ParserField> FIELDS = {TITLE,
             CREATOR,
             CREATION_DATE,
             MODIFICATION_DATE,
@@ -45,36 +45,36 @@ public class DocxParser extends ParserAbstract implements PoiExtractor {
             LANG_DETECTION};
 
     @Override
-    public ParserField[] getFields() {
+    public Collection<ParserField> getFields() {
         return FIELDS;
     }
 
     @Override
-    public String[] getDefaultExtensions() {
+    public Collection<String> getSupportedFileExtensions() {
         return DEFAULT_EXTENSIONS;
     }
 
     @Override
-    public String[] getDefaultMimeTypes() {
+    public Collection<MediaType> getSupportedMimeTypes {
         return DEFAULT_MIMETYPES;
     }
 
-    static void extract(final XWPFWordExtractor word, final ParserFieldsBuilder result) {
+    static void extract(final XWPFWordExtractor word, final ParserResult.FieldsBuilder result) {
         result.add(CONTENT, word.getText());
     }
 
     @Override
     public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-                             final String extension, final String mimeType, final ParserResultBuilder resultBuilder) {
+                             final String extension, final String mimeType, final ParserResult.Builder resultBuilder) {
 
         try (final XWPFDocument document = new XWPFDocument(inputStream)) {
 
             try (final XWPFWordExtractor word = new XWPFWordExtractor(document)) {
 
-                final ParserFieldsBuilder metas = resultBuilder.metas();
+                final ParserResult.FieldsBuilder metas = resultBuilder.metas();
                 metas.set(MIME_TYPE, findMimeType(extension, mimeType, this::findMimeTypeUsingDefault));
                 PoiExtractor.extractMetas(word.getCoreProperties(), metas);
-                final ParserFieldsBuilder parserDocument = resultBuilder.newDocument();
+                final ParserResult.FieldsBuilder parserDocument = resultBuilder.newDocument();
                 extract(word, parserDocument);
                 parserDocument.add(LANG_DETECTION, languageDetection(parserDocument, CONTENT, 10000));
             }

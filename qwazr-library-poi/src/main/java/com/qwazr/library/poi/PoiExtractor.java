@@ -16,7 +16,7 @@
 package com.qwazr.library.poi;
 
 import com.qwazr.extractor.ParserField;
-import com.qwazr.extractor.ParserFieldsBuilder;
+import com.qwazr.extractor.ParserResult.FieldsBuilder;
 import org.apache.poi.hpsf.SummaryInformation;
 import org.apache.poi.ooxml.POIXMLProperties;
 
@@ -38,7 +38,7 @@ public interface PoiExtractor {
 
     ParserField SUBJECT = ParserField.newString("subject", "The subject of the document");
 
-    static void extractMetas(final POIXMLProperties.CoreProperties info, final ParserFieldsBuilder metas) {
+    static void extractMetas(final POIXMLProperties.CoreProperties info, final ParserResult.FieldsBuilder metas) {
         if (info == null)
             return;
         metas.add(TITLE, info.getTitle());
@@ -50,7 +50,7 @@ public interface PoiExtractor {
         metas.add(KEYWORDS, info.getKeywords());
     }
 
-    static void extractMetas(final SummaryInformation info, final ParserFieldsBuilder metas) {
+    static void extractMetas(final SummaryInformation info, final ParserResult.FieldsBuilder metas) {
         if (info == null)
             return;
         metas.add(TITLE, info.getTitle());
@@ -62,7 +62,7 @@ public interface PoiExtractor {
     }
 
     /* TODO
-    static void extract(final POIFSFileSystem fileSystem, final ParserFieldsBuilder result)
+    static void extract(final POIFSFileSystem fileSystem, final ParserResult.FieldsBuilder result)
             throws OpenXML4JException, XmlException, IOException {
 
         // Firstly, get an extractor for the Workbook
