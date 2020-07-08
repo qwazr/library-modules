@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2018 Emmanuel Keller / QWAZR
+ * Copyright 2015-2020 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.qwazr.library.wpd;
 import com.qwazr.extractor.ExtractorManager;
 import com.qwazr.extractor.ParserTest;
 import com.qwazr.utils.LoggerUtils;
+import javax.ws.rs.core.MediaType;
 import org.apache.commons.lang3.SystemUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -48,7 +49,9 @@ public class WpdParserTest extends ParserTest {
             LOGGER.warning("This module does not work on Windows OS. Deps on C++ library (libwpd)");
             return;
         }
-        doTest(WpdParser.class, "file.wpd", "application/wordperfect", "content", DEFAULT_TEST_STRING);
+        doTest(WpdParser.class, "file.wpd",
+                MediaType.valueOf("application/wordperfect"),
+                "content", DEFAULT_TEST_STRING);
 
     }
 }
