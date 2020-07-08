@@ -15,30 +15,38 @@
  */
 package com.qwazr.library.odf;
 
-import com.qwazr.extractor.ParserAbstract;
+import com.qwazr.extractor.ParserFactory;
 import com.qwazr.extractor.ParserField;
-import com.qwazr.extractor.ParserResult.FieldsBuilder;
-import com.qwazr.extractor.ParserResult.Builder;
+import com.qwazr.extractor.ParserInterface;
+import com.qwazr.extractor.ParserResult;
+import com.qwazr.extractor.ParserUtils;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Path;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import javax.ws.rs.InternalServerErrorException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import org.odftoolkit.odfdom.pkg.OdfElement;
 import org.odftoolkit.simple.Document;
 import org.odftoolkit.simple.common.TextExtractor;
 import org.odftoolkit.simple.meta.Meta;
 
-import javax.ws.rs.core.MultivaluedMap;
-import java.io.InputStream;
-import java.nio.file.Path;
-
 public class OdfParser implements ParserFactory, ParserInterface {
 
-    static final Collection<String> DEFAULT_MIMETYPES = { "application/vnd.oasis.opendocument.spreadsheet",
-            "application/vnd.oasis.opendocument.spreadsheet-template",
-            "application/vnd.oasis.opendocument.text",
-            "application/vnd.oasis.opendocument.text-master",
-            "application/vnd.oasis.opendocument.text-template",
-            "application/vnd.oasis.opendocument.presentation",
-            "application/vnd.oasis.opendocument.presentation-template" };
+    private final static String NAME = "odf";
 
-    static final Collection<String> DEFAULT_EXTENSIONS = { "ods", "ots", "odt", "odm", "ott", "odp", "otp" };
+    static final Map<String, MediaType> TYPES_MAP = Map.of(
+            "ods", MediaType.valueOf("application/vnd.oasis.opendocument.spreadsheet"),
+            "ots", MediaType.valueOf("application/vnd.oasis.opendocument.spreadsheet-template"),
+            "odt", MediaType.valueOf("application/vnd.oasis.opendocument.text"),
+            "odm", MediaType.valueOf("application/vnd.oasis.opendocument.text-master"),
+            "ott", MediaType.valueOf("application/vnd.oasis.opendocument.text-template"),
+            "odp", MediaType.valueOf("application/vnd.oasis.opendocument.presentation"),
+            "otp", MediaType.valueOf("application/vnd.oasis.opendocument.presentation-template")
+    );
 
     final static ParserField CREATOR = ParserField.newString("creator", "The name of the creator");
 
@@ -57,7 +65,8 @@ public class OdfParser implements ParserFactory, ParserInterface {
 
     final static ParserField PRODUCER = ParserField.newString("producer", "The producer of the document");
 
-    final static ParserField[] FIELDS = { TITLE,
+    final static List<ParserField> FIELDS = List.of(
+            TITLE,
             CREATOR,
             CREATION_DATE,
             MODIFICATION_DATE,
@@ -67,7 +76,18 @@ public class OdfParser implements ParserFactory, ParserInterface {
             CONTENT,
             LANGUAGE,
             PRODUCER,
-            LANG_DETECTION };
+            LANG_DETECTION
+    );
+
+    @Override
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public ParserInterface createParser() {
+        return this;
+    }
 
     @Override
     public Collection<ParserField> getFields() {
@@ -76,19 +96,23 @@ public class OdfParser implements ParserFactory, ParserInterface {
 
     @Override
     public Collection<String> getSupportedFileExtensions() {
-        return DEFAULT_EXTENSIONS;
+        return TYPES_MAP.keySet();
     }
 
     @Override
-    public Collection<MediaType> getSupportedMimeTypes {
-        return DEFAULT_MIMETYPES;
+    public Collection<MediaType> getSupportedMimeTypes() {
+        return TYPES_MAP.values();
     }
 
-    private void parseContent(final Document document, final ParserResult.Builder resultBuilder) {
+    private ParserResult parseContent(final Document document,
+                                      final MediaType mediaType) throws Exception {
+        final ParserResult.Builder resultBuilder = ParserResult.of(NAME);
+        if (mediaType != null)
+            resultBuilder.metas().set(MIME_TYPE, mediaType.toString());
         // Load file
         try {
             if (document == null)
-                return;
+                return resultBuilder.build();
             final Meta meta = document.getOfficeMetadata();
             if (meta != null) {
                 final ParserResult.FieldsBuilder metas = resultBuilder.metas();
@@ -108,36 +132,33 @@ public class OdfParser implements ParserFactory, ParserInterface {
                 String text = TextExtractor.newOdfTextExtractor(odfElement).getText();
                 if (text != null) {
                     result.add(CONTENT, text);
-                    result.add(LANG_DETECTION, languageDetection(result, CONTENT, 10000));
+                    result.add(LANG_DETECTION, ParserUtils.languageDetection(result, CONTENT, 10000));
                 }
             }
-        } catch (Exception e) {
-            throw convertException(e::getMessage, e);
         } finally {
             if (document != null)
                 document.close();
         }
+        return resultBuilder.build();
     }
 
     @Override
-    public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-            String extension, final String mimeType, final ParserResult.Builder resultBuilder) {
-        resultBuilder.metas().set(MIME_TYPE, findMimeType(extension, mimeType, this::findMimeTypeUsingDefault));
+    public ParserResult extract(final MultivaluedMap<String, String> parameters,
+                                final InputStream inputStream,
+                                final MediaType mimeType) throws IOException {
         try {
-            parseContent(Document.loadDocument(inputStream), resultBuilder);
+            return parseContent(Document.loadDocument(inputStream), mimeType);
+        } catch (IOException e) {
+            throw e;
         } catch (Exception e) {
-            throw convertException(e::getMessage, e);
+            throw new InternalServerErrorException(e);
         }
     }
 
     @Override
-    public void parseContent(final MultivaluedMap<String, String> parameters, final Path filePath, String extension,
-            final String mimeType, final ParserResult.Builder resultBuilder) {
-        resultBuilder.metas().set(MIME_TYPE, findMimeType(extension, mimeType, this::findMimeTypeUsingDefault));
-        try {
-            parseContent(Document.loadDocument(filePath.toFile()), resultBuilder);
-        } catch (Exception e) {
-            throw convertException(() -> "Error with " + filePath.toAbsolutePath() + ": " + e.getMessage(), e);
-        }
+    public ParserResult extract(final MultivaluedMap<String, String> parameters,
+                                final Path filePath) throws IOException {
+        final MediaType mediaType = TYPES_MAP.get(ParserUtils.getExtension(filePath));
+        return ParserUtils.toBufferedStream(filePath, in -> extract(parameters, in, mediaType));
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 Emmanuel Keller / QWAZR
+ * Copyright 2015-2020 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,34 +17,37 @@ package com.qwazr.library.odf;
 
 import com.qwazr.extractor.ExtractorManager;
 import com.qwazr.extractor.ParserTest;
+import javax.ws.rs.core.MediaType;
 import org.junit.Test;
-
-import java.io.IOException;
 
 public class OdfParserTest extends ParserTest {
 
-	static final String DEFAULT_TEST_STRING = "osstextextractor";
+    static final String DEFAULT_TEST_STRING = "osstextextractor";
 
-	public OdfParserTest() {
-		super(new ExtractorManager());
-		manager.registerServices();
-	}
+    public OdfParserTest() {
+        super(new ExtractorManager());
+        manager.registerServices();
+    }
 
-	@Test
-	public void testOdt() throws Exception {
-		doTest(OdfParser.class, "file.odt", "application/vnd.oasis.opendocument.text", "content", DEFAULT_TEST_STRING);
-	}
+    @Test
+    public void testOdt() throws Exception {
+        doTest(OdfParser.class, "file.odt",
+                MediaType.valueOf("application/vnd.oasis.opendocument.text"),
+                "content", DEFAULT_TEST_STRING);
+    }
 
-	@Test
-	public void testOds() throws Exception {
-		doTest(OdfParser.class, "file.ods", "application/vnd.oasis.opendocument.spreadsheet", "content",
-				DEFAULT_TEST_STRING);
-	}
+    @Test
+    public void testOds() throws Exception {
+        doTest(OdfParser.class, "file.ods",
+                MediaType.valueOf("application/vnd.oasis.opendocument.spreadsheet"),
+                "content", DEFAULT_TEST_STRING);
+    }
 
-	@Test
-	public void testOdp() throws Exception {
-		doTest(OdfParser.class, "file.odp", "application/vnd.oasis.opendocument.presentation", "content",
-				DEFAULT_TEST_STRING);
-	}
+    @Test
+    public void testOdp() throws Exception {
+        doTest(OdfParser.class, "file.odp",
+                MediaType.valueOf("application/vnd.oasis.opendocument.presentation"),
+                "content", DEFAULT_TEST_STRING);
+    }
 
 }
