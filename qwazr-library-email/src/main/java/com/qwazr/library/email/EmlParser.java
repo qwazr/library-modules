@@ -1,5 +1,5 @@
-/**
- * Copyright 2015-2017 Emmanuel Keller / QWAZR
+/*
+ * Copyright 2015-2020 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,36 @@
  */
 package com.qwazr.library.email;
 
-import com.qwazr.extractor.ParserAbstract;
+import com.qwazr.extractor.ParserFactory;
 import com.qwazr.extractor.ParserField;
-import com.qwazr.extractor.ParserResult.FieldsBuilder;
-import com.qwazr.extractor.ParserResult.Builder;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.mail.util.MimeMessageParser;
-
+import com.qwazr.extractor.ParserInterface;
+import com.qwazr.extractor.ParserResult;
+import com.qwazr.extractor.ParserUtils;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Path;
+import java.util.Collection;
+import java.util.List;
+import java.util.Properties;
 import javax.activation.DataSource;
 import javax.mail.Address;
 import javax.mail.Session;
 import javax.mail.internet.MimeMessage;
+import javax.ws.rs.InternalServerErrorException;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
-import java.io.InputStream;
-import java.util.Properties;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.mail.util.MimeMessageParser;
 
 public class EmlParser implements ParserFactory, ParserInterface {
 
-    private static final Collection<String> DEFAULT_MIMETYPES = { "message/rfc822" };
+    private static final String NAME = "eml";
 
-    private static final Collection<String> DEFAULT_EXTENSIONS = { "eml" };
+    private static final MediaType DEFAULT_MIMETYPE = MediaType.valueOf("message/rfc822");
+
+    private static final Collection<MediaType> DEFAULT_MIMETYPES = List.of(DEFAULT_MIMETYPE);
+
+    private static final Collection<String> DEFAULT_EXTENSIONS = List.of("eml");
 
     private final static ParserField SUBJECT = ParserField.newString("subject", "The subject of the email");
 
@@ -63,7 +73,8 @@ public class EmlParser implements ParserFactory, ParserInterface {
 
     private final static ParserField HTML_CONTENT = ParserField.newString("html_content", "The html text body content");
 
-    private final static ParserField[] FIELDS = { SUBJECT,
+    private final static List<ParserField> FIELDS = List.of(
+            SUBJECT,
             FROM,
             RECIPIENT_TO,
             RECIPIENT_CC,
@@ -75,7 +86,18 @@ public class EmlParser implements ParserFactory, ParserInterface {
             ATTACHMENT_CONTENT,
             PLAIN_CONTENT,
             HTML_CONTENT,
-            LANG_DETECTION };
+            LANG_DETECTION
+    );
+
+    @Override
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public ParserInterface createParser() {
+        return this;
+    }
 
     @Override
     public Collection<ParserField> getFields() {
@@ -88,7 +110,7 @@ public class EmlParser implements ParserFactory, ParserInterface {
     }
 
     @Override
-    public Collection<MediaType> getSupportedMimeTypes {
+    public Collection<MediaType> getSupportedMimeTypes() {
         return DEFAULT_MIMETYPES;
     }
 
@@ -100,12 +122,16 @@ public class EmlParser implements ParserFactory, ParserInterface {
     }
 
     @Override
-    public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-            final String extension, final String mimeType, final ParserResult.Builder resultBuilder) {
+    public ParserResult extract(final MultivaluedMap<String, String> parameters,
+                                final InputStream inputStream,
+                                final MediaType mimeType) throws IOException {
+        final ParserResult.Builder resultBuilder = ParserResult.of(NAME);
         try {
+
             final Session session = Session.getDefaultInstance(JAVAMAIL_PROPS);
 
-            resultBuilder.metas().set(MIME_TYPE, findMimeType(extension, mimeType, this::findMimeTypeUsingDefault));
+            if (mimeType != null)
+                resultBuilder.metas().set(MIME_TYPE, mimeType.toString());
 
             final MimeMessage mimeMessage = new MimeMessage(session, inputStream);
             final MimeMessageParser mimeMessageParser = new MimeMessageParser(mimeMessage).parse();
@@ -147,12 +173,21 @@ public class EmlParser implements ParserFactory, ParserInterface {
                 // }
             }
             if (StringUtils.isEmpty(mimeMessageParser.getHtmlContent()))
-                document.add(LANG_DETECTION, languageDetection(document, PLAIN_CONTENT, 10000));
+                document.add(LANG_DETECTION, ParserUtils.languageDetection(document, PLAIN_CONTENT, 10000));
             else
-                document.add(LANG_DETECTION, languageDetection(document, HTML_CONTENT, 10000));
+                document.add(LANG_DETECTION, ParserUtils.languageDetection(document, HTML_CONTENT, 10000));
+        } catch (IOException e) {
+            throw e;
         } catch (Exception e) {
-            throw convertException(e::getMessage, e);
+            throw new InternalServerErrorException(e);
         }
+        return resultBuilder.build();
+    }
+
+    @Override
+    public ParserResult extract(final MultivaluedMap<String, String> parameters,
+                                final Path filePath) throws IOException {
+        return ParserUtils.toBufferedStream(filePath, in -> extract(parameters, in, DEFAULT_MIMETYPE));
     }
 
 }

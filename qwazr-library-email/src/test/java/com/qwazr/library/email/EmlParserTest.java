@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 Emmanuel Keller
+ * Copyright 2015-2020 Emmanuel Keller
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +17,21 @@ package com.qwazr.library.email;
 
 import com.qwazr.extractor.ExtractorManager;
 import com.qwazr.extractor.ParserTest;
+import javax.ws.rs.core.MediaType;
 import org.junit.Test;
 
 public class EmlParserTest extends ParserTest {
 
-	public EmlParserTest() {
-		super(new ExtractorManager());
-		manager.registerServices();
-	}
+    public EmlParserTest() {
+        super(new ExtractorManager());
+        manager.registerServices();
+    }
 
-	@Test
-	public void testEml() throws Exception {
-		doTest(EmlParser.class, "file.eml", "message/rfc822", "html_content", "Maximum actions in one visit");
-	}
+    @Test
+    public void testEml() throws Exception {
+        doTest(EmlParser.class, "file.eml",
+                MediaType.valueOf("message/rfc822"),
+                "html_content", "Maximum actions in one visit");
+    }
 
 }
