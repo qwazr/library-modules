@@ -15,11 +15,24 @@
  */
 package com.qwazr.library.markdown;
 
-import com.qwazr.extractor.ParserAbstract;
+import com.qwazr.extractor.ParserFactory;
 import com.qwazr.extractor.ParserField;
-import com.qwazr.extractor.ParserFieldsBuilder;
-import com.qwazr.extractor.ParserResultBuilder;
+import com.qwazr.extractor.ParserInterface;
+import com.qwazr.extractor.ParserResult;
+import com.qwazr.extractor.ParserUtils;
 import com.qwazr.utils.StringUtils;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import org.commonmark.node.Heading;
 import org.commonmark.node.Link;
 import org.commonmark.node.Node;
@@ -28,20 +41,15 @@ import org.commonmark.parser.Parser;
 import org.commonmark.renderer.NodeRenderer;
 import org.commonmark.renderer.text.TextContentRenderer;
 
-import javax.ws.rs.core.MultivaluedMap;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+public class MarkdownParser implements ParserInterface, ParserFactory {
 
-public class MarkdownParser extends ParserAbstract {
+    final private static String NAME = "markdown";
 
-    final static String[] DEFAULT_MIMETYPES = {"text/markdown"};
+    final private static MediaType DEFAULT_MEDIATYPE = MediaType.valueOf("text/markdown");
 
-    final static String[] DEFAULT_EXTENSIONS = {"md", "markdown"};
+    final static Collection<MediaType> DEFAULT_MIMETYPES = List.of(DEFAULT_MEDIATYPE);
+
+    final static Collection<String> DEFAULT_EXTENSIONS = List.of("md", "markdown");
 
     final static ParserField H1 = ParserField.newString("h1", "h1 headers");
 
@@ -59,37 +67,46 @@ public class MarkdownParser extends ParserAbstract {
 
     final static ParserField URL_TITLE = ParserField.newString("title", "URL title");
 
-    final static ParserField[] FIELDS = {H1, H2, H3, H4, H5, H6, CONTENT, URL, URL_TITLE, LANG_DETECTION};
+    final static Collection<ParserField> FIELDS = List.of(H1, H2, H3, H4, H5, H6, CONTENT, URL, URL_TITLE, LANG_DETECTION);
 
     @Override
-    public ParserField[] getFields() {
+    public Collection<ParserField> getFields() {
         return FIELDS;
     }
 
     @Override
-    public String[] getDefaultExtensions() {
+    public Collection<String> getSupportedFileExtensions() {
         return DEFAULT_EXTENSIONS;
     }
 
     @Override
-    public String[] getDefaultMimeTypes() {
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public ParserInterface createParser() {
+        return this;
+    }
+
+    @Override
+    public Collection<MediaType> getSupportedMimeTypes() {
         return DEFAULT_MIMETYPES;
     }
 
     @Override
-    final public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-                                   final String extension, final String mimeType, final ParserResultBuilder resultBuilder) {
+    final public ParserResult extract(final MultivaluedMap<String, String> parameters,
+                                      final InputStream inputStream,
+                                      final MediaType mimeType) throws IOException {
 
-        resultBuilder.metas().set(MIME_TYPE, DEFAULT_MIMETYPES[0]);
-        final ParserFieldsBuilder result = resultBuilder.newDocument();
+        ParserResult.Builder builder = ParserResult.of(NAME);
+        builder.metas().set(MIME_TYPE, DEFAULT_MEDIATYPE.toString());
+        final ParserResult.FieldsBuilder result = builder.newDocument();
         final Parser parser = Parser.builder().build();
 
         final Node documentNode;
         try (final InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
             documentNode = parser.parseReader(reader);
-        }
-        catch (IOException e) {
-            throw convertIOException(e::getMessage, e);
         }
 
         // First pass we extract the meta data fields
@@ -105,7 +122,12 @@ public class MarkdownParser extends ParserAbstract {
             for (String line : lines)
                 result.add(CONTENT, line);
         }
+        return builder.build();
+    }
 
+    @Override
+    public ParserResult extract(MultivaluedMap<String, String> parameters, Path filePath) throws IOException {
+        return ParserUtils.toBufferedStream(filePath, in -> extract(parameters, in, DEFAULT_MEDIATYPE));
     }
 
     private final static Set<Class<? extends Node>> TYPES =
@@ -113,9 +135,9 @@ public class MarkdownParser extends ParserAbstract {
 
     final public static class ExtractorNodeRenderer implements NodeRenderer {
 
-        private final ParserFieldsBuilder result;
+        private final ParserResult.FieldsBuilder result;
 
-        private ExtractorNodeRenderer(final ParserFieldsBuilder result) {
+        private ExtractorNodeRenderer(final ParserResult.FieldsBuilder result) {
             this.result = result;
         }
 

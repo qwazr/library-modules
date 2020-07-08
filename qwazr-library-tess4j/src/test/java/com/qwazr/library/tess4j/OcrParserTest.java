@@ -17,6 +17,7 @@ package com.qwazr.library.tess4j;
 
 import com.qwazr.extractor.ExtractorManager;
 import com.qwazr.extractor.ParserTest;
+import javax.ws.rs.core.MediaType;
 import net.sourceforge.tess4j.Tesseract1;
 import org.junit.Assume;
 import org.junit.BeforeClass;
@@ -54,7 +55,7 @@ public class OcrParserTest extends ParserTest {
 
     @Test
     public void testOcr() throws Exception {
-        doTest(OcrParser.class, "file.pdf", "application/pdf", "content", DEFAULT_TEST_STRING);
+        doTest(OcrParser.class, "file.pdf", MediaType.valueOf("application/pdf"), "content", DEFAULT_TEST_STRING);
     }
 
 }

@@ -18,23 +18,22 @@ package com.qwazr.library.markdown;
 import com.qwazr.extractor.ExtractorManager;
 import com.qwazr.extractor.ParserResult;
 import com.qwazr.extractor.ParserTest;
+import javax.ws.rs.core.MediaType;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
-
 public class MarkdownParserTest extends ParserTest {
 
-	public MarkdownParserTest() throws IOException, ClassNotFoundException {
-		super(new ExtractorManager());
-		manager.registerServices();
-	}
+    public MarkdownParserTest() {
+        super(new ExtractorManager());
+        manager.registerServices();
+    }
 
-	@Test
-	public void testMarkdown() throws Exception {
-		final ParserResult parserResult =
-				doTest(MarkdownParser.class, "file.md", "text/markdown", "content", "extract data to be indexed");
-		Assert.assertEquals("Discovering the main concepts", parserResult.getDocumentFieldValue(0, "h1", 0));
-	}
+    @Test
+    public void testMarkdown() throws Exception {
+        final ParserResult parserResult =
+                doTest(MarkdownParser.class, "file.md", MediaType.valueOf("text/markdown"), "content", "extract data to be indexed");
+        Assert.assertEquals("Discovering the main concepts", parserResult.getDocumentFieldValue(0, "h1", 0));
+    }
 
 }

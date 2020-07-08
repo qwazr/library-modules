@@ -15,45 +15,49 @@
  */
 package com.qwazr.library.tess4j;
 
-import com.qwazr.extractor.ParserAbstract;
+import com.qwazr.extractor.ParserFactory;
 import com.qwazr.extractor.ParserField;
-import com.qwazr.extractor.ParserFieldsBuilder;
-import com.qwazr.extractor.ParserResultBuilder;
+import com.qwazr.extractor.ParserInterface;
+import com.qwazr.extractor.ParserResult;
+import com.qwazr.extractor.ParserUtils;
 import com.qwazr.utils.AutoCloseWrapper;
 import com.qwazr.utils.LoggerUtils;
 import com.qwazr.utils.StringUtils;
-import net.sourceforge.tess4j.Tesseract1;
-import net.sourceforge.tess4j.TesseractException;
-
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.InternalServerErrorException;
-import javax.ws.rs.core.MultivaluedMap;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.logging.Logger;
+import javax.ws.rs.BadRequestException;
+import javax.ws.rs.InternalServerErrorException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import net.sourceforge.tess4j.Tesseract1;
+import net.sourceforge.tess4j.TesseractException;
 
-public class OcrParser extends ParserAbstract {
+public class OcrParser implements ParserFactory, ParserInterface {
 
     private static final Logger LOGGER = LoggerUtils.getLogger(OcrParser.class);
 
-    private static final HashMap<String, String> MIMEMAP;
+    private static final HashMap<MediaType, String> MIMEMAP;
+
+    private static final String NAME = "ocr";
 
     static {
         MIMEMAP = new HashMap<>();
-        MIMEMAP.put("image/tiff", "tiff");
-        MIMEMAP.put("image/jpeg", "jpg");
-        MIMEMAP.put("image/gif", "gif");
-        MIMEMAP.put("image/png", "png");
-        MIMEMAP.put("image/bmp", "bmp");
-        MIMEMAP.put("application/pdf", "pdf");
+        MIMEMAP.put(MediaType.valueOf("image/tiff"), "tiff");
+        MIMEMAP.put(MediaType.valueOf("image/jpeg"), "jpg");
+        MIMEMAP.put(MediaType.valueOf("image/gif"), "gif");
+        MIMEMAP.put(MediaType.valueOf("image/png"), "png");
+        MIMEMAP.put(MediaType.valueOf("image/bmp"), "bmp");
+        MIMEMAP.put(MediaType.valueOf("application/pdf"), "pdf");
     }
 
-    final private static ParserField[] FIELDS = { CONTENT, LANG_DETECTION };
+    final private static List<ParserField> FIELDS = List.of(CONTENT, LANG_DETECTION);
 
     final private static ParserField LANGUAGE = ParserField.newString("language",
             "The language code of the document if known: afr (Afrikaans) amh (Amharic) ara (Arabic) asm (Assamese) " +
@@ -80,25 +84,35 @@ public class OcrParser extends ParserAbstract {
                     "uig (Uighur; Uyghur) ukr (Ukrainian) urd (Urdu) uzb (Uzbek) uzb_cyrl (Uzbek - Cyrilic) " +
                     "vie (Vietnamese) yid (Yiddish)");
 
-    final private static ParserField[] PARAMETERS = { LANGUAGE };
+    final private static List<ParserField> PARAMETERS = List.of(LANGUAGE);
 
     @Override
-    public ParserField[] getParameters() {
+    public Collection<ParserField> getParameters() {
         return PARAMETERS;
     }
 
     @Override
-    public ParserField[] getFields() {
+    public Collection<ParserField> getFields() {
         return FIELDS;
     }
 
     @Override
-    public String[] getDefaultExtensions() {
+    public Collection<String> getSupportedFileExtensions() {
         return null;
     }
 
     @Override
-    public String[] getDefaultMimeTypes() {
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public ParserInterface createParser() {
+        return this;
+    }
+
+    @Override
+    public Collection<MediaType> getSupportedMimeTypes() {
         return null;
     }
 
@@ -133,10 +147,11 @@ public class OcrParser extends ParserAbstract {
     }
 
     @Override
-    public void parseContent(final MultivaluedMap<String, String> parameters, final Path filePath,
-            final String extension, String mimeType, final ParserResultBuilder resultBuilder) {
+    public ParserResult extract(final MultivaluedMap<String, String> parameters,
+                                final Path filePath) {
+        final ParserResult.Builder builder = ParserResult.of(NAME);
         final Tesseract1 tesseract = new Tesseract1();
-        final String lang = this.getParameterValue(parameters, LANGUAGE, 0);
+        final String lang = ParserUtils.getParameterValue(parameters, LANGUAGE, 0);
         if (lang != null)
             tesseract.setLanguage(lang);
         if (TESSDATA_PREFIX != null)
@@ -147,36 +162,22 @@ public class OcrParser extends ParserAbstract {
         } catch (TesseractException e) {
             throw new InternalServerErrorException("A Tesseract error occurred: " + e.getMessage(), e);
         }
-        if (StringUtils.isEmpty(result))
-            return;
-        if (StringUtils.isBlank(mimeType)) {
-            for (Map.Entry<String, String> entry : MIMEMAP.entrySet()) {
-                if (entry.getValue().equals(extension)) {
-                    mimeType = entry.getKey();
-                    break;
-                }
-            }
+        if (!StringUtils.isEmpty(result)) {
+            builder.newDocument().add(CONTENT, result);
         }
-        resultBuilder.metas().set(MIME_TYPE, mimeType);
-        final ParserFieldsBuilder document = resultBuilder.newDocument();
-        document.add(CONTENT, result);
+        return builder.build();
     }
 
     @Override
-    public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-            String extension, final String mimeType, final ParserResultBuilder resultBuilder) {
-        if (extension == null) {
-            if (mimeType == null)
-                throw new BadRequestException("The file extension or the mime-type is required.");
-            extension = MIMEMAP.get(mimeType);
-            if (extension == null)
-                throw new BadRequestException("The mime-type is not supported: " + mimeType);
-        }
+    public ParserResult extract(final MultivaluedMap<String, String> parameters,
+                                final InputStream inputStream,
+                                final MediaType mediaType) throws IOException {
+        final String extension = MIMEMAP.get(mediaType);
+        if (extension == null)
+            throw new BadRequestException("The mime-type is not supported: " + mediaType);
         try (final AutoCloseWrapper<Path> a = AutoCloseWrapper.of(
-                ParserAbstract.createTempFile(inputStream, "." + extension), LOGGER, Files::deleteIfExists)) {
-            parseContent(parameters, a.get(), extension, mimeType, resultBuilder);
-        } catch (IOException e) {
-            throw convertIOException(e::getMessage, e);
+                ParserUtils.createTempFile(inputStream, "." + extension), LOGGER, Files::deleteIfExists)) {
+            return extract(parameters, a.get());
         }
     }
 
