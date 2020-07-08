@@ -15,26 +15,35 @@
  */
 package com.qwazr.library.poi;
 
-import com.qwazr.extractor.ParserAbstract;
+import com.qwazr.extractor.ParserFactory;
 import com.qwazr.extractor.ParserField;
-import com.qwazr.extractor.ParserResult.FieldsBuilder;
-import com.qwazr.extractor.ParserResult.Builder;
+import com.qwazr.extractor.ParserInterface;
+import com.qwazr.extractor.ParserResult;
+import com.qwazr.extractor.ParserUtils;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Path;
+import java.util.Collection;
+import java.util.List;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import org.apache.poi.hssf.extractor.ExcelExtractor;
 import org.apache.poi.xssf.extractor.XSSFExcelExtractor;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import javax.ws.rs.core.MultivaluedMap;
-import java.io.IOException;
-import java.io.InputStream;
+public class XlsxParser implements ParserFactory, ParserInterface, PoiExtractor {
 
-public class XlsxParser implements ParserFactory, ParserInterface implements PoiExtractor {
+    private final static String NAME = "xlsx";
 
-    private static final Collection<String> DEFAULT_MIMETYPES =
-            {"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"};
+    private static final MediaType DEFAULT_MIMETYPE = MediaType.valueOf(
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 
-    private static final Collection<String> DEFAULT_EXTENSIONS = {"xlsx"};
+    private static final Collection<MediaType> DEFAULT_MIMETYPES = List.of(DEFAULT_MIMETYPE);
 
-    final private static Collection<ParserField> FIELDS = {TITLE,
+    private static final Collection<String> DEFAULT_EXTENSIONS = List.of("xlsx");
+
+    final private static Collection<ParserField> FIELDS = List.of(
+            TITLE,
             CREATOR,
             CREATION_DATE,
             MODIFICATION_DATE,
@@ -42,7 +51,17 @@ public class XlsxParser implements ParserFactory, ParserInterface implements Poi
             KEYWORDS,
             SUBJECT,
             CONTENT,
-            LANG_DETECTION};
+            LANG_DETECTION);
+
+    @Override
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public ParserInterface createParser() {
+        return this;
+    }
 
     @Override
     public Collection<ParserField> getFields() {
@@ -55,7 +74,7 @@ public class XlsxParser implements ParserFactory, ParserInterface implements Poi
     }
 
     @Override
-    public Collection<MediaType> getSupportedMimeTypes {
+    public Collection<MediaType> getSupportedMimeTypes() {
         return DEFAULT_MIMETYPES;
     }
 
@@ -74,27 +93,33 @@ public class XlsxParser implements ParserFactory, ParserInterface implements Poi
     }
 
     @Override
-    public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-                             String extension, final String mimeType, final ParserResult.Builder resultBuilder) {
+    public ParserResult extract(final MultivaluedMap<String, String> parameters,
+                                final InputStream inputStream,
+                                final MediaType mimeType) throws IOException {
 
+        final ParserResult.Builder resultBuilder = ParserResult.of(NAME);
         try (final XSSFWorkbook workbook = new XSSFWorkbook(inputStream)) {
 
             try (final XSSFExcelExtractor excelExtractor = new XSSFExcelExtractor(workbook)) {
 
                 final ParserResult.FieldsBuilder metas = resultBuilder.metas();
-                metas.set(MIME_TYPE, findMimeType(extension, mimeType, this::findMimeTypeUsingDefault));
+                if (mimeType != null)
+                    metas.set(MIME_TYPE, mimeType.toString());
                 PoiExtractor.extractMetas(excelExtractor.getCoreProperties(), metas);
 
                 final ParserResult.FieldsBuilder result = resultBuilder.newDocument();
                 extract(excelExtractor, result);
-                result.add(LANG_DETECTION, languageDetection(result, CONTENT, 10000));
+                result.add(LANG_DETECTION, ParserUtils.languageDetection(result, CONTENT, 10000));
 
             }
         }
-        catch (IOException e) {
-            throw convertIOException(e::getMessage, e);
-        }
+        return resultBuilder.build();
+    }
 
+    @Override
+    public ParserResult extract(final MultivaluedMap<String, String> parameters,
+                                final Path filePath) throws IOException {
+        return ParserUtils.toBufferedStream(filePath, in -> extract(parameters, in, DEFAULT_MIMETYPE));
     }
 
 }

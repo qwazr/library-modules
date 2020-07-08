@@ -17,63 +17,66 @@ package com.qwazr.library.poi;
 
 import com.qwazr.extractor.ExtractorManager;
 import com.qwazr.extractor.ParserTest;
+import javax.ws.rs.core.MediaType;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class PoiParsersTest extends ParserTest {
 
-	static final String DEFAULT_TEST_STRING = "osstextextractor";
+    static final String DEFAULT_TEST_STRING = "osstextextractor";
 
-	static ExtractorManager manager;
+    static ExtractorManager manager;
 
-	@BeforeClass
-	public static void init() {
-		manager = new ExtractorManager();
-		manager.registerServices();
-	}
+    @BeforeClass
+    public static void init() {
+        manager = new ExtractorManager();
+        manager.registerServices();
+    }
 
-	public PoiParsersTest() {
-		super(manager);
-	}
+    public PoiParsersTest() {
+        super(manager);
+    }
 
-	@Test
-	public void testDoc() throws Exception {
-		doTest(DocParser.class, "file.doc", "application/msword", "content", DEFAULT_TEST_STRING);
-	}
+    @Test
+    public void testDoc() throws Exception {
+        doTest(DocParser.class, "file.doc", MediaType.valueOf("application/msword"), "content", DEFAULT_TEST_STRING);
+    }
 
-	@Test
-	public void testDocx() throws Exception {
-		doTest(DocxParser.class, "file.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-				"content", DEFAULT_TEST_STRING);
-	}
+    @Test
+    public void testDocx() throws Exception {
+        doTest(DocxParser.class, "file.docx", MediaType.valueOf("application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
+                "content", DEFAULT_TEST_STRING);
+    }
 
-	@Test
-	public void testDocx2() throws Exception {
-		doTest(DocxParser.class, "file.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-				"content", DEFAULT_TEST_STRING);
-	}
+    @Test
+    public void testDocx2() throws Exception {
+        doTest(DocxParser.class, "file.docx", MediaType.valueOf("application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
+                "content", DEFAULT_TEST_STRING);
+    }
 
-	@Test
-	public void testPpt() throws Exception {
-		doTest(PptParser.class, "file.ppt", "application/vnd.ms-powerpoint", "content", DEFAULT_TEST_STRING);
-	}
+    @Test
+    public void testPpt() throws Exception {
+        doTest(PptParser.class, "file.ppt", MediaType.valueOf("application/vnd.ms-powerpoint"),
+                "content", DEFAULT_TEST_STRING);
+    }
 
-	@Test
-	public void testPptx() throws Exception {
-		doTest(PptxParser.class, "file.pptx",
-				"application/vnd.openxmlformats-officedocument.presentationml.presentation", "content",
-				DEFAULT_TEST_STRING);
-	}
+    @Test
+    public void testPptx() throws Exception {
+        doTest(PptxParser.class, "file.pptx",
+                MediaType.valueOf("application/vnd.openxmlformats-officedocument.presentationml.presentation"),
+                "content", DEFAULT_TEST_STRING);
+    }
 
-	@Test
-	public void testXls() throws Exception {
-		doTest(XlsParser.class, "file.xls", "application/vnd.ms-excel", "content", DEFAULT_TEST_STRING);
-	}
+    @Test
+    public void testXls() throws Exception {
+        doTest(XlsParser.class, "file.xls", MediaType.valueOf("application/vnd.ms-excel"),
+                "content", DEFAULT_TEST_STRING);
+    }
 
-	@Test
-	public void testXlsx() throws Exception {
-		doTest(XlsxParser.class, "file.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-				"content", DEFAULT_TEST_STRING);
-	}
+    @Test
+    public void testXlsx() throws Exception {
+        doTest(XlsxParser.class, "file.xlsx", MediaType.valueOf("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+                "content", DEFAULT_TEST_STRING);
+    }
 
 }

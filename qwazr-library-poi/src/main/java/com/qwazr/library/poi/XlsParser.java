@@ -15,25 +15,44 @@
  */
 package com.qwazr.library.poi;
 
-import com.qwazr.extractor.ParserAbstract;
+import com.qwazr.extractor.ParserFactory;
 import com.qwazr.extractor.ParserField;
-import com.qwazr.extractor.ParserResult.FieldsBuilder;
-import com.qwazr.extractor.ParserResult.Builder;
+import com.qwazr.extractor.ParserInterface;
+import com.qwazr.extractor.ParserResult;
+import com.qwazr.extractor.ParserUtils;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Path;
+import java.util.Collection;
+import java.util.List;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import org.apache.poi.hssf.extractor.ExcelExtractor;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 
-import javax.ws.rs.core.MultivaluedMap;
-import java.io.IOException;
-import java.io.InputStream;
+public class XlsParser implements ParserFactory, ParserInterface, PoiExtractor {
 
-public class XlsParser implements ParserFactory, ParserInterface implements PoiExtractor {
+    private final static String NAME = "xls";
 
-    private static final Collection<String> DEFAULT_MIMETYPES = {"application/vnd.ms-excel"};
+    private static final MediaType DEFAULT_MIMETYPE = MediaType.valueOf(
+            "application/vnd.ms-excel");
 
-    private static final Collection<String> DEFAULT_EXTENSIONS = {"xls"};
+    private static final Collection<MediaType> DEFAULT_MIMETYPES = List.of(DEFAULT_MIMETYPE);
 
-    final private static Collection<ParserField> FIELDS =
-            {TITLE, AUTHOR, KEYWORDS, SUBJECT, CREATION_DATE, MODIFICATION_DATE, CONTENT, LANG_DETECTION};
+    private static final Collection<String> DEFAULT_EXTENSIONS = List.of("xls");
+
+    final private static Collection<ParserField> FIELDS = List.of(
+            TITLE, AUTHOR, KEYWORDS, SUBJECT, CREATION_DATE, MODIFICATION_DATE, CONTENT, LANG_DETECTION);
+
+    @Override
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public ParserInterface createParser() {
+        return this;
+    }
 
     @Override
     public Collection<ParserField> getFields() {
@@ -46,29 +65,36 @@ public class XlsParser implements ParserFactory, ParserInterface implements PoiE
     }
 
     @Override
-    public Collection<MediaType> getSupportedMimeTypes {
+    public Collection<MediaType> getSupportedMimeTypes() {
         return DEFAULT_MIMETYPES;
     }
 
     @Override
-    public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-                             final String extension, final String mimeType, final ParserResult.Builder resultBuilder) {
+    public ParserResult extract(final MultivaluedMap<String, String> parameters,
+                                final InputStream inputStream,
+                                final MediaType mimeType) throws IOException {
 
+        final ParserResult.Builder resultBuilder = ParserResult.of(NAME);
         try (final HSSFWorkbook workbook = new HSSFWorkbook(inputStream)) {
 
             try (final ExcelExtractor excel = new ExcelExtractor(workbook)) {
 
                 final ParserResult.FieldsBuilder metas = resultBuilder.metas();
-                metas.set(MIME_TYPE, findMimeType(extension, mimeType, this::findMimeTypeUsingDefault));
+                if (mimeType != null)
+                    metas.set(MIME_TYPE, mimeType.toString());
                 PoiExtractor.extractMetas(excel.getSummaryInformation(), metas);
 
                 final ParserResult.FieldsBuilder result = resultBuilder.newDocument();
                 result.add(CONTENT, excel.getText());
-                result.add(LANG_DETECTION, languageDetection(result, CONTENT, 10000));
+                result.add(LANG_DETECTION, ParserUtils.languageDetection(result, CONTENT, 10000));
             }
         }
-        catch (IOException e) {
-            throw convertIOException(e::getMessage, e);
-        }
+        return resultBuilder.build();
+    }
+
+    @Override
+    public ParserResult extract(final MultivaluedMap<String, String> parameters,
+                                final Path filePath) throws IOException {
+        return ParserUtils.toBufferedStream(filePath, in -> extract(parameters, in, DEFAULT_MIMETYPE));
     }
 }

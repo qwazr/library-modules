@@ -15,28 +15,36 @@
  */
 package com.qwazr.library.poi;
 
-import com.qwazr.extractor.ParserAbstract;
+import com.qwazr.extractor.ParserFactory;
 import com.qwazr.extractor.ParserField;
-import com.qwazr.extractor.ParserResult.FieldsBuilder;
-import com.qwazr.extractor.ParserResult.Builder;
+import com.qwazr.extractor.ParserInterface;
+import com.qwazr.extractor.ParserResult;
+import com.qwazr.extractor.ParserUtils;
 import com.qwazr.utils.IOUtils;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Path;
+import java.util.Collection;
+import java.util.List;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import org.apache.poi.hpsf.SummaryInformation;
 import org.apache.poi.hwpf.OldWordFileFormatException;
 import org.apache.poi.hwpf.extractor.Word6Extractor;
 import org.apache.poi.hwpf.extractor.WordExtractor;
 
-import javax.ws.rs.core.MultivaluedMap;
-import java.io.IOException;
-import java.io.InputStream;
+public class DocParser implements ParserFactory, ParserInterface, PoiExtractor {
 
-public class DocParser implements ParserFactory, ParserInterface implements PoiExtractor {
+    private static final String NAME = "doc";
 
-    private static final Collection<String> DEFAULT_MIMETYPES = {"application/msword"};
+    private static final MediaType DEFAULT_MIMETYPE = MediaType.valueOf("application/msword");
 
-    private static final Collection<String> DEFAULT_EXTENSIONS = {"doc", "dot"};
+    private static final Collection<MediaType> DEFAULT_MIMETYPES = List.of(DEFAULT_MIMETYPE);
 
-    final private static Collection<ParserField> FIELDS =
-            {TITLE, AUTHOR, CREATION_DATE, MODIFICATION_DATE, SUBJECT, KEYWORDS, CONTENT, LANG_DETECTION};
+    private static final Collection<String> DEFAULT_EXTENSIONS = List.of("doc", "dot");
+
+    final private static Collection<ParserField> FIELDS = List.of(
+            TITLE, AUTHOR, CREATION_DATE, MODIFICATION_DATE, SUBJECT, KEYWORDS, CONTENT, LANG_DETECTION);
 
     @Override
     public Collection<ParserField> getFields() {
@@ -49,17 +57,28 @@ public class DocParser implements ParserFactory, ParserInterface implements PoiE
     }
 
     @Override
-    public Collection<MediaType> getSupportedMimeTypes {
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public ParserInterface createParser() {
+        return this;
+    }
+
+    @Override
+    public Collection<MediaType> getSupportedMimeTypes() {
         return DEFAULT_MIMETYPES;
     }
 
-    private void currentWordExtraction(final InputStream inputStream, final ParserResult.Builder resultBuilder)
+    private ParserResult currentWordExtraction(final InputStream inputStream)
             throws IOException {
+        final ParserResult.Builder resultBuilder = ParserResult.of(NAME);
 
         try (final WordExtractor word = new WordExtractor(inputStream)) {
 
             final ParserResult.FieldsBuilder metas = resultBuilder.metas();
-            metas.set(MIME_TYPE, DEFAULT_MIMETYPES[0]);
+            metas.set(MIME_TYPE, DEFAULT_MIMETYPE.toString());
             PoiExtractor.extractMetas(word.getSummaryInformation(), metas);
 
             final ParserResult.FieldsBuilder document = resultBuilder.newDocument();
@@ -67,18 +86,20 @@ public class DocParser implements ParserFactory, ParserInterface implements PoiE
             if (paragraphes != null)
                 for (String paragraph : paragraphes)
                     document.add(CONTENT, paragraph);
-            document.add(LANG_DETECTION, languageDetection(document, CONTENT, 10000));
+            document.add(LANG_DETECTION, ParserUtils.languageDetection(document, CONTENT, 10000));
         }
+        return resultBuilder.build();
     }
 
-    private void oldWordExtraction(final InputStream inputStream, final ParserResult.Builder resultBuilder)
+    private ParserResult oldWordExtraction(final InputStream inputStream)
             throws IOException {
+        final ParserResult.Builder resultBuilder = ParserResult.of(NAME);
         Word6Extractor word6 = null;
         try {
             word6 = new Word6Extractor(inputStream);
 
             final ParserResult.FieldsBuilder metas = resultBuilder.metas();
-            metas.set(MIME_TYPE, DEFAULT_MIMETYPES[0]);
+            metas.set(MIME_TYPE, DEFAULT_MIMETYPE.toString());
 
             SummaryInformation si = word6.getSummaryInformation();
             if (si != null) {
@@ -92,27 +113,28 @@ public class DocParser implements ParserFactory, ParserInterface implements PoiE
             if (paragraphes != null)
                 for (String paragraph : paragraphes)
                     document.add(CONTENT, paragraph);
-            document.add(LANG_DETECTION, languageDetection(document, CONTENT, 10000));
-        }
-        finally {
+            document.add(LANG_DETECTION, ParserUtils.languageDetection(document, CONTENT, 10000));
+            return resultBuilder.build();
+        } finally {
             IOUtils.closeQuietly(word6);
         }
     }
 
     @Override
-    public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-                             final String extension, final String mimeType, final ParserResult.Builder resultBuilder) {
+    public ParserResult extract(final MultivaluedMap<String, String> parameters,
+                                final InputStream inputStream,
+                                final MediaType mimeType) throws IOException {
         try {
-            try {
-                currentWordExtraction(inputStream, resultBuilder);
-            }
-            catch (OldWordFileFormatException e) {
-                oldWordExtraction(inputStream, resultBuilder);
-            }
+            return currentWordExtraction(inputStream);
+        } catch (OldWordFileFormatException e) {
+            return oldWordExtraction(inputStream);
         }
-        catch (IOException e) {
-            throw convertIOException(e::getMessage, e);
-        }
+    }
+
+    @Override
+    public ParserResult extract(final MultivaluedMap<String, String> parameters,
+                                final Path filePath) throws IOException {
+        return ParserUtils.toBufferedStream(filePath, in -> extract(parameters, in, DEFAULT_MIMETYPE));
     }
 
 }

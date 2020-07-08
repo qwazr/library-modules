@@ -16,11 +16,10 @@
 package com.qwazr.library.poi;
 
 import com.qwazr.extractor.ParserField;
-import com.qwazr.extractor.ParserResult.FieldsBuilder;
+import static com.qwazr.extractor.ParserInterface.TITLE;
+import com.qwazr.extractor.ParserResult;
 import org.apache.poi.hpsf.SummaryInformation;
 import org.apache.poi.ooxml.POIXMLProperties;
-
-import static com.qwazr.extractor.ParserInterface.TITLE;
 
 public interface PoiExtractor {
 
@@ -38,7 +37,8 @@ public interface PoiExtractor {
 
     ParserField SUBJECT = ParserField.newString("subject", "The subject of the document");
 
-    static void extractMetas(final POIXMLProperties.CoreProperties info, final ParserResult.FieldsBuilder metas) {
+    static void extractMetas(final POIXMLProperties.CoreProperties info,
+                             final ParserResult.FieldsBuilder metas) {
         if (info == null)
             return;
         metas.add(TITLE, info.getTitle());
@@ -50,7 +50,8 @@ public interface PoiExtractor {
         metas.add(KEYWORDS, info.getKeywords());
     }
 
-    static void extractMetas(final SummaryInformation info, final ParserResult.FieldsBuilder metas) {
+    static void extractMetas(final SummaryInformation info,
+                             final ParserResult.FieldsBuilder metas) {
         if (info == null)
             return;
         metas.add(TITLE, info.getTitle());

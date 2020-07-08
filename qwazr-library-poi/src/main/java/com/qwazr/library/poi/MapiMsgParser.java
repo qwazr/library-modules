@@ -15,23 +15,32 @@
  */
 package com.qwazr.library.poi;
 
-import com.qwazr.extractor.ParserAbstract;
+import com.qwazr.extractor.ParserFactory;
 import com.qwazr.extractor.ParserField;
-import com.qwazr.extractor.ParserResult.FieldsBuilder;
-import com.qwazr.extractor.ParserResult.Builder;
+import com.qwazr.extractor.ParserInterface;
+import com.qwazr.extractor.ParserResult;
+import com.qwazr.extractor.ParserUtils;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Path;
+import java.util.Collection;
+import java.util.List;
+import javax.ws.rs.InternalServerErrorException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.hsmf.MAPIMessage;
 import org.apache.poi.hsmf.exceptions.ChunkNotFoundException;
 
-import javax.ws.rs.core.MultivaluedMap;
-import java.io.IOException;
-import java.io.InputStream;
-
 public class MapiMsgParser implements ParserFactory, ParserInterface {
 
-    private static final Collection<String> DEFAULT_MIMETYPES = { "application/vnd.ms-outlook" };
+    private final static String NAME = "mapi";
 
-    private static final Collection<String> DEFAULT_EXTENSIONS = { "msg" };
+    private static final MediaType DEFAULT_MIMETYPE = MediaType.valueOf("application/vnd.ms-outlook");
+
+    private static final Collection<MediaType> DEFAULT_MIMETYPES = List.of(DEFAULT_MIMETYPE);
+
+    private static final Collection<String> DEFAULT_EXTENSIONS = List.of("msg");
 
     final private static ParserField SUBJECT = ParserField.newString("subject", "The subject of the email");
 
@@ -61,7 +70,8 @@ public class MapiMsgParser implements ParserFactory, ParserInterface {
 
     final private static ParserField HTML_CONTENT = ParserField.newString("html_content", "The html text body content");
 
-    final private static Collection<ParserField> FIELDS = { SUBJECT,
+    final private static Collection<ParserField> FIELDS = List.of(
+            SUBJECT,
             FROM,
             RECIPIENT_TO,
             RECIPIENT_CC,
@@ -73,7 +83,18 @@ public class MapiMsgParser implements ParserFactory, ParserInterface {
             ATTACHMENT_CONTENT,
             PLAIN_CONTENT,
             HTML_CONTENT,
-            LANG_DETECTION };
+            LANG_DETECTION
+    );
+
+    @Override
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public ParserInterface createParser() {
+        return this;
+    }
 
     @Override
     public Collection<ParserField> getFields() {
@@ -86,19 +107,23 @@ public class MapiMsgParser implements ParserFactory, ParserInterface {
     }
 
     @Override
-    public Collection<MediaType> getSupportedMimeTypes {
+    public Collection<MediaType> getSupportedMimeTypes() {
         return DEFAULT_MIMETYPES;
     }
 
     @Override
-    public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-            final String extension, final String mimeType, final ParserResult.Builder resultBuilder) {
+    public ParserResult extract(final MultivaluedMap<String, String> parameters,
+                                final InputStream inputStream,
+                                final MediaType mimeType) throws IOException {
+
+        final ParserResult.Builder resultBuilder = ParserResult.of(NAME);
 
         try (final MAPIMessage msg = new MAPIMessage(inputStream)) {
             msg.setReturnNullOnMissingChunk(true);
 
             final ParserResult.FieldsBuilder metas = resultBuilder.metas();
-            metas.set(MIME_TYPE, DEFAULT_MIMETYPES[0]);
+            if (mimeType != null)
+                metas.set(MIME_TYPE, mimeType.toString());
 
             final ParserResult.FieldsBuilder document = resultBuilder.newDocument();
 
@@ -113,16 +138,21 @@ public class MapiMsgParser implements ParserFactory, ParserInterface {
             document.add(CONVERSATION_TOPIC, msg.getConversationTopic());
 
             if (StringUtils.isEmpty(msg.getHtmlBody()))
-                document.add(LANG_DETECTION, languageDetection(document, PLAIN_CONTENT, 10000));
+                document.add(LANG_DETECTION, ParserUtils.languageDetection(document, PLAIN_CONTENT, 10000));
             else
-                document.add(LANG_DETECTION, languageDetection(document, HTML_CONTENT, 10000));
+                document.add(LANG_DETECTION, ParserUtils.languageDetection(document, HTML_CONTENT, 10000));
 
             // TODO manage attachments
-        } catch (IOException e) {
-            throw convertIOException(e::getMessage, e);
         } catch (ChunkNotFoundException e) {
-            throw convertException(e::getMessage, e);
+            throw new InternalServerErrorException(e);
         }
+        return resultBuilder.build();
+    }
+
+    @Override
+    public ParserResult extract(final MultivaluedMap<String, String> parameters,
+                                final Path filePath) throws IOException {
+        return ParserUtils.toBufferedStream(filePath, in -> extract(parameters, in, DEFAULT_MIMETYPE));
     }
 
 }

@@ -15,26 +15,33 @@
  */
 package com.qwazr.library.poi;
 
-import com.qwazr.extractor.ParserAbstract;
+import com.qwazr.extractor.ParserFactory;
 import com.qwazr.extractor.ParserField;
-import com.qwazr.extractor.ParserResult.FieldsBuilder;
-import com.qwazr.extractor.ParserResult.Builder;
+import com.qwazr.extractor.ParserInterface;
+import com.qwazr.extractor.ParserResult;
+import com.qwazr.extractor.ParserUtils;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Path;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 
-import javax.ws.rs.core.MultivaluedMap;
-import java.io.IOException;
-import java.io.InputStream;
+public class DocxParser implements ParserFactory, ParserInterface, PoiExtractor {
 
-public class DocxParser implements ParserFactory, ParserInterface implements PoiExtractor {
+    private final static String NAME = "docx";
 
-    private static final Collection<String> DEFAULT_MIMETYPES = {
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.template"};
+    private static final Map<String, MediaType> TYPEMAP = Map.of(
+            "docx", MediaType.valueOf("application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
+            "dotx", MediaType.valueOf("application/vnd.openxmlformats-officedocument.wordprocessingml.template")
+    );
 
-    private static final Collection<String> DEFAULT_EXTENSIONS = {"docx", "dotx"};
-
-    final private static Collection<ParserField> FIELDS = {TITLE,
+    final private static Collection<ParserField> FIELDS = List.of(
+            TITLE,
             CREATOR,
             CREATION_DATE,
             MODIFICATION_DATE,
@@ -42,7 +49,7 @@ public class DocxParser implements ParserFactory, ParserInterface implements Poi
             KEYWORDS,
             SUBJECT,
             CONTENT,
-            LANG_DETECTION};
+            LANG_DETECTION);
 
     @Override
     public Collection<ParserField> getFields() {
@@ -50,13 +57,23 @@ public class DocxParser implements ParserFactory, ParserInterface implements Poi
     }
 
     @Override
-    public Collection<String> getSupportedFileExtensions() {
-        return DEFAULT_EXTENSIONS;
+    public String getName() {
+        return NAME;
     }
 
     @Override
-    public Collection<MediaType> getSupportedMimeTypes {
-        return DEFAULT_MIMETYPES;
+    public ParserInterface createParser() {
+        return this;
+    }
+
+    @Override
+    public Collection<String> getSupportedFileExtensions() {
+        return TYPEMAP.keySet();
+    }
+
+    @Override
+    public Collection<MediaType> getSupportedMimeTypes() {
+        return TYPEMAP.values();
     }
 
     static void extract(final XWPFWordExtractor word, final ParserResult.FieldsBuilder result) {
@@ -64,23 +81,32 @@ public class DocxParser implements ParserFactory, ParserInterface implements Poi
     }
 
     @Override
-    public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-                             final String extension, final String mimeType, final ParserResult.Builder resultBuilder) {
+    public ParserResult extract(final MultivaluedMap<String, String> parameters,
+                                final InputStream inputStream,
+                                final MediaType mimeType) throws IOException {
+
+        final ParserResult.Builder resultBuilder = ParserResult.of(NAME);
 
         try (final XWPFDocument document = new XWPFDocument(inputStream)) {
 
             try (final XWPFWordExtractor word = new XWPFWordExtractor(document)) {
 
                 final ParserResult.FieldsBuilder metas = resultBuilder.metas();
-                metas.set(MIME_TYPE, findMimeType(extension, mimeType, this::findMimeTypeUsingDefault));
+                if (mimeType != null)
+                    metas.set(MIME_TYPE, mimeType.toString());
                 PoiExtractor.extractMetas(word.getCoreProperties(), metas);
                 final ParserResult.FieldsBuilder parserDocument = resultBuilder.newDocument();
                 extract(word, parserDocument);
-                parserDocument.add(LANG_DETECTION, languageDetection(parserDocument, CONTENT, 10000));
+                parserDocument.add(LANG_DETECTION, ParserUtils.languageDetection(parserDocument, CONTENT, 10000));
             }
         }
-        catch (IOException e) {
-            throw convertIOException(e::getMessage, e);
-        }
+        return resultBuilder.build();
+    }
+
+    @Override
+    public ParserResult extract(final MultivaluedMap<String, String> parameters,
+                                final Path filePath) throws IOException {
+        final MediaType mediaType = TYPEMAP.get(ParserUtils.getExtension(filePath));
+        return ParserUtils.toBufferedStream(filePath, in -> extract(parameters, in, mediaType));
     }
 }
