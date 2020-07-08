@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 Emmanuel Keller / QWAZR
+ * Copyright 2015-2020 Emmanuel Keller / QWAZR
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,28 +17,29 @@ package com.qwazr.library.pdfbox;
 
 import com.qwazr.extractor.ExtractorManager;
 import com.qwazr.extractor.ParserTest;
+import javax.ws.rs.core.MediaType;
 import org.junit.Test;
 
 import java.io.IOException;
 
 public class PdfBoxParserTest extends ParserTest {
 
-	static final String DEFAULT_TEST_STRING = "osstextextractor";
+    static final String DEFAULT_TEST_STRING = "osstextextractor";
 
-	public PdfBoxParserTest() throws IOException, ClassNotFoundException {
-		super(new ExtractorManager());
-		manager.registerServices();
-	}
+    public PdfBoxParserTest() throws IOException, ClassNotFoundException {
+        super(new ExtractorManager());
+        manager.registerServices();
+    }
 
-	@Test
-	public void testPdf() throws Exception {
-		doTest(PdfBoxParser.class, "file.pdf", "application/pdf", "content", DEFAULT_TEST_STRING);
-	}
+    @Test
+    public void testPdf() throws Exception {
+        doTest(PdfBoxParser.class, "file.pdf", MediaType.valueOf("application/pdf"), "content", DEFAULT_TEST_STRING);
+    }
 
-	@Test
-	public void testPwdPdf() throws Exception {
-		doTest(PdfBoxParser.class, "file-pass.pdf", "application/pdf", "content", DEFAULT_TEST_STRING, "password",
-				"1234");
-	}
+    @Test
+    public void testPwdPdf() throws Exception {
+        doTest(PdfBoxParser.class, "file-pass.pdf", MediaType.valueOf("application/pdf"), "content", DEFAULT_TEST_STRING, "password",
+                "1234");
+    }
 
 }

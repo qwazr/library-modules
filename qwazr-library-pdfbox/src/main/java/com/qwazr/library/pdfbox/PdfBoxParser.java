@@ -15,12 +15,24 @@
  */
 package com.qwazr.library.pdfbox;
 
-import com.qwazr.extractor.ParserAbstract;
+import com.qwazr.extractor.ParserFactory;
 import com.qwazr.extractor.ParserField;
-import com.qwazr.extractor.ParserResult.FieldsBuilder;
-import com.qwazr.extractor.ParserResult.Builder;
+import com.qwazr.extractor.ParserInterface;
+import com.qwazr.extractor.ParserResult;
+import com.qwazr.extractor.ParserUtils;
 import com.qwazr.utils.LoggerUtils;
 import com.qwazr.utils.StringUtils;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringWriter;
+import java.nio.file.Path;
+import java.util.Collection;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.ws.rs.InternalServerErrorException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDDocumentCatalog;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
@@ -28,21 +40,17 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.encryption.InvalidPasswordException;
 import org.apache.pdfbox.text.PDFTextStripper;
 
-import javax.ws.rs.core.MultivaluedMap;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringWriter;
-import java.nio.file.Path;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 public class PdfBoxParser implements ParserFactory, ParserInterface {
+
+    private final static String NAME = "pdfbox";
 
     private final static Logger LOGGER = LoggerUtils.getLogger(PdfBoxParser.class);
 
-    private static final Collection<String> DEFAULT_MIMETYPES = { "application/pdf" };
+    private static final MediaType DEFAULT_MIMETYPE = MediaType.valueOf("application/pdf");
 
-    private static final Collection<String> DEFAULT_EXTENSIONS = { "pdf" };
+    private static final Collection<MediaType> DEFAULT_MIMETYPES = List.of(DEFAULT_MIMETYPE);
+
+    private static final Collection<String> DEFAULT_EXTENSIONS = List.of("pdf");
 
     final private static ParserField AUTHOR = ParserField.newString("author", "The name of the author");
 
@@ -64,7 +72,8 @@ public class PdfBoxParser implements ParserFactory, ParserInterface {
 
     final private static ParserField CHARACTER_COUNT = ParserField.newInteger("character_count", null);
 
-    final private static Collection<ParserField> FIELDS = { TITLE,
+    final private static Collection<ParserField> FIELDS = List.of(
+            TITLE,
             AUTHOR,
             SUBJECT,
             CONTENT,
@@ -75,14 +84,25 @@ public class PdfBoxParser implements ParserFactory, ParserInterface {
             LANGUAGE,
             ROTATION,
             NUMBER_OF_PAGES,
-            LANG_DETECTION };
+            LANG_DETECTION
+    );
 
     final private static ParserField PASSWORD = ParserField.newString("password", StringUtils.EMPTY);
 
-    final private static ParserField[] PARAMETERS = { PASSWORD };
+    final private static Collection<ParserField> PARAMETERS = List.of(PASSWORD);
+
+    @Override
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public ParserInterface createParser() {
+        return this;
+    }
 
     private void extractMetaData(final PDDocument pdf, final ParserResult.FieldsBuilder metas) {
-        metas.set(MIME_TYPE, DEFAULT_MIMETYPES[0]);
+        metas.set(MIME_TYPE, DEFAULT_MIMETYPE.toString());
         final PDDocumentInformation info = pdf.getDocumentInformation();
         if (info != null) {
             metas.add(TITLE, info.getTitle());
@@ -105,15 +125,13 @@ public class PdfBoxParser implements ParserFactory, ParserInterface {
      *
      * @param pdf
      * @param resultBuilder
-     * @throws Exception
+     * @throws IOException
      */
-    private void parseContent(final PDDocument pdf, final ParserResult.Builder resultBuilder) {
+    private void parseContent(final PDDocument pdf, final ParserResult.Builder resultBuilder) throws IOException {
         try {
             extractMetaData(pdf, resultBuilder.metas());
-            Stripper stripper = new Stripper(resultBuilder);
+            final Stripper stripper = new Stripper(resultBuilder);
             stripper.getText(pdf);
-        } catch (IOException e) {
-            throw convertIOException(e::getMessage, e);
         } finally {
             if (pdf != null) {
                 try {
@@ -126,31 +144,32 @@ public class PdfBoxParser implements ParserFactory, ParserInterface {
     }
 
     private String getPassword(final MultivaluedMap<String, String> parameters) {
-        final String password = getParameterValue(parameters, PASSWORD, 0);
+        final String password = ParserUtils.getParameterValue(parameters, PASSWORD, 0);
         return password == null ? StringUtils.EMPTY : password;
     }
 
     @Override
-    public void parseContent(final MultivaluedMap<String, String> parameters, final InputStream inputStream,
-            String extension, final String mimeType, final ParserResult.Builder resultBuilder) {
+    public ParserResult extract(final MultivaluedMap<String, String> parameters,
+                                final InputStream inputStream,
+                                final MediaType mediaType) throws IOException {
         try {
+            final ParserResult.Builder resultBuilder = ParserResult.of(NAME);
             parseContent(PDDocument.load(inputStream, getPassword(parameters)), resultBuilder);
+            return resultBuilder.build();
         } catch (InvalidPasswordException e) {
-            throw convertException(e::getMessage, e);
-        } catch (IOException e) {
-            throw convertIOException(e::getMessage, e);
+            throw new InternalServerErrorException(e);
         }
     }
 
     @Override
-    public void parseContent(final MultivaluedMap<String, String> parameters, final Path filePath, String extension,
-            final String mimeType, final ParserResult.Builder resultBuilder) {
+    public ParserResult extract(final MultivaluedMap<String, String> parameters,
+                                final Path filePath) throws IOException {
         try {
+            final ParserResult.Builder resultBuilder = ParserResult.of(NAME);
             parseContent(PDDocument.load(filePath.toFile(), getPassword(parameters)), resultBuilder);
+            return resultBuilder.build();
         } catch (InvalidPasswordException e) {
-            throw convertException(() -> "Error with " + filePath.toAbsolutePath() + ": " + e.getMessage(), e);
-        } catch (IOException e) {
-            throw convertIOException(() -> "Error with " + filePath.toAbsolutePath() + ": " + e.getMessage(), e);
+            throw new InternalServerErrorException("Error with " + filePath.toAbsolutePath() + ": " + e.getMessage(), e);
         }
     }
 
@@ -170,11 +189,11 @@ public class PdfBoxParser implements ParserFactory, ParserInterface {
     }
 
     @Override
-    public Collection<MediaType> getSupportedMimeTypes {
+    public Collection<MediaType> getSupportedMimeTypes() {
         return DEFAULT_MIMETYPES;
     }
 
-    public class Stripper extends PDFTextStripper {
+    private static class Stripper extends PDFTextStripper {
 
         private final ParserResult.Builder resultBuilder;
 
@@ -189,7 +208,7 @@ public class PdfBoxParser implements ParserFactory, ParserInterface {
             final String text = output.toString();
             document.add(CHARACTER_COUNT, text.length());
             document.add(CONTENT, text);
-            document.add(LANG_DETECTION, languageDetection(document, CONTENT, 10000));
+            document.add(LANG_DETECTION, ParserUtils.languageDetection(document, CONTENT, 10000));
             document.add(ROTATION, page.getRotation());
             output = new StringWriter();
         }
