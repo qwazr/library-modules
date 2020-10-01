@@ -8,7 +8,7 @@
   <parent>
     <groupId>com.qwazr</groupId>
     <artifactId>qwazr-library-modules</artifactId>
-    <version>1.5.0</version>
+    <version>1.5.1-SNAPSHOT</version>
   </parent>
 
   <dependencies>
@@ -20,7 +20,7 @@
     <dependency>
       <groupId>com.qwazr</groupId>
       <artifactId>qwazr-database</artifactId>
-      <version>1.5.0</version>
+      <version>1.5.1-SNAPSHOT</version>
     </dependency>
   </dependencies>
 
