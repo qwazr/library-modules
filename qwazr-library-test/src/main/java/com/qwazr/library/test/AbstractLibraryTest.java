@@ -20,10 +20,6 @@ import com.qwazr.database.TableSingleton;
 import com.qwazr.library.LibraryManager;
 import com.qwazr.utils.FileUtils;
 import com.qwazr.utils.reflection.InstancesSupplier;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -31,6 +27,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.List;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
 
 public abstract class AbstractLibraryTest {
 
