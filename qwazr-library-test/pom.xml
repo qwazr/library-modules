@@ -21,7 +21,7 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
-  
+
   <dependencies>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
@@ -32,11 +32,6 @@
       <groupId>org.junit.vintage</groupId>
       <artifactId>junit-vintage-engine</artifactId>
       <version>${junit.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.qwazr</groupId>
-      <artifactId>qwazr-database</artifactId>
-      <version>${project.version}</version>
     </dependency>
   </dependencies>
 

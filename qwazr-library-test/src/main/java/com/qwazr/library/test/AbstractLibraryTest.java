@@ -15,8 +15,6 @@
  */
 package com.qwazr.library.test;
 
-import com.qwazr.database.TableServiceInterface;
-import com.qwazr.database.TableSingleton;
 import com.qwazr.library.LibraryManager;
 import com.qwazr.utils.FileUtils;
 import com.qwazr.utils.reflection.InstancesSupplier;
@@ -35,18 +33,13 @@ public abstract class AbstractLibraryTest {
 
     private static LibraryManager libraryManager;
 
-    private static TableSingleton tableSingleton;
-
     @BeforeClass
     public static void init() throws IOException {
         if (libraryManager != null)
             return;
         final Path dataDirectory = Files.createTempDirectory("library-test");
         final Collection<Path> etcFiles = List.of(Paths.get("src/test/resources/etc/library.json"));
-        final TableSingleton tableSingleton = new TableSingleton(dataDirectory, null);
-        final InstancesSupplier instancesSupplier = InstancesSupplier.withConcurrentMap();
-        instancesSupplier.registerInstance(TableServiceInterface.class, tableSingleton.getTableManager().getService());
-        libraryManager = new LibraryManager(dataDirectory, etcFiles, instancesSupplier);
+        libraryManager = new LibraryManager(dataDirectory, etcFiles, InstancesSupplier.withConcurrentMap());
         final File resourcesDirectory = new File("src/test/resources");
         if (resourcesDirectory.exists())
             FileUtils.copyDirectory(resourcesDirectory, dataDirectory.toFile());
@@ -54,10 +47,6 @@ public abstract class AbstractLibraryTest {
 
     @AfterClass
     public static void cleanup() {
-        if (tableSingleton != null) {
-            tableSingleton.close();
-            tableSingleton = null;
-        }
         if (libraryManager != null) {
             libraryManager.close();
             libraryManager = null;

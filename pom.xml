@@ -82,26 +82,19 @@
     <module>qwazr-library-archiver</module>
     <module>qwazr-library-asciidoctor</module>
     <module>qwazr-library-audio</module>
-    <module>qwazr-library-cassandra</module>
     <module>qwazr-library-csv</module>
     <module>qwazr-library-email</module>
     <module>qwazr-library-poi</module>
     <module>qwazr-library-files</module>
     <module>qwazr-library-fop</module>
     <module>qwazr-library-freemarker</module>
-    <module>qwazr-library-ftp</module>
     <module>qwazr-library-html</module>
-    <module>qwazr-library-iban</module>
     <module>qwazr-library-jdbc</module>
     <module>qwazr-library-ldap</module>
     <module>qwazr-library-markdown</module>
-    <module>qwazr-library-mongodb</module>
     <module>qwazr-library-mybatis</module>
     <module>qwazr-library-odf</module>
     <module>qwazr-library-pdfbox</module>
-    <module>qwazr-library-process</module>
-    <module>qwazr-library-properties</module>
-    <module>qwazr-library-realm-table</module>
     <module>qwazr-library-rrd4j</module>
     <module>qwazr-library-rss</module>
     <module>qwazr-library-tess4j</module>
