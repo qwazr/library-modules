@@ -12,7 +12,7 @@
   </parent>
 
   <properties>
-    <commonmark.version>0.12.1</commonmark.version>
+    <commonmark.version>0.17.0</commonmark.version>
   </properties>
 
   <dependencies>
